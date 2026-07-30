@@ -241,6 +241,9 @@ export const events = pgTable("events", {
   postRegistrationUrl: text("post_registration_url"),
   feedbackEnabled: boolean("feedback_enabled").notNull().default(true),
   feedbackQuestion: text("feedback_question"),
+  brandPrimaryColor: text("brand_primary_color"),
+  brandAccentColor: text("brand_accent_color"),
+  brandBackgroundColor: text("brand_background_color"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),

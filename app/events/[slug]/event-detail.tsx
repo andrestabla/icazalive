@@ -29,6 +29,9 @@ type EventData = {
   postRegistrationUrl: string | null;
   feedbackEnabled: boolean;
   feedbackQuestion: string | null;
+  brandPrimaryColor: string | null;
+  brandAccentColor: string | null;
+  brandBackgroundColor: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -336,7 +339,7 @@ export default function EventDetail({
     };
   }, [activeTab, event.slug]);
 
-  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl" | "feedbackEnabled" | "feedbackQuestion">>) => {
+  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl" | "feedbackEnabled" | "feedbackQuestion" | "brandPrimaryColor" | "brandAccentColor" | "brandBackgroundColor">>) => {
     setSaving(true);
     setMessage("");
     const response = await fetch(`/api/events/${event.slug}`, {
@@ -1027,6 +1030,47 @@ export default function EventDetail({
               <Link href="/participants">Ver participantes →</Link>
             </section>
           </div>
+          <section className="panel event-brand-card">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">APARIENCIA</p>
+                <h2>Colores del evento</h2>
+                <p>Sobrescriben la marca global en la página de registro, la sala y la autogestión de este evento.</p>
+              </div>
+              <button
+                disabled={saving || (!event.brandPrimaryColor && !event.brandAccentColor && !event.brandBackgroundColor)}
+                onClick={() =>
+                  void patchEvent({
+                    brandPrimaryColor: null,
+                    brandAccentColor: null,
+                    brandBackgroundColor: null,
+                  })
+                }
+              >
+                Volver a la marca global
+              </button>
+            </div>
+            <div className="event-brand-colors">
+              {([
+                { key: "brandPrimaryColor", label: "Color principal", fallback: "#24194F" },
+                { key: "brandAccentColor", label: "Color de acento", fallback: "#6946E8" },
+                { key: "brandBackgroundColor", label: "Fondo de páginas públicas", fallback: "#FBFAFC" },
+              ] as const).map((item) => (
+                <label key={item.key}>
+                  <input
+                    type="color"
+                    value={event[item.key] ?? item.fallback}
+                    disabled={saving}
+                    onChange={(input) => void patchEvent({ [item.key]: input.target.value })}
+                  />
+                  <span>
+                    <b>{item.label}</b>
+                    <small>{event[item.key] ?? "Marca global"}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
           <RegistrationFieldsManager eventSlug={event.slug} />
         </div>
       ) : activeTab === "Comunicaciones" ? (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useUserTimezone } from "@/lib/use-user-timezone";
+import { downloadXlsx } from "@/lib/xlsx-export";
 import ParticipantInviter from "./participant-inviter";
 
 type RegistrationStatus =
@@ -60,6 +61,45 @@ function csvCell(value: string | number | boolean | null) {
 
 const PAGE_SIZE = 25;
 
+type ExportColumn = {
+  key: string;
+  label: string;
+  value: (
+    record: ParticipantRecord,
+    helpers: { timezone: string },
+  ) => string | number;
+};
+
+const exportColumns: ExportColumn[] = [
+  { key: "name", label: "Nombre", value: (record) => record.name },
+  { key: "email", label: "Correo", value: (record) => record.email },
+  { key: "phone", label: "Teléfono", value: (record) => record.phone ?? "" },
+  { key: "company", label: "Empresa", value: (record) => record.company ?? "" },
+  { key: "jobTitle", label: "Cargo", value: (record) => record.jobTitle ?? "" },
+  { key: "event", label: "Evento", value: (record) => record.eventTitle },
+  { key: "status", label: "Estado", value: (record) => statusLabels[record.status] },
+  {
+    key: "source",
+    label: "Origen",
+    value: (record) => sourceLabels[record.source] ?? record.source,
+  },
+  {
+    key: "registeredAt",
+    label: "Fecha de registro",
+    value: (record, helpers) => formatDate(record.registeredAt, helpers.timezone),
+  },
+  {
+    key: "marketingConsent",
+    label: "Consentimiento de marketing",
+    value: (record) => (record.marketingConsent ? "Sí" : "No"),
+  },
+  {
+    key: "engagementScore",
+    label: "Puntaje de interacción",
+    value: (record) => record.engagementScore ?? "",
+  },
+];
+
 export default function ParticipantsList() {
   const userTimezone = useUserTimezone();
   const [records, setRecords] = useState<ParticipantRecord[]>([]);
@@ -73,6 +113,11 @@ export default function ParticipantsList() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState<Set<string>>(
+    () => new Set(exportColumns.map((column) => column.key)),
+  );
+  const [includeCustomFields, setIncludeCustomFields] = useState(true);
 
   useEffect(() => {
     fetch("/api/participants")
@@ -127,42 +172,26 @@ export default function ParticipantsList() {
     currentPage * PAGE_SIZE,
   );
 
-  const exportCsv = () => {
+  const runExport = (format: "csv" | "xlsx") => {
     if (!filtered.length) return;
-    const customLabels = Array.from(
-      new Set(
-        filtered.flatMap((record) =>
-          record.customFields.map((field) => field.label),
-        ),
-      ),
+    const activeColumns = exportColumns.filter((column) =>
+      selectedColumns.has(column.key),
     );
-    const rows = [
-      [
-        "Nombre",
-        "Correo",
-        "Teléfono",
-        "Empresa",
-        "Cargo",
-        "Evento",
-        "Estado",
-        "Origen",
-        "Registro",
-        "Consentimiento de marketing",
-        "Puntaje de interacción",
-        ...customLabels,
-      ],
+    const customLabels = includeCustomFields
+      ? Array.from(
+          new Set(
+            filtered.flatMap((record) =>
+              record.customFields.map((field) => field.label),
+            ),
+          ),
+        )
+      : [];
+    const rows: (string | number)[][] = [
+      [...activeColumns.map((column) => column.label), ...customLabels],
       ...filtered.map((record) => [
-        record.name,
-        record.email,
-        record.phone ?? "",
-        record.company ?? "",
-        record.jobTitle ?? "",
-        record.eventTitle,
-        statusLabels[record.status],
-        sourceLabels[record.source] ?? record.source,
-        formatDate(record.registeredAt, userTimezone),
-        record.marketingConsent ? "Sí" : "No",
-        record.engagementScore ?? "",
+        ...activeColumns.map((column) =>
+          column.value(record, { timezone: userTimezone }),
+        ),
         ...customLabels.map(
           (label) =>
             record.customFields.find((field) => field.label === label)?.value ??
@@ -170,25 +199,32 @@ export default function ParticipantsList() {
         ),
       ]),
     ];
-    const csv = rows
-      .map((row) => row.map((cell) => csvCell(cell)).join(","))
-      .join("\r\n");
-    const blob = new Blob(["\uFEFF", csv], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const eventName =
       eventFilter === "all"
         ? "todos"
         : records.find((record) => record.eventId === eventFilter)?.eventSlug ??
           "evento";
-    link.href = url;
-    link.download = `participantes-${eventName}-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const filename = `participantes-${eventName}-${new Date().toISOString().slice(0, 10)}`;
+
+    if (format === "xlsx") {
+      downloadXlsx(filename, "Participantes", rows);
+    } else {
+      const csv = rows
+        .map((row) => row.map((cell) => csvCell(cell)).join(","))
+        .join("\r\n");
+      const blob = new Blob(["\uFEFF", csv], {
+        type: "text/csv;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${filename}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    setExportOpen(false);
     setMessage(
-      `${filtered.length} participante${filtered.length === 1 ? "" : "s"} exportado${filtered.length === 1 ? "" : "s"}.`,
+      `${filtered.length} participante${filtered.length === 1 ? "" : "s"} exportado${filtered.length === 1 ? "" : "s"} en ${format.toUpperCase()}.`,
     );
   };
 
@@ -233,9 +269,9 @@ export default function ParticipantsList() {
           <button
             className="secondary-action"
             disabled={!filtered.length || loading}
-            onClick={exportCsv}
+            onClick={() => setExportOpen(true)}
           >
-            ↓ Exportar CSV
+            ↓ Exportar
           </button>
           <ParticipantInviter
             onImported={() => setRefreshKey((current) => current + 1)}
@@ -402,6 +438,69 @@ export default function ParticipantsList() {
           </footer>
         )}
       </section>
+
+      {exportOpen && (
+        <div className="modal-backdrop" onMouseDown={() => setExportOpen(false)}>
+          <section
+            className="modal export-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="export-modal-title"
+            onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+          >
+            <button className="modal-close" onClick={() => setExportOpen(false)} aria-label="Cerrar">×</button>
+            <div className="modal-icon">↓</div>
+            <h2 id="export-modal-title">Exportar participantes</h2>
+            <p>
+              Se exportará la vista filtrada actual ({filtered.length} registro{filtered.length === 1 ? "" : "s"}).
+              Elige las columnas y el formato.
+            </p>
+            <div className="export-columns">
+              {exportColumns.map((column) => (
+                <label key={column.key}>
+                  <input
+                    type="checkbox"
+                    checked={selectedColumns.has(column.key)}
+                    onChange={(input) =>
+                      setSelectedColumns((current) => {
+                        const next = new Set(current);
+                        if (input.target.checked) next.add(column.key);
+                        else next.delete(column.key);
+                        return next;
+                      })
+                    }
+                  />
+                  <span>{column.label}</span>
+                </label>
+              ))}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={includeCustomFields}
+                  onChange={(input) => setIncludeCustomFields(input.target.checked)}
+                />
+                <span>Respuestas personalizadas</span>
+              </label>
+            </div>
+            <div className="export-actions">
+              <button
+                className="secondary-action"
+                disabled={!selectedColumns.size && !includeCustomFields}
+                onClick={() => runExport("csv")}
+              >
+                Descargar CSV
+              </button>
+              <button
+                className="primary-button"
+                disabled={!selectedColumns.size && !includeCustomFields}
+                onClick={() => runExport("xlsx")}
+              >
+                Descargar XLSX
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {selected && (
         <div

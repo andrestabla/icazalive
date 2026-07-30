@@ -1,7 +1,7 @@
 import { and, count, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { authSessions, users } from "@/db/schema";
+import { authSessions, events, users } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
@@ -270,4 +270,69 @@ export async function PATCH(request: Request) {
     request,
   });
   return NextResponse.json({ data: safeMember(updated) });
+}
+
+export async function DELETE(request: Request) {
+  const auth = await requireAdministrator();
+  if ("error" in auth) return auth.error;
+
+  const body = (await request.json()) as { id?: string };
+  if (!body.id || typeof body.id !== "string") {
+    return NextResponse.json({ error: "Miembro no válido." }, { status: 400 });
+  }
+  if (body.id === auth.user.id) {
+    return NextResponse.json(
+      { error: "No puedes eliminar tu propia cuenta." },
+      { status: 400 },
+    );
+  }
+
+  const db = getDb();
+  const [target] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, body.id))
+    .limit(1);
+  if (!target || !staffRoles.includes(target.role as StaffRole)) {
+    return NextResponse.json({ error: "Miembro no encontrado." }, { status: 404 });
+  }
+
+  if (target.role === "administrator" && target.active) {
+    const [summary] = await db
+      .select({ total: count() })
+      .from(users)
+      .where(and(eq(users.role, "administrator"), eq(users.active, true)));
+    if ((summary?.total ?? 0) <= 1) {
+      return NextResponse.json(
+        { error: "Debe existir al menos un administrador activo." },
+        { status: 400 },
+      );
+    }
+  }
+
+  const [created] = await db
+    .select({ total: count() })
+    .from(events)
+    .where(eq(events.createdBy, target.id));
+  if ((created?.total ?? 0) > 0) {
+    return NextResponse.json(
+      {
+        error: `La cuenta creó ${created!.total} evento${created!.total === 1 ? "" : "s"} y no puede eliminarse para conservar la trazabilidad. Desactívala en su lugar.`,
+      },
+      { status: 409 },
+    );
+  }
+
+  await db.delete(users).where(eq(users.id, target.id));
+
+  await writeAuditLog({
+    actor: auth.user,
+    action: "team.member.deleted",
+    resourceType: "team_member",
+    resourceId: target.id,
+    summary: `Cuenta de equipo ${target.email} eliminada definitivamente.`,
+    details: { role: target.role },
+    request,
+  });
+  return NextResponse.json({ data: { deleted: true } });
 }

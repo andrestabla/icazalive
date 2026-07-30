@@ -103,7 +103,13 @@ export default function EventAnalyticsPanel({
   );
 
   return (
-    <div className="event-analytics">
+    <div className="event-analytics print-report">
+      <div className="analytics-print-bar">
+        <p>Informe del evento generado localmente.</p>
+        <button type="button" onClick={() => window.print()}>
+          Imprimir / guardar PDF ⎙
+        </button>
+      </div>
       <section className="analytics-kpis" aria-label="Métricas del evento">
         <article>
           <span className="analytics-kpi-icon purple">♙</span>

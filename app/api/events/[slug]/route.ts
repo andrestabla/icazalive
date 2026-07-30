@@ -95,6 +95,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     postRegistrationUrl?: string | null;
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
+    brandPrimaryColor?: string | null;
+    brandAccentColor?: string | null;
+    brandBackgroundColor?: string | null;
   };
   const allowedStatuses = [
     "draft",
@@ -172,6 +175,25 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  const brandColorFields = [
+    "brandPrimaryColor",
+    "brandAccentColor",
+    "brandBackgroundColor",
+  ] as const;
+  for (const field of brandColorFields) {
+    const value = body[field];
+    if (
+      value !== undefined &&
+      value !== null &&
+      (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value))
+    ) {
+      return NextResponse.json(
+        { error: "Los colores del evento deben ser valores hexadecimales (#RRGGBB)." },
+        { status: 400 },
+      );
+    }
+  }
+
   const db = getDb();
   const [current] = await db
     .select({ id: events.id, status: events.status })
@@ -206,6 +228,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     postRegistrationUrl?: string | null;
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
+    brandPrimaryColor?: string | null;
+    brandAccentColor?: string | null;
+    brandBackgroundColor?: string | null;
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
@@ -220,6 +245,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (body.feedbackQuestion !== undefined) {
     changes.feedbackQuestion = body.feedbackQuestion?.trim() || null;
+  }
+  for (const field of brandColorFields) {
+    if (body[field] !== undefined) {
+      changes[field] = body[field] ?? null;
+    }
   }
 
   if (body.status) {

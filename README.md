@@ -42,13 +42,13 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0018` son la fuente de verdad del
+Las migraciones `drizzle/0000` a `drizzle/0019` son la fuente de verdad del
 esquema. Las más recientes incorporan: votos de preguntas (`question_votes`),
 vigencia de contraseñas (`users.password_changed_at`), plazo de autogestión por
 evento (`0016`); organizadores por evento (`event_organizers`) y URL de
 redirección post-registro (`0017`); respuestas de feedback
 (`event_feedback_responses`), configuración de encuesta por evento y zona
-horaria por usuario (`0018`).
+horaria por usuario (`0018`); colores de marca por evento (`0019`).
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;
@@ -72,8 +72,14 @@ detén el servidor, ejecuta el script y vuelve a iniciarlo.
   plazo de autogestión (hasta el inicio o con cierre anticipado configurable);
   vencido el plazo, el enlace personal no permite editar ni cancelar.
 - Participantes con búsqueda, filtro por evento y por estado, paginación,
-  cambio de estado, exportación CSV, invitación individual e importación CSV
-  de hasta 500 filas.
+  cambio de estado, exportación CSV/XLSX con selección de columnas, invitación
+  individual e importación CSV de hasta 500 filas.
+- Colores de marca por evento (principal, acento y fondo) que sobrescriben la
+  marca global en las páginas públicas del evento.
+- Informe del evento imprimible o guardable como PDF desde la pestaña
+  Analítica; el equipo admite eliminación definitiva de cuentas con
+  salvaguardas (nunca la propia, nunca el último administrador, y se bloquea
+  si la cuenta creó eventos).
 - Comunicaciones configurables con variables renderizadas, confirmaciones en
   cola y recordatorios programados.
 - Sala y estudio con chat público, canal privado, Q&A con votación de

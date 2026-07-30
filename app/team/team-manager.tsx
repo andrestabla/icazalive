@@ -66,6 +66,7 @@ export default function TeamManager({
   const [members, setMembers] = useState(initialMembers);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [resetMember, setResetMember] = useState<TeamMember | null>(null);
+  const [deleteMember, setDeleteMember] = useState<TeamMember | null>(null);
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [createdAccess, setCreatedAccess] = useState<{
     name: string;
@@ -156,6 +157,27 @@ export default function TeamManager({
       }
     } else {
       setError(payload.error ?? "No fue posible actualizar el acceso.");
+    }
+    setSaving(null);
+  };
+
+  const removeMember = async (member: TeamMember) => {
+    setSaving(member.id);
+    setMessage("");
+    setError("");
+    const response = await fetch("/api/team", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: member.id }),
+    });
+    const payload = (await response.json()) as { error?: string };
+    if (response.ok) {
+      setMembers((current) => current.filter((item) => item.id !== member.id));
+      setDeleteMember(null);
+      setMessage(`La cuenta de ${member.name} fue eliminada definitivamente.`);
+    } else {
+      setError(payload.error ?? "No fue posible eliminar la cuenta.");
+      setDeleteMember(null);
     }
     setSaving(null);
   };
@@ -254,6 +276,13 @@ export default function TeamManager({
                   >
                     {saving === member.id ? "Guardando…" : member.active ? "Desactivar" : "Activar"}
                   </button>
+                  <button
+                    className="danger"
+                    disabled={isCurrent || saving === member.id}
+                    onClick={() => setDeleteMember(member)}
+                  >
+                    Eliminar
+                  </button>
                 </div>
               </article>
             );
@@ -313,6 +342,35 @@ export default function TeamManager({
             <p>La sesión actual del miembro se cerrará y deberá usar la nueva contraseña.</p>
             <div className="team-reset-password"><input aria-label="Nueva contraseña temporal" value={generatedPassword} onChange={(input) => setGeneratedPassword(input.target.value)} /><button onClick={() => setGeneratedPassword(temporaryPassword())}>Generar otra</button></div>
             <button className="primary-button" disabled={saving === resetMember.id} onClick={() => void patchMember(resetMember, { password: generatedPassword })}>{saving === resetMember.id ? "Actualizando…" : "Confirmar restablecimiento"}</button>
+          </section>
+        </div>
+      )}
+
+      {deleteMember && (
+        <div className="modal-backdrop" onMouseDown={() => saving !== deleteMember.id && setDeleteMember(null)}>
+          <section
+            className="modal session-delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-delete-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button className="modal-close" disabled={saving === deleteMember.id} onClick={() => setDeleteMember(null)} aria-label="Cerrar">×</button>
+            <div className="modal-icon danger">!</div>
+            <h2 id="team-delete-title">Eliminar la cuenta de {deleteMember.name}</h2>
+            <p>
+              Esta acción es definitiva: borra la cuenta, sus sesiones y sus asignaciones.
+              Si la persona creó eventos, la plataforma pedirá desactivarla en su lugar
+              para conservar la trazabilidad.
+            </p>
+            <div className="session-delete-actions">
+              <button className="session-cancel-button" disabled={saving === deleteMember.id} onClick={() => setDeleteMember(null)}>
+                Conservar cuenta
+              </button>
+              <button className="session-confirm-delete" disabled={saving === deleteMember.id} onClick={() => void removeMember(deleteMember)}>
+                {saving === deleteMember.id ? "Eliminando…" : "Sí, eliminar"}
+              </button>
+            </div>
           </section>
         </div>
       )}

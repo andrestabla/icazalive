@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { events } from "@/db/schema";
 import { getBrandSettings } from "@/lib/brand";
+import { applyEventBrand } from "@/lib/brand-config";
 import RoomClient from "./room-client";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,9 @@ export default async function RoomPage({
         slug: events.slug,
         startsAt: events.startsAt,
         timezone: events.timezone,
+        brandPrimaryColor: events.brandPrimaryColor,
+        brandAccentColor: events.brandAccentColor,
+        brandBackgroundColor: events.brandBackgroundColor,
       })
       .from(events)
       .where(eq(events.slug, slug))
@@ -38,7 +42,7 @@ export default async function RoomPage({
         ...event,
         startsAt: event.startsAt.toISOString(),
       }}
-      brand={brand}
+      brand={applyEventBrand(brand, event)}
     />
   );
 }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { eventRegistrationFields, events } from "@/db/schema";
 import { getBrandSettings } from "@/lib/brand";
+import { applyEventBrand } from "@/lib/brand-config";
 import { getPublishedLegalDocuments } from "@/lib/privacy";
 import RegistrationForm from "./registration-form";
 
@@ -28,6 +29,9 @@ export default async function PublicRegistrationPage({
         timezone: events.timezone,
         registrationOpen: events.registrationOpen,
         postRegistrationUrl: events.postRegistrationUrl,
+        brandPrimaryColor: events.brandPrimaryColor,
+        brandAccentColor: events.brandAccentColor,
+        brandBackgroundColor: events.brandBackgroundColor,
       })
       .from(events)
       .where(eq(events.slug, slug))
@@ -58,7 +62,7 @@ export default async function PublicRegistrationPage({
         startsAt: event.startsAt.toISOString(),
         endsAt: event.endsAt.toISOString(),
       }}
-      brand={brand}
+      brand={applyEventBrand(brand, event)}
       fields={fields}
       legalDocuments={{
         privacy: {
