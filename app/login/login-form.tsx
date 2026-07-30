@@ -1,0 +1,105 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+
+export default function LoginForm({
+  returnTo,
+  showLocalCredentials,
+}: {
+  returnTo: string;
+  showLocalCredentials: boolean;
+}) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const form = new FormData(event.currentTarget);
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: form.get("email"),
+        password: form.get("password"),
+        returnTo,
+      }),
+    });
+    const payload = (await response.json()) as {
+      data?: { returnTo: string };
+      error?: string;
+    };
+
+    if (!response.ok || !payload.data) {
+      setError(payload.error ?? "No fue posible iniciar sesión.");
+      setLoading(false);
+      return;
+    }
+
+    window.location.assign(payload.data.returnTo);
+  };
+
+  return (
+    <main className="login-shell">
+      <section className="login-story">
+        <div className="login-brand">
+          <div className="brand-mark">I</div>
+          <span>Icaza Live</span>
+        </div>
+        <div className="story-copy">
+          <span className="story-label">EVENTOS QUE CONECTAN</span>
+          <h1>Todo tu evento,<br />en un solo lugar.</h1>
+          <p>Crea experiencias memorables, conecta con tu audiencia y convierte cada interacción en información valiosa.</p>
+          <div className="story-proof">
+            <div><b>5.000</b><span>asistentes por evento</span></div>
+            <div><b>En vivo</b><span>Zoom + Amazon IVS</span></div>
+            <div><b>360°</b><span>analítica y engagement</span></div>
+          </div>
+        </div>
+        <div className="story-footer">Plataforma privada · Icaza Jammoul</div>
+      </section>
+
+      <section className="login-panel">
+        <div className="login-card">
+          <div className="login-mobile-brand">
+            <div className="brand-mark">I</div>
+            <span>Icaza Live</span>
+          </div>
+          <p className="eyebrow">BIENVENIDO DE NUEVO</p>
+          <h2>Inicia sesión</h2>
+          <p className="login-intro">Ingresa con tu cuenta administrativa para continuar.</p>
+
+          <form className="login-form" onSubmit={submit}>
+            <label>
+              Correo electrónico
+              <div className="login-input"><span>＠</span><input name="email" type="email" autoComplete="email" required placeholder="nombre@empresa.com" /></div>
+            </label>
+            <label>
+              <span className="label-row"><span>Contraseña</span><small>Acceso privado</small></span>
+              <div className="login-input">
+                <span>⌑</span>
+                <input name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required minLength={8} maxLength={128} placeholder="Tu contraseña" />
+                <button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}>{showPassword ? "Ocultar" : "Ver"}</button>
+              </div>
+            </label>
+            {error && <div className="login-error" role="alert">ⓘ {error}</div>}
+            <button className="login-submit" disabled={loading}>{loading ? "Validando…" : "Ingresar a Icaza Live"}<span>→</span></button>
+          </form>
+
+          {showLocalCredentials && (
+            <div className="local-access">
+              <span>DESARROLLO LOCAL</span>
+              <p><b>Usuario:</b> andres@icazalive.local</p>
+              <p><b>Contraseña:</b> IcazaLive2026!</p>
+            </div>
+          )}
+
+          <p className="login-help">Para recuperar el acceso, contacta al administrador de la plataforma.</p>
+        </div>
+      </section>
+    </main>
+  );
+}

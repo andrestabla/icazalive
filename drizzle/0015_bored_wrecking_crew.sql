@@ -1,0 +1,1 @@
+ALTER TABLE "communication_deliveries" ADD COLUMN "body" text DEFAULT '' NOT NULL;
