@@ -17,6 +17,7 @@ type PublicEvent = {
   endsAt: string;
   timezone: string;
   registrationOpen: boolean;
+  postRegistrationUrl: string | null;
 };
 
 function formatStableDateTime(date: Date, timeZone: string) {
@@ -160,6 +161,16 @@ export default function RegistrationForm({
                 {accessUrl && <Link className="login-submit registration-room-link" href={accessUrl}>Entrar a la sala del evento <span>→</span></Link>}
                 {manageUrl && <Link className="registration-manage-link" href={manageUrl}>Gestionar mi inscripción</Link>}
                 {calendarUrl && <a className="registration-manage-link" href={calendarUrl}>Añadir al calendario (.ics)</a>}
+                {event.postRegistrationUrl && (
+                  <a
+                    className="registration-manage-link"
+                    href={event.postRegistrationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Continuar hacia la página del organizador ↗
+                  </a>
+                )}
               </div>
             </div>
           ) : (

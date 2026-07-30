@@ -27,6 +27,7 @@ export default async function PublicRegistrationPage({
         endsAt: events.endsAt,
         timezone: events.timezone,
         registrationOpen: events.registrationOpen,
+        postRegistrationUrl: events.postRegistrationUrl,
       })
       .from(events)
       .where(eq(events.slug, slug))

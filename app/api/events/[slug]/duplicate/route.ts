@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
   communicationMessages,
+  eventOrganizers,
   eventPolls,
   eventRegistrationFields,
   eventResources,
@@ -147,6 +148,12 @@ export async function POST(request: Request, context: RouteContext) {
         createdBy: user.id,
       })
       .returning();
+
+    await transaction.insert(eventOrganizers).values({
+      eventId: event.id,
+      userId: user.id,
+      role: "owner",
+    });
 
     if (sourceSessions.length) {
       await transaction.insert(sessions).values(

@@ -9,6 +9,13 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
+import {
+  canTransition,
+  eventStatusLabels,
+  eventStatusTransitions,
+  type EventStatus,
+} from "@/lib/event-status";
 
 export const runtime = "nodejs";
 
@@ -85,6 +92,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     status?: string;
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
+    postRegistrationUrl?: string | null;
   };
   const allowedStatuses = [
     "draft",
@@ -100,6 +108,22 @@ export async function PATCH(request: Request, context: RouteContext) {
     !allowedStatuses.includes(body.status as (typeof allowedStatuses)[number])
   ) {
     return NextResponse.json({ error: "Estado no válido." }, { status: 400 });
+  }
+
+  if (body.postRegistrationUrl !== undefined && body.postRegistrationUrl !== null) {
+    if (
+      typeof body.postRegistrationUrl !== "string" ||
+      body.postRegistrationUrl.length > 500 ||
+      !/^https?:\/\/[^\s]+$/.test(body.postRegistrationUrl)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "La URL de redirección debe iniciar con http:// o https:// y no superar 500 caracteres.",
+        },
+        { status: 400 },
+      );
+    }
   }
 
   if (body.registrationOpen !== undefined && typeof body.registrationOpen !== "boolean") {
@@ -126,35 +150,89 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const db = getDb();
+  const [current] = await db
+    .select({ id: events.id, status: events.status })
+    .from(events)
+    .where(eq(events.slug, slug))
+    .limit(1);
+  if (!current) {
+    return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+
+  if (!(await canManageEvent(currentUser, current.id))) {
+    await writeAuditLog({
+      actor: currentUser,
+      action: "event.update.denied",
+      resourceType: "event",
+      resourceId: current.id,
+      outcome: "denied",
+      summary: "Intento de actualizar un evento sin ser organizador asignado.",
+      request,
+    });
+    return NextResponse.json(
+      { error: "No eres organizador de este evento." },
+      { status: 403 },
+    );
+  }
+
+  const currentStatus = current.status as EventStatus;
   const changes: {
     status?: (typeof allowedStatuses)[number];
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
+    postRegistrationUrl?: string | null;
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
   if (body.selfServiceCutoffMinutes !== undefined) {
     changes.selfServiceCutoffMinutes = body.selfServiceCutoffMinutes;
   }
+  if (body.postRegistrationUrl !== undefined) {
+    changes.postRegistrationUrl = body.postRegistrationUrl || null;
+  }
 
   if (body.status) {
-    changes.status = body.status as (typeof allowedStatuses)[number];
+    const target = body.status as EventStatus;
+    if (!canTransition(currentStatus, target)) {
+      const allowed = eventStatusTransitions[currentStatus]
+        .map((status) => eventStatusLabels[status])
+        .join(", ");
+      return NextResponse.json(
+        {
+          error: `No es posible pasar de “${eventStatusLabels[currentStatus]}” a “${eventStatusLabels[target]}”. ${
+            allowed ? `Transiciones permitidas: ${allowed}.` : "Este estado es definitivo."
+          }`,
+        },
+        { status: 409 },
+      );
+    }
+    changes.status = target;
   }
   if (body.registrationOpen !== undefined) {
+    if (
+      body.registrationOpen &&
+      (currentStatus === "completed" || currentStatus === "cancelled")
+    ) {
+      return NextResponse.json(
+        { error: "No es posible abrir el registro de un evento completado o cancelado." },
+        { status: 409 },
+      );
+    }
     changes.registrationOpen = body.registrationOpen;
-    if (body.registrationOpen && !body.status) changes.status = "registration_open";
-    if (!body.registrationOpen && !body.status) changes.status = "preparing";
+    // El estado solo se ajusta automáticamente cuando la matriz lo permite.
+    if (body.registrationOpen && !body.status && canTransition(currentStatus, "registration_open")) {
+      changes.status = "registration_open";
+    }
+    if (!body.registrationOpen && !body.status && canTransition(currentStatus, "preparing")) {
+      changes.status = "preparing";
+    }
   }
 
   const [updated] = await db
     .update(events)
     .set(changes)
-    .where(eq(events.slug, slug))
+    .where(eq(events.id, current.id))
     .returning();
-
-  if (!updated) {
-    return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
-  }
 
   await writeAuditLog({
     actor: currentUser,

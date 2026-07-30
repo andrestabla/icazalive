@@ -12,11 +12,11 @@ La aplicación se desarrolla primero de manera local y se diseñó para migrar a
 Replit o a otra infraestructura PostgreSQL sin cambiar el modelo de negocio. La
 matriz técnica contiene 109 requisitos; la auditoría vigente registra:
 
-- 20 requisitos cumplidos.
-- 59 requisitos parciales.
-- 18 requisitos pendientes.
+- 22 requisitos cumplidos.
+- 58 requisitos parciales.
+- 17 requisitos pendientes.
 - 12 requisitos que requieren despliegue o pruebas de infraestructura.
-- Índice ponderado actual: 45,4%.
+- Índice ponderado actual: 46,8%.
 
 Los estados parciales no equivalen a cumplimiento contractual final. En
 particular, Zoom, Amazon IVS/S3, entrega de email, SSO y MFA continúan
@@ -43,10 +43,12 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0016` son la fuente de verdad del
+Las migraciones `drizzle/0000` a `drizzle/0017` son la fuente de verdad del
 esquema. La migración `0016` incorpora los votos de preguntas (`question_votes`),
 la vigencia de contraseñas (`users.password_changed_at`) y el plazo de
-autogestión por evento (`events.self_service_cutoff_minutes`).
+autogestión por evento (`events.self_service_cutoff_minutes`). La `0017` añade
+los organizadores por evento (`event_organizers`, con backfill del creador como
+propietario) y la URL de redirección post-registro.
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;
@@ -55,7 +57,14 @@ detén el servidor, ejecuta el script y vuelve a iniciarlo.
 ## Funcionalidad disponible localmente
 
 - Gestión de eventos, sesiones, estados, detección de conflictos y duplicación
-  con ajuste de fechas.
+  con ajuste de fechas. Las transiciones de estado siguen una matriz estricta
+  (completado es terminal; cancelado solo se recupera como borrador) y las
+  acciones sensibles piden confirmación.
+- Organizadores por evento: propietario y coorganizadores, asignación desde el
+  detalle del evento, transferencia de propiedad y permisos por evento (los
+  organizadores solo modifican los eventos donde están asignados).
+- Redirección opcional a una página informativa del organizador después de
+  completar el registro.
 - Registro público con campos personalizados de texto, área de texto, selección
   y consentimiento.
 - Enlaces personales con acceso a sala, autogestión de datos,

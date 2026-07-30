@@ -4,7 +4,12 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
+import {
+  confirmableTransitions,
+  eventStatusTransitions,
+} from "@/lib/event-status";
 import EventAnalyticsPanel from "./event-analytics-panel";
+import OrganizersPanel from "./organizers-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
 
 type EventData = {
@@ -20,6 +25,7 @@ type EventData = {
   maxAttendees: number;
   registrationOpen: boolean;
   selfServiceCutoffMinutes: number;
+  postRegistrationUrl: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -279,6 +285,7 @@ export default function EventDetail({
   );
   const [activeTab, setActiveTab] = useState("Resumen");
   const [saving, setSaving] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<EventData["status"] | null>(null);
   const [communicationSaving, setCommunicationSaving] = useState(false);
   const [streamingSaving, setStreamingSaving] = useState(false);
   const [sessionEditor, setSessionEditor] = useState<
@@ -326,7 +333,7 @@ export default function EventDetail({
     };
   }, [activeTab, event.slug]);
 
-  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes">>) => {
+  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl">>) => {
     setSaving(true);
     setMessage("");
     const response = await fetch(`/api/events/${event.slug}`, {
@@ -855,8 +862,22 @@ export default function EventDetail({
         <div className="detail-actions">
           <label className="status-control">
             Estado
-            <select value={event.status} disabled={saving} onChange={(input) => void patchEvent({ status: input.target.value as EventData["status"] })}>
-              {Object.entries(statusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+            <select
+              value={event.status}
+              disabled={saving || eventStatusTransitions[event.status].length === 0}
+              onChange={(input) => {
+                const target = input.target.value as EventData["status"];
+                if (target === event.status) return;
+                if (confirmableTransitions[target]) {
+                  setPendingStatus(target);
+                } else {
+                  void patchEvent({ status: target });
+                }
+              }}
+            >
+              {[event.status, ...eventStatusTransitions[event.status]].map((value) => (
+                <option value={value} key={value}>{statusLabels[value]}</option>
+              ))}
             </select>
           </label>
           <button className="primary-button" disabled={saving} onClick={() => void patchEvent({ registrationOpen: !event.registrationOpen })}>
@@ -942,6 +963,7 @@ export default function EventDetail({
               <div className="transmission-service"><span className="service-logo aws">aws</span><div><b>Amazon IVS</b><small>{ivs?.accountLabel ?? "Entorno local"}</small></div><i className={ivs?.status ?? "disconnected"}>{ivs?.status === "connected" ? "Conectado" : "Local"}</i></div>
               <button onClick={() => setActiveTab("Transmisión")} className="secondary-button">Configurar transmisión</button>
             </section>
+            <OrganizersPanel eventSlug={event.slug} />
           </aside>
         </div>
       ) : activeTab === "Registro" ? (
@@ -973,6 +995,25 @@ export default function EventDetail({
                   <option value={10080}>Cierra 7 días antes</option>
                 </select>
                 <small>Después de este plazo, el enlace personal no permite editar ni cancelar la inscripción.</small>
+              </label>
+              <label className="post-registration-field">
+                Redirección después del registro (opcional)
+                <div>
+                  <input
+                    type="url"
+                    placeholder="https://tusitio.com/gracias"
+                    maxLength={500}
+                    defaultValue={event.postRegistrationUrl ?? ""}
+                    disabled={saving}
+                    onBlur={(input) => {
+                      const value = input.target.value.trim();
+                      if ((event.postRegistrationUrl ?? "") !== value) {
+                        void patchEvent({ postRegistrationUrl: value || null });
+                      }
+                    }}
+                  />
+                </div>
+                <small>Si la defines, la confirmación de registro ofrecerá continuar hacia esa página informativa.</small>
               </label>
             </section>
             <section className="panel registration-summary-card">
@@ -1954,6 +1995,39 @@ export default function EventDetail({
                 onClick={() => void deleteSession()}
               >
                 {sessionSaving ? "Eliminando…" : "Sí, eliminar"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {pendingStatus && confirmableTransitions[pendingStatus] && (
+        <div className="modal-backdrop" onMouseDown={() => !saving && setPendingStatus(null)}>
+          <section
+            className="modal session-delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="status-confirm-title"
+            onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+          >
+            <button className="modal-close" disabled={saving} onClick={() => setPendingStatus(null)} aria-label="Cerrar">×</button>
+            <div className={`modal-icon ${pendingStatus === "cancelled" ? "danger" : ""}`}>
+              {pendingStatus === "cancelled" ? "!" : "→"}
+            </div>
+            <h2 id="status-confirm-title">{confirmableTransitions[pendingStatus].title}</h2>
+            <p>{confirmableTransitions[pendingStatus].description}</p>
+            <div className="session-delete-actions">
+              <button className="session-cancel-button" disabled={saving} onClick={() => setPendingStatus(null)}>
+                Volver
+              </button>
+              <button
+                className={pendingStatus === "cancelled" ? "session-confirm-delete" : "primary-button"}
+                disabled={saving}
+                onClick={() => {
+                  void patchEvent({ status: pendingStatus }).then(() => setPendingStatus(null));
+                }}
+              >
+                {saving ? "Aplicando…" : `Sí, ${statusLabels[pendingStatus].toLowerCase()}`}
               </button>
             </div>
           </section>

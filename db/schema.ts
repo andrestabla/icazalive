@@ -18,6 +18,11 @@ export const userRole = pgEnum("user_role", [
   "participant",
 ]);
 
+export const eventOrganizerRole = pgEnum("event_organizer_role", [
+  "owner",
+  "co_organizer",
+]);
+
 export const eventFormat = pgEnum("event_format", [
   "live",
   "simulated",
@@ -232,12 +237,35 @@ export const events = pgTable("events", {
   selfServiceCutoffMinutes: integer("self_service_cutoff_minutes")
     .notNull()
     .default(0),
+  postRegistrationUrl: text("post_registration_url"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const eventOrganizers = pgTable(
+  "event_organizers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: eventOrganizerRole("role").notNull().default("co_organizer"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("event_organizers_event_user_unique").on(
+      table.eventId,
+      table.userId,
+    ),
+    index("event_organizers_user_idx").on(table.userId),
+  ],
+);
 
 export const sessions = pgTable(
   "sessions",

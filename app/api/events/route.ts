@@ -1,7 +1,7 @@
 import { asc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { events, sessions } from "@/db/schema";
+import { eventOrganizers, events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
 import {
@@ -126,6 +126,12 @@ export async function POST(request: Request) {
       title: "Sesión principal",
       startsAt,
       endsAt,
+    });
+
+    await transaction.insert(eventOrganizers).values({
+      eventId: event.id,
+      userId: currentUser.id,
+      role: "owner",
     });
 
     return event;
