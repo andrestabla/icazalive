@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { eventOrganizers, events, users } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser, type AuthenticatedUser } from "@/lib/auth";
-import { canManageEvent, isEventOwner } from "@/lib/event-permissions";
+import { isEventOwner } from "@/lib/event-permissions";
 
 export const runtime = "nodejs";
 

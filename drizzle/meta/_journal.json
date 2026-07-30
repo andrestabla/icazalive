@@ -127,6 +127,13 @@
       "when": 1785376845261,
       "tag": "0017_flawless_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785378582407,
+      "tag": "0018_careful_karnak",
+      "breakpoints": true
     }
   ]
 }

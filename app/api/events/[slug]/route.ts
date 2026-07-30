@@ -93,6 +93,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
     postRegistrationUrl?: string | null;
+    feedbackEnabled?: boolean;
+    feedbackQuestion?: string | null;
   };
   const allowedStatuses = [
     "draft",
@@ -149,6 +151,27 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  if (
+    body.feedbackEnabled !== undefined &&
+    typeof body.feedbackEnabled !== "boolean"
+  ) {
+    return NextResponse.json(
+      { error: "La configuración de feedback no es válida." },
+      { status: 400 },
+    );
+  }
+  if (
+    body.feedbackQuestion !== undefined &&
+    body.feedbackQuestion !== null &&
+    (typeof body.feedbackQuestion !== "string" ||
+      body.feedbackQuestion.trim().length > 300)
+  ) {
+    return NextResponse.json(
+      { error: "La pregunta de feedback no puede superar 300 caracteres." },
+      { status: 400 },
+    );
+  }
+
   const db = getDb();
   const [current] = await db
     .select({ id: events.id, status: events.status })
@@ -181,6 +204,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
     postRegistrationUrl?: string | null;
+    feedbackEnabled?: boolean;
+    feedbackQuestion?: string | null;
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
@@ -189,6 +214,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (body.postRegistrationUrl !== undefined) {
     changes.postRegistrationUrl = body.postRegistrationUrl || null;
+  }
+  if (body.feedbackEnabled !== undefined) {
+    changes.feedbackEnabled = body.feedbackEnabled;
+  }
+  if (body.feedbackQuestion !== undefined) {
+    changes.feedbackQuestion = body.feedbackQuestion?.trim() || null;
   }
 
   if (body.status) {

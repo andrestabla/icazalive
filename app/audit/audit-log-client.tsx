@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useUserTimezone } from "@/lib/use-user-timezone";
 
 type AuditOutcome = "success" | "denied" | "failure";
 
@@ -110,7 +111,7 @@ const outcomeLabels: Record<AuditOutcome, string> = {
   failure: "Fallido",
 };
 
-function formatStableDateTime(value: string) {
+function formatStableDateTime(value: string, timeZone: string) {
   const parts = new Intl.DateTimeFormat("es-CO", {
     day: "2-digit",
     month: "short",
@@ -119,7 +120,7 @@ function formatStableDateTime(value: string) {
     minute: "2-digit",
     second: "2-digit",
     hour12: true,
-    timeZone: "America/Bogota",
+    timeZone,
   }).formatToParts(new Date(value));
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts
@@ -137,6 +138,7 @@ export default function AuditLogClient({
 }: {
   initialData: AuditData;
 }) {
+  const userTimezone = useUserTimezone();
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState("");
   const [outcome, setOutcome] = useState("");
@@ -353,7 +355,7 @@ export default function AuditLogClient({
           {data.entries.map((entry) => (
             <article key={entry.id}>
               <div className="audit-date">
-                <b>{formatStableDateTime(entry.createdAt)}</b>
+                <b>{formatStableDateTime(entry.createdAt, userTimezone)}</b>
                 <small>{entry.ipAddress || "IP no disponible"}</small>
               </div>
               <div className="audit-actor">
@@ -440,7 +442,7 @@ export default function AuditLogClient({
             <div className="audit-detail-grid">
               <div>
                 <small>FECHA</small>
-                <b>{formatStableDateTime(selected.createdAt)}</b>
+                <b>{formatStableDateTime(selected.createdAt, userTimezone)}</b>
               </div>
               <div>
                 <small>RESULTADO</small>

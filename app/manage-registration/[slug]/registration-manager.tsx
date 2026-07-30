@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import type { PublicBrand } from "@/lib/brand-config";
+import FeedbackCard from "./feedback-card";
 import type { RegistrationFieldDefinition } from "@/lib/registration-fields";
 
 type ManagementData = {
@@ -266,6 +267,9 @@ export default function RegistrationManager({
           <small>
             Este enlace es personal. No lo compartas con otras personas.
           </small>
+          {accessToken && data?.registration.status !== "cancelled" && (
+            <FeedbackCard eventSlug={eventShell.slug} accessToken={accessToken} />
+          )}
         </aside>
 
         <div className="registration-manager-card">

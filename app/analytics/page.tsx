@@ -1,8 +1,9 @@
-import { desc } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import Link from "next/link";
 import { getDb } from "@/db";
-import { events } from "@/db/schema";
+import { events, registrations } from "@/db/schema";
 import { getEventAnalytics } from "@/lib/event-analytics";
+import AnalyticsCharts from "./analytics-charts";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,29 @@ export default async function AnalyticsPage() {
       analytics: await getEventAnalytics(event.id),
     })),
   );
+
+  const db = getDb();
+  const [dailyRegistrations, statusDistribution] = await Promise.all([
+    db
+      .select({
+        eventId: registrations.eventId,
+        day: sql<string>`to_char(${registrations.registeredAt} at time zone 'UTC', 'YYYY-MM-DD')`,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(registrations)
+      .groupBy(
+        registrations.eventId,
+        sql`to_char(${registrations.registeredAt} at time zone 'UTC', 'YYYY-MM-DD')`,
+      ),
+    db
+      .select({
+        eventId: registrations.eventId,
+        status: registrations.status,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(registrations)
+      .groupBy(registrations.eventId, registrations.status),
+  ]);
 
   const totals = eventMetrics.reduce(
     (summary, item) => {
@@ -159,6 +183,12 @@ export default async function AnalyticsPage() {
           </div>
         </section>
       </div>
+
+      <AnalyticsCharts
+        events={eventRecords.map((event) => ({ id: event.id, title: event.title }))}
+        dailyRegistrations={dailyRegistrations}
+        statusDistribution={statusDistribution}
+      />
 
       <section className="panel analytics-events-panel">
         <div className="panel-heading">

@@ -9,6 +9,7 @@ import {
   eventStatusTransitions,
 } from "@/lib/event-status";
 import EventAnalyticsPanel from "./event-analytics-panel";
+import FeedbackAdminPanel from "./feedback-admin-panel";
 import OrganizersPanel from "./organizers-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
 
@@ -26,6 +27,8 @@ type EventData = {
   registrationOpen: boolean;
   selfServiceCutoffMinutes: number;
   postRegistrationUrl: string | null;
+  feedbackEnabled: boolean;
+  feedbackQuestion: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -333,7 +336,7 @@ export default function EventDetail({
     };
   }, [activeTab, event.slug]);
 
-  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl">>) => {
+  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl" | "feedbackEnabled" | "feedbackQuestion">>) => {
     setSaving(true);
     setMessage("");
     const response = await fetch(`/api/events/${event.slug}`, {
@@ -1796,10 +1799,19 @@ export default function EventDetail({
           </section>
         )
       ) : activeTab === "Analítica" ? (
-        <EventAnalyticsPanel
-          slug={event.slug}
-          maxAttendees={event.maxAttendees}
-        />
+        <>
+          <EventAnalyticsPanel
+            slug={event.slug}
+            maxAttendees={event.maxAttendees}
+          />
+          <FeedbackAdminPanel
+            eventSlug={event.slug}
+            feedbackEnabled={event.feedbackEnabled}
+            feedbackQuestion={event.feedbackQuestion}
+            saving={saving}
+            onConfigChange={(changes) => void patchEvent(changes)}
+          />
+        </>
       ) : (
         <section className="panel tab-placeholder">
           <span>⌁</span>

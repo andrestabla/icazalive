@@ -201,6 +201,7 @@ export const users = pgTable("users", {
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+  timezone: text("timezone"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -238,6 +239,8 @@ export const events = pgTable("events", {
     .notNull()
     .default(0),
   postRegistrationUrl: text("post_registration_url"),
+  feedbackEnabled: boolean("feedback_enabled").notNull().default(true),
+  feedbackQuestion: text("feedback_question"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),
@@ -486,6 +489,30 @@ export const eventQuestions = pgTable(
       table.question,
     ),
     index("event_questions_event_status_idx").on(table.eventId, table.status),
+  ],
+);
+
+export const eventFeedbackResponses = pgTable(
+  "event_feedback_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    registrationId: uuid("registration_id")
+      .notNull()
+      .references(() => registrations.id, { onDelete: "cascade" }),
+    rating: integer("rating").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("event_feedback_event_registration_unique").on(
+      table.eventId,
+      table.registrationId,
+    ),
+    index("event_feedback_event_idx").on(table.eventId),
   ],
 );
 

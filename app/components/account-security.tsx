@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { invalidateUserTimezone } from "@/lib/use-user-timezone";
 
 type PasswordStatus = {
   expiresAt: string;
@@ -9,22 +10,52 @@ type PasswordStatus = {
   expiresSoon: boolean;
 };
 
+const TIMEZONE_CHOICES = [
+  "America/Bogota",
+  "America/Mexico_City",
+  "America/Lima",
+  "America/Guayaquil",
+  "America/Panama",
+  "America/Santiago",
+  "America/Argentina/Buenos_Aires",
+  "America/Sao_Paulo",
+  "America/New_York",
+  "America/Chicago",
+  "America/Los_Angeles",
+  "Europe/Madrid",
+  "Europe/Paris",
+  "Europe/London",
+  "UTC",
+];
+
 export default function AccountSecurity() {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<PasswordStatus | null>(null);
-  const [autoOpened, setAutoOpened] = useState(false);
+  const [, setAutoOpened] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [timezone, setTimezone] = useState<string>("");
+  const [timezoneNotice, setTimezoneNotice] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/auth/me")
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
-        if (!cancelled && payload?.data?.passwordStatus) {
-          setStatus(payload.data.passwordStatus as PasswordStatus);
+        if (cancelled || !payload?.data) return;
+        if (payload.data.passwordStatus) {
+          const passwordStatus = payload.data.passwordStatus as PasswordStatus;
+          setStatus(passwordStatus);
+          if (passwordStatus.expired) {
+            // Aviso automático: abre el modal una sola vez al detectar expiración.
+            setAutoOpened((alreadyOpened) => {
+              if (!alreadyOpened) setOpen(true);
+              return true;
+            });
+          }
         }
+        setTimezone((payload.data.timezone as string | null) ?? "");
       })
       .catch(() => undefined);
     return () => {
@@ -32,12 +63,27 @@ export default function AccountSecurity() {
     };
   }, []);
 
-  useEffect(() => {
-    if (status?.expired && !autoOpened) {
-      setAutoOpened(true);
-      setOpen(true);
+  const saveTimezone = async (value: string) => {
+    setTimezone(value);
+    setTimezoneNotice("");
+    const response = await fetch("/api/auth/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ timezone: value || null }),
+    });
+    if (response.ok) {
+      invalidateUserTimezone(value || null);
+      setTimezoneNotice(
+        value
+          ? `Las fechas administrativas se mostrarán en ${value.replaceAll("_", " ")}.`
+          : "Se usará la zona horaria del navegador.",
+      );
+    } else {
+      const payload = (await response.json()) as { error?: string };
+      setTimezoneNotice(payload.error ?? "No se pudo guardar la preferencia.");
     }
-  }, [status, autoOpened]);
+  };
+
 
   async function submit(form: React.FormEvent<HTMLFormElement>) {
     form.preventDefault();
@@ -99,6 +145,19 @@ export default function AccountSecurity() {
                 Tu contraseña vence en {status.daysUntilExpiry} {status.daysUntilExpiry === 1 ? "día" : "días"}. Te recomendamos renovarla.
               </p>
             )}
+            <label className="timezone-preference">
+              Zona horaria para fechas administrativas
+              <select
+                value={timezone}
+                onChange={(input) => void saveTimezone(input.target.value)}
+              >
+                <option value="">Automática (zona del navegador)</option>
+                {TIMEZONE_CHOICES.map((zone) => (
+                  <option value={zone} key={zone}>{zone.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+              {timezoneNotice && <small role="status">{timezoneNotice}</small>}
+            </label>
             {!success ? (
               <>
                 <p>La política exige renovar la contraseña cada seis meses. Debe tener al menos 12 caracteres e incluir mayúscula, minúscula, número y símbolo.</p>

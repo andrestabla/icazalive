@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Organizer = {
   userId: string;
@@ -26,26 +26,31 @@ export default function OrganizersPanel({ eventSlug }: { eventSlug: string }) {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
 
-  const refresh = useCallback(async () => {
-    const response = await fetch(`/api/events/${eventSlug}/organizers`);
-    if (!response.ok) return;
-    const payload = (await response.json()) as {
-      data?: {
-        organizers: Organizer[];
-        availableStaff: StaffMember[];
-        canManage: boolean;
-      };
-    };
-    if (payload.data) {
-      setOrganizers(payload.data.organizers);
-      setAvailableStaff(payload.data.availableStaff);
-      setCanManage(payload.data.canManage);
-    }
-  }, [eventSlug]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    fetch(`/api/events/${eventSlug}/organizers`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then(
+        (payload: {
+          data?: {
+            organizers: Organizer[];
+            availableStaff: StaffMember[];
+            canManage: boolean;
+          };
+        } | null) => {
+          if (cancelled || !payload?.data) return;
+          setOrganizers(payload.data.organizers);
+          setAvailableStaff(payload.data.availableStaff);
+          setCanManage(payload.data.canManage);
+        },
+      )
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [eventSlug, refreshKey]);
 
   const mutate = async (
     method: "POST" | "PATCH" | "DELETE",
@@ -63,7 +68,7 @@ export default function OrganizersPanel({ eventSlug }: { eventSlug: string }) {
     if (response.ok) {
       setNotice(successMessage);
       setSelectedUserId("");
-      await refresh();
+      setRefreshKey((current) => current + 1);
     } else {
       setNotice(payload.error ?? "La operación no fue posible.");
     }

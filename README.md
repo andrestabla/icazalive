@@ -11,11 +11,11 @@ La aplicación se desarrolla primero de manera local y se diseñó para migrar a
 Replit o a otra infraestructura PostgreSQL sin cambiar el modelo de negocio. La
 matriz técnica contiene 109 requisitos; la auditoría vigente registra:
 
-- 22 requisitos cumplidos.
-- 58 requisitos parciales.
-- 17 requisitos pendientes.
+- 24 requisitos cumplidos.
+- 57 requisitos parciales.
+- 16 requisitos pendientes.
 - 12 requisitos que requieren despliegue o pruebas de infraestructura.
-- Índice ponderado actual: 46,8%.
+- Índice ponderado actual: 48,2%.
 
 Los estados parciales no equivalen a cumplimiento contractual final. En
 particular, Zoom, Amazon IVS/S3, entrega de email, SSO y MFA continúan
@@ -42,12 +42,13 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0017` son la fuente de verdad del
-esquema. La migración `0016` incorpora los votos de preguntas (`question_votes`),
-la vigencia de contraseñas (`users.password_changed_at`) y el plazo de
-autogestión por evento (`events.self_service_cutoff_minutes`). La `0017` añade
-los organizadores por evento (`event_organizers`, con backfill del creador como
-propietario) y la URL de redirección post-registro.
+Las migraciones `drizzle/0000` a `drizzle/0018` son la fuente de verdad del
+esquema. Las más recientes incorporan: votos de preguntas (`question_votes`),
+vigencia de contraseñas (`users.password_changed_at`), plazo de autogestión por
+evento (`0016`); organizadores por evento (`event_organizers`) y URL de
+redirección post-registro (`0017`); respuestas de feedback
+(`event_feedback_responses`), configuración de encuesta por evento y zona
+horaria por usuario (`0018`).
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useUserTimezone } from "@/lib/use-user-timezone";
 import ParticipantInviter from "./participant-inviter";
 
 type RegistrationStatus =
@@ -45,11 +46,11 @@ const sourceLabels: Record<string, string> = {
   import: "Importación",
 };
 
-function formatDate(value: string) {
+function formatDate(value: string, timeZone: string) {
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "America/Bogota",
+    timeZone,
   }).format(new Date(value));
 }
 
@@ -60,6 +61,7 @@ function csvCell(value: string | number | boolean | null) {
 const PAGE_SIZE = 25;
 
 export default function ParticipantsList() {
+  const userTimezone = useUserTimezone();
   const [records, setRecords] = useState<ParticipantRecord[]>([]);
   const [search, setSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
@@ -118,10 +120,6 @@ export default function ParticipantsList() {
     });
   }, [records, search, eventFilter, statusFilter]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, eventFilter, statusFilter]);
-
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const paginated = filtered.slice(
@@ -162,7 +160,7 @@ export default function ParticipantsList() {
         record.eventTitle,
         statusLabels[record.status],
         sourceLabels[record.source] ?? record.source,
-        formatDate(record.registeredAt),
+        formatDate(record.registeredAt, userTimezone),
         record.marketingConsent ? "Sí" : "No",
         record.engagementScore ?? "",
         ...customLabels.map(
@@ -287,7 +285,7 @@ export default function ParticipantsList() {
           <span>⌕</span>
           <input
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
             placeholder="Buscar nombre, correo, empresa o cargo"
             aria-label="Buscar participantes"
           />
@@ -296,7 +294,7 @@ export default function ParticipantsList() {
           <span>Evento</span>
           <select
             value={eventFilter}
-            onChange={(event) => setEventFilter(event.target.value)}
+            onChange={(event) => { setEventFilter(event.target.value); setPage(1); }}
           >
             <option value="all">Todos los eventos</option>
             {eventOptions.map(([id, title]) => (
@@ -310,9 +308,10 @@ export default function ParticipantsList() {
           <span>Estado</span>
           <select
             value={statusFilter}
-            onChange={(event) =>
-              setStatusFilter(event.target.value as "all" | RegistrationStatus)
-            }
+            onChange={(event) => {
+              setStatusFilter(event.target.value as "all" | RegistrationStatus);
+              setPage(1);
+            }}
           >
             <option value="all">Todos los estados</option>
             {Object.entries(statusLabels).map(([value, label]) => (
@@ -366,7 +365,7 @@ export default function ParticipantsList() {
               <Link href={`/events/${record.eventSlug}`}>
                 {record.eventTitle}
               </Link>
-              <time>{formatDate(record.registeredAt)}</time>
+              <time>{formatDate(record.registeredAt, userTimezone)}</time>
               <span className={`participant-status ${record.status}`}>
                 ● {statusLabels[record.status]}
               </span>
@@ -458,7 +457,7 @@ export default function ParticipantsList() {
               <div>
                 <small>EVENTO</small>
                 <b>{selected.eventTitle}</b>
-                <span>{formatDate(selected.registeredAt)}</span>
+                <span>{formatDate(selected.registeredAt, userTimezone)}</span>
               </div>
               <div>
                 <small>ORIGEN</small>

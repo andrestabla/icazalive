@@ -17,6 +17,7 @@ export async function GET() {
     .select({
       passwordChangedAt: users.passwordChangedAt,
       createdAt: users.createdAt,
+      timezone: users.timezone,
     })
     .from(users)
     .where(eq(users.id, user.id))
@@ -27,7 +28,7 @@ export async function GET() {
     : null;
 
   return NextResponse.json(
-    { data: { ...user, passwordStatus } },
+    { data: { ...user, passwordStatus, timezone: record?.timezone ?? null } },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
