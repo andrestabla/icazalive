@@ -1,7 +1,6 @@
 # Icaza Live
 
-Plataforma local para gestionar eventos virtuales e híbridos, inspirada en la
-experiencia de producto de Livestorm. El proyecto prepara integraciones con Zoom
+Plataforma local para gestionar eventos virtuales e híbridos. El proyecto prepara integraciones con Zoom
 y servicios de AWS sin acoplar los datos de negocio a esos proveedores.
 
 ## Contexto y estado del proyecto
