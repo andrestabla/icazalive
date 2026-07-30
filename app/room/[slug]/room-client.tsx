@@ -159,10 +159,33 @@ export default function RoomClient({
     };
 
     void refresh();
-    const interval = window.setInterval(() => void refresh(), 2_000);
+    // Canal SSE: actividad nueva dispara un refresco inmediato; el sondeo
+    // queda como respaldo con un intervalo más amplio cuando hay push.
+    let pollMs = 2_000;
+    const streamUrl = accessToken
+      ? `/api/public/events/${eventShell.slug}/room/stream?access=${encodeURIComponent(accessToken)}`
+      : `/api/public/events/${eventShell.slug}/room/stream`;
+    const source = new EventSource(streamUrl);
+    source.onopen = () => {
+      pollMs = 10_000;
+    };
+    source.onerror = () => {
+      pollMs = 2_000;
+    };
+    source.onmessage = (message) => {
+      if (message.data !== "heartbeat") void refresh();
+    };
+    let timer: number | undefined;
+    const schedule = () => {
+      timer = window.setTimeout(() => {
+        void refresh().finally(schedule);
+      }, pollMs);
+    };
+    schedule();
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
+      if (timer !== undefined) window.clearTimeout(timer);
+      source.close();
     };
   }, [accessToken, eventShell.slug]);
 

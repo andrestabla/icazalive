@@ -148,6 +148,13 @@
       "when": 1785415182677,
       "tag": "0020_cloudy_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785416827120,
+      "tag": "0021_regular_punisher",
+      "breakpoints": true
     }
   ]
 }

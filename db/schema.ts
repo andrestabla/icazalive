@@ -281,6 +281,21 @@ export const eventOrganizers = pgTable(
   ],
 );
 
+export const eventTemplates = pgTable(
+  "event_templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    description: text("description"),
+    payload: jsonb("payload").notNull(),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("event_templates_created_by_idx").on(table.createdBy)],
+);
+
 export const sessions = pgTable(
   "sessions",
   {

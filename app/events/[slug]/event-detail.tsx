@@ -891,6 +891,33 @@ export default function EventDetail({
           <button className="primary-button" disabled={saving} onClick={() => void patchEvent({ registrationOpen: !event.registrationOpen })}>
             {event.registrationOpen ? "Cerrar registro" : "Abrir registro"}
           </button>
+          <button
+            className="template-save-button"
+            disabled={saving}
+            title="Guarda formato, duración, campos, comunicaciones y marca como plantilla reutilizable"
+            onClick={() => {
+              const name = window.prompt(
+                "Nombre de la plantilla (guarda formato, duración, campos de registro, comunicaciones y marca):",
+                `Plantilla · ${event.title}`,
+              );
+              if (!name?.trim()) return;
+              void fetch("/api/event-templates", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ eventSlug: event.slug, name: name.trim() }),
+              })
+                .then((response) => response.json())
+                .then((payload: { data?: { name: string }; error?: string }) => {
+                  setMessage(
+                    payload.data
+                      ? `Plantilla “${payload.data.name}” guardada. Estará disponible al crear eventos.`
+                      : payload.error ?? "No fue posible guardar la plantilla.",
+                  );
+                });
+            }}
+          >
+            Guardar como plantilla
+          </button>
         </div>
       </header>
 

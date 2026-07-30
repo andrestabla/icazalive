@@ -27,6 +27,7 @@ import {
   getBearerToken,
   resolveRegistrationAccess,
 } from "@/lib/registration-access";
+import { notifyRoomActivity } from "@/lib/room-events";
 
 export const runtime = "nodejs";
 
@@ -453,6 +454,7 @@ export async function POST(request: Request, context: RouteContext) {
         message,
       })
       .returning();
+    notifyRoomActivity(access.eventId, "chat");
     return NextResponse.json({ data: created }, { status: 201 });
   }
 
@@ -492,6 +494,7 @@ export async function POST(request: Request, context: RouteContext) {
         reaction,
       })
       .returning();
+    notifyRoomActivity(access.eventId, "reaction");
     return NextResponse.json({ data: created }, { status: 201 });
   }
 
@@ -524,6 +527,7 @@ export async function POST(request: Request, context: RouteContext) {
         { status: 409 },
       );
     }
+    notifyRoomActivity(access.eventId, "question");
     return NextResponse.json({ data: created }, { status: 201 });
   }
 
@@ -579,6 +583,7 @@ export async function POST(request: Request, context: RouteContext) {
       .where(eq(eventQuestions.id, question.id))
       .returning({ id: eventQuestions.id, upvotes: eventQuestions.upvotes });
 
+    notifyRoomActivity(access.eventId, "question_vote");
     return NextResponse.json({
       data: {
         questionId: updated.id,
@@ -624,6 +629,7 @@ export async function POST(request: Request, context: RouteContext) {
         },
       })
       .returning();
+    notifyRoomActivity(access.eventId, "poll_vote");
     return NextResponse.json({ data: vote });
   }
 

@@ -11,11 +11,11 @@ La aplicación se desarrolla primero de manera local y se diseñó para migrar a
 Replit o a otra infraestructura PostgreSQL sin cambiar el modelo de negocio. La
 matriz técnica contiene 109 requisitos; la auditoría vigente registra:
 
-- 29 requisitos cumplidos.
-- 56 requisitos parciales.
+- 31 requisitos cumplidos.
+- 54 requisitos parciales.
 - 12 requisitos pendientes.
 - 12 requisitos que requieren despliegue o pruebas de infraestructura.
-- Índice ponderado actual: 52,3%.
+- Índice ponderado actual: 53,2%.
 
 Los estados parciales no equivalen a cumplimiento contractual final. En
 particular, Zoom, Amazon IVS/S3, entrega de email, SSO y MFA continúan
@@ -42,14 +42,15 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0020` son la fuente de verdad del
+Las migraciones `drizzle/0000` a `drizzle/0021` son la fuente de verdad del
 esquema. Las más recientes incorporan: votos de preguntas (`question_votes`),
 vigencia de contraseñas (`users.password_changed_at`), plazo de autogestión por
 evento (`0016`); organizadores por evento (`event_organizers`) y URL de
 redirección post-registro (`0017`); respuestas de feedback
 (`event_feedback_responses`), configuración de encuesta por evento y zona
 horaria por usuario (`0018`); colores de marca por evento (`0019`); video
-pregrabado y redirección final para eventos simulados (`0020`).
+pregrabado y redirección final para eventos simulados (`0020`); plantillas
+reutilizables de eventos (`0021`).
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;
@@ -88,6 +89,11 @@ detén el servidor, ejecuta el script y vuelve a iniciarlo.
   si la cuenta creó eventos).
 - Comunicaciones configurables con variables renderizadas, confirmaciones en
   cola y recordatorios programados.
+- Plantillas reutilizables: cualquier evento puede guardarse como plantilla
+  (formato, duración, campos de registro, comunicaciones, marca y políticas) y
+  reutilizarse al crear eventos nuevos.
+- La sala recibe la actividad por push (Server-Sent Events) con el sondeo como
+  respaldo; foco visible y movimiento reducido respetados en toda la interfaz.
 - Sala y estudio con chat público, canal privado, Q&A con votación de
   preguntas (un voto por participante, retirable), encuestas, reacciones,
   recursos y moderación de participantes.

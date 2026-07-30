@@ -118,6 +118,8 @@ export default function Dashboard({
 }) {
   const [data, setData] = useState(initialData);
   const [showCreate, setShowCreate] = useState(false);
+  const [templates, setTemplates] = useState<EventTemplateSummary[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [selectedFormat, setSelectedFormat] = useState<EventFormat | null>(null);
   const [savingEvent, setSavingEvent] = useState(false);
   const [formError, setFormError] = useState("");
@@ -148,6 +150,12 @@ export default function Dashboard({
     setFormError("");
     setScheduleConflicts([]);
     setShowCreate(true);
+    fetch("/api/event-templates")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { data?: EventTemplateSummary[] } | null) => {
+        if (payload?.data) setTemplates(payload.data);
+      })
+      .catch(() => undefined);
   };
 
   const createEvent = async (formEvent: FormEvent<HTMLFormElement>) => {
@@ -174,6 +182,7 @@ export default function Dashboard({
         startsAt: startsAt.toISOString(),
         endsAt: endsAt.toISOString(),
         allowConflict: scheduleConflicts.length > 0,
+        templateId: selectedTemplateId || undefined,
       }),
     });
     const payload = (await response.json()) as {
@@ -588,6 +597,22 @@ export default function Dashboard({
                   configuran después.
                 </p>
                 <form className="event-form" onSubmit={createEvent}>
+                  {templates.length > 0 && (
+                    <label>
+                      Plantilla (opcional)
+                      <select
+                        value={selectedTemplateId}
+                        onChange={(input) => setSelectedTemplateId(input.target.value)}
+                      >
+                        <option value="">Sin plantilla · configuración vacía</option>
+                        {templates.map((template) => (
+                          <option value={template.id} key={template.id}>
+                            {template.name} · {template.durationMinutes} min
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <label>
                     Nombre del evento
                     <input

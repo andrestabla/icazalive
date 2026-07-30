@@ -1,7 +1,15 @@
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { eventOrganizers, events, sessions } from "@/db/schema";
+import {
+  communicationMessages,
+  eventOrganizers,
+  eventRegistrationFields,
+  events,
+  eventTemplates,
+  sessions,
+} from "@/db/schema";
+import type { EventTemplatePayload } from "@/app/api/event-templates/route";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
 import {
@@ -57,12 +65,31 @@ export async function POST(request: Request) {
     startsAt?: string;
     endsAt?: string;
     allowConflict?: boolean;
+    templateId?: string;
   };
 
   const title = body.title?.trim();
   const formats = ["live", "simulated", "hybrid"] as const;
   const startsAt = body.startsAt ? new Date(body.startsAt) : null;
-  const endsAt = body.endsAt ? new Date(body.endsAt) : null;
+  let endsAt = body.endsAt ? new Date(body.endsAt) : null;
+
+  // Plantilla: completa formato, duración y configuración base.
+  let template: EventTemplatePayload | null = null;
+  if (body.templateId) {
+    const [record] = await getDb()
+      .select({ payload: eventTemplates.payload })
+      .from(eventTemplates)
+      .where(eq(eventTemplates.id, body.templateId))
+      .limit(1);
+    if (!record) {
+      return NextResponse.json({ error: "La plantilla no existe." }, { status: 404 });
+    }
+    template = record.payload as EventTemplatePayload;
+    body.format = template.format;
+    if (startsAt && !body.endsAt) {
+      endsAt = new Date(startsAt.getTime() + template.durationMinutes * 60_000);
+    }
+  }
 
   if (
     !title ||
@@ -118,8 +145,51 @@ export async function POST(request: Request) {
         endsAt,
         registrationOpen: false,
         createdBy: currentUser.id,
+        ...(template
+          ? {
+              description: template.description,
+              timezone: template.timezone,
+              maxAttendees: template.maxAttendees,
+              selfServiceCutoffMinutes: template.selfServiceCutoffMinutes,
+              postRegistrationUrl: template.postRegistrationUrl,
+              postEventRedirectUrl: template.postEventRedirectUrl,
+              feedbackEnabled: template.feedbackEnabled,
+              feedbackQuestion: template.feedbackQuestion,
+              brandPrimaryColor: template.brandPrimaryColor,
+              brandAccentColor: template.brandAccentColor,
+              brandBackgroundColor: template.brandBackgroundColor,
+            }
+          : {}),
       })
       .returning();
+
+    if (template?.registrationFields.length) {
+      await transaction.insert(eventRegistrationFields).values(
+        template.registrationFields.map((field) => ({
+          eventId: event.id,
+          fieldKey: field.fieldKey,
+          label: field.label,
+          type: field.type,
+          required: field.required,
+          placeholder: field.placeholder,
+          helpText: field.helpText,
+          options: field.options,
+          position: field.position,
+        })),
+      );
+    }
+    if (template?.communications.length) {
+      await transaction.insert(communicationMessages).values(
+        template.communications.map((message) => ({
+          eventId: event.id,
+          type: message.type,
+          subject: message.subject,
+          body: message.body,
+          enabled: message.enabled,
+          offsetMinutes: message.offsetMinutes,
+        })),
+      );
+    }
 
     await transaction.insert(sessions).values({
       eventId: event.id,
