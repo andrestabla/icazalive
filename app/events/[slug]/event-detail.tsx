@@ -11,6 +11,7 @@ import {
 import EventAnalyticsPanel from "./event-analytics-panel";
 import FeedbackAdminPanel from "./feedback-admin-panel";
 import OrganizersPanel from "./organizers-panel";
+import RecordedVideoPanel from "./recorded-video-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
 
 type EventData = {
@@ -32,6 +33,7 @@ type EventData = {
   brandPrimaryColor: string | null;
   brandAccentColor: string | null;
   brandBackgroundColor: string | null;
+  postEventRedirectUrl: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -339,7 +341,7 @@ export default function EventDetail({
     };
   }, [activeTab, event.slug]);
 
-  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl" | "feedbackEnabled" | "feedbackQuestion" | "brandPrimaryColor" | "brandAccentColor" | "brandBackgroundColor">>) => {
+  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl" | "feedbackEnabled" | "feedbackQuestion" | "brandPrimaryColor" | "brandAccentColor" | "brandBackgroundColor" | "postEventRedirectUrl">>) => {
     setSaving(true);
     setMessage("");
     const response = await fetch(`/api/events/${event.slug}`, {
@@ -1630,6 +1632,16 @@ export default function EventDetail({
       ) : activeTab === "Transmisión" ? (
         streamingSession ? (
           <div className="streaming-section">
+            {event.format === "simulated" && (
+              <RecordedVideoPanel
+                eventSlug={event.slug}
+                postEventRedirectUrl={event.postEventRedirectUrl}
+                saving={saving}
+                onRedirectChange={(value) =>
+                  void patchEvent({ postEventRedirectUrl: value })
+                }
+              />
+            )}
             <section className="panel streaming-overview">
               <div>
                 <p className="eyebrow">ESTADO TÉCNICO</p>

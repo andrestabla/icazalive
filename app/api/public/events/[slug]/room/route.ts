@@ -94,6 +94,51 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
 
+  // Automatización de eventos simulados: al llegar la hora de inicio la sala
+  // pasa a EN VIVO y, al terminar el video, el evento queda completado.
+  const simulatedReady =
+    record.event.format === "simulated" &&
+    record.event.recordedVideoPath &&
+    (record.event.recordedVideoDurationSeconds ?? 0) > 0;
+  if (simulatedReady) {
+    const startMs = record.event.startsAt.getTime();
+    const endMs =
+      startMs + (record.event.recordedVideoDurationSeconds ?? 0) * 1000;
+    const nowMs = Date.now();
+    let automatedStatus: "live" | "completed" | null = null;
+    if (
+      nowMs >= startMs &&
+      nowMs < endMs &&
+      (record.event.status === "registration_open" ||
+        record.event.status === "preparing")
+    ) {
+      automatedStatus = "live";
+    } else if (
+      nowMs >= endMs &&
+      (record.event.status === "live" ||
+        record.event.status === "registration_open" ||
+        record.event.status === "preparing")
+    ) {
+      automatedStatus = "completed";
+    }
+    if (automatedStatus) {
+      await db
+        .update(events)
+        .set({ status: automatedStatus, updatedAt: new Date() })
+        .where(eq(events.id, record.event.id));
+      record.event.status = automatedStatus;
+      await writeAuditLog({
+        action: `event.simulated.${automatedStatus === "live" ? "started" : "ended"}`,
+        resourceType: "event",
+        resourceId: record.event.id,
+        summary: `Automatización del evento simulado “${record.event.title}”: ${
+          automatedStatus === "live" ? "inicio de reproducción" : "finalización"
+        }.`,
+        request,
+      });
+    }
+  }
+
   const [
     questions,
     polls,
@@ -276,6 +321,21 @@ export async function GET(request: Request, context: RouteContext) {
         zoomJoinUrl: record.session.zoomJoinUrl,
       },
       attendeeCount: attendeeSummary[0]?.total ?? 0,
+      simulatedPlayback: simulatedReady
+        ? {
+            durationSeconds: record.event.recordedVideoDurationSeconds,
+            startsAt: record.event.startsAt.toISOString(),
+            endsAt: new Date(
+              record.event.startsAt.getTime() +
+                (record.event.recordedVideoDurationSeconds ?? 0) * 1000,
+            ).toISOString(),
+            ended:
+              Date.now() >=
+              record.event.startsAt.getTime() +
+                (record.event.recordedVideoDurationSeconds ?? 0) * 1000,
+            postEventRedirectUrl: record.event.postEventRedirectUrl,
+          }
+        : null,
       questions,
       votedQuestionIds: participantQuestionVotes.map((vote) => vote.questionId),
       polls: polls.map((poll) => ({

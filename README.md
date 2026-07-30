@@ -11,11 +11,11 @@ La aplicación se desarrolla primero de manera local y se diseñó para migrar a
 Replit o a otra infraestructura PostgreSQL sin cambiar el modelo de negocio. La
 matriz técnica contiene 109 requisitos; la auditoría vigente registra:
 
-- 24 requisitos cumplidos.
-- 57 requisitos parciales.
-- 16 requisitos pendientes.
+- 29 requisitos cumplidos.
+- 56 requisitos parciales.
+- 12 requisitos pendientes.
 - 12 requisitos que requieren despliegue o pruebas de infraestructura.
-- Índice ponderado actual: 48,2%.
+- Índice ponderado actual: 52,3%.
 
 Los estados parciales no equivalen a cumplimiento contractual final. En
 particular, Zoom, Amazon IVS/S3, entrega de email, SSO y MFA continúan
@@ -42,13 +42,14 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0019` son la fuente de verdad del
+Las migraciones `drizzle/0000` a `drizzle/0020` son la fuente de verdad del
 esquema. Las más recientes incorporan: votos de preguntas (`question_votes`),
 vigencia de contraseñas (`users.password_changed_at`), plazo de autogestión por
 evento (`0016`); organizadores por evento (`event_organizers`) y URL de
 redirección post-registro (`0017`); respuestas de feedback
 (`event_feedback_responses`), configuración de encuesta por evento y zona
-horaria por usuario (`0018`); colores de marca por evento (`0019`).
+horaria por usuario (`0018`); colores de marca por evento (`0019`); video
+pregrabado y redirección final para eventos simulados (`0020`).
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;
@@ -76,6 +77,11 @@ detén el servidor, ejecuta el script y vuelve a iniciarlo.
   individual e importación CSV de hasta 500 filas.
 - Colores de marca por evento (principal, acento y fondo) que sobrescriben la
   marca global en las páginas públicas del evento.
+- Eventos simulados con video pregrabado: carga de MP4 (hasta 1 GB, validado y
+  guardado en `~/.icaza-live/media`, fuera de OneDrive), reproducción
+  automática a la hora del evento con reloj compartido (corrección cuando la
+  desviación supera 2 s), finalización automática del evento y redirección
+  opcional de los asistentes al terminar.
 - Informe del evento imprimible o guardable como PDF desde la pestaña
   Analítica; el equipo admite eliminación definitiva de cuentas con
   salvaguardas (nunca la propia, nunca el último administrador, y se bloquea

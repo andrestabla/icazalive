@@ -93,6 +93,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
     postRegistrationUrl?: string | null;
+    postEventRedirectUrl?: string | null;
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
     brandPrimaryColor?: string | null;
@@ -115,11 +116,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Estado no válido." }, { status: 400 });
   }
 
-  if (body.postRegistrationUrl !== undefined && body.postRegistrationUrl !== null) {
+  for (const urlField of ["postRegistrationUrl", "postEventRedirectUrl"] as const) {
+    const value = body[urlField];
+    if (value === undefined || value === null) continue;
     if (
-      typeof body.postRegistrationUrl !== "string" ||
-      body.postRegistrationUrl.length > 500 ||
-      !/^https?:\/\/[^\s]+$/.test(body.postRegistrationUrl)
+      typeof value !== "string" ||
+      value.length > 500 ||
+      !/^https?:\/\/[^\s]+$/.test(value)
     ) {
       return NextResponse.json(
         {
@@ -130,6 +133,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
   }
+
 
   if (body.registrationOpen !== undefined && typeof body.registrationOpen !== "boolean") {
     return NextResponse.json(
@@ -226,6 +230,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
     postRegistrationUrl?: string | null;
+    postEventRedirectUrl?: string | null;
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
     brandPrimaryColor?: string | null;
@@ -239,6 +244,9 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (body.postRegistrationUrl !== undefined) {
     changes.postRegistrationUrl = body.postRegistrationUrl || null;
+  }
+  if (body.postEventRedirectUrl !== undefined) {
+    changes.postEventRedirectUrl = body.postEventRedirectUrl || null;
   }
   if (body.feedbackEnabled !== undefined) {
     changes.feedbackEnabled = body.feedbackEnabled;

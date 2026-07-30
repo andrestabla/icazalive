@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import type { PublicBrand } from "@/lib/brand-config";
+import SimulatedPlayer, { type SimulatedPlayback } from "./simulated-player";
 
 type RoomData = {
   viewer: {
@@ -28,6 +29,7 @@ type RoomData = {
     zoomJoinUrl: string | null;
   };
   attendeeCount: number;
+  simulatedPlayback: SimulatedPlayback | null;
   questions: {
     id: string;
     question: string;
@@ -330,7 +332,17 @@ export default function RoomClient({
               <span className={isLive ? "live" : ""}>● {isLive ? "EN VIVO" : "LOBBY"}</span>
               <small>◉ {room.attendeeCount} participantes</small>
             </div>
-            {isLive && room.session.playbackUrl ? (
+            {room.simulatedPlayback &&
+            (room.simulatedPlayback.ended ||
+              (isLive && minutesUntilStart === 0)) ? (
+              <SimulatedPlayer
+                eventSlug={eventShell.slug}
+                accessToken={accessToken}
+                playback={room.simulatedPlayback}
+                serverTime={room.serverTime}
+                isParticipant={room.viewer.kind === "participant"}
+              />
+            ) : isLive && room.session.playbackUrl ? (
               <div className="room-video-ready">
                 <span>▶</span>
                 <h2>La señal está disponible</h2>

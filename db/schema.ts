@@ -244,6 +244,14 @@ export const events = pgTable("events", {
   brandPrimaryColor: text("brand_primary_color"),
   brandAccentColor: text("brand_accent_color"),
   brandBackgroundColor: text("brand_background_color"),
+  recordedVideoPath: text("recorded_video_path"),
+  recordedVideoName: text("recorded_video_name"),
+  recordedVideoSize: integer("recorded_video_size"),
+  recordedVideoDurationSeconds: integer("recorded_video_duration_seconds"),
+  recordedVideoUploadedAt: timestamp("recorded_video_uploaded_at", {
+    withTimezone: true,
+  }),
+  postEventRedirectUrl: text("post_event_redirect_url"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),
