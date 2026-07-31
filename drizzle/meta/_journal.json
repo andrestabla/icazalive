@@ -155,6 +155,13 @@
       "when": 1785416827120,
       "tag": "0021_regular_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1785522022907,
+      "tag": "0022_needy_black_knight",
+      "breakpoints": true
     }
   ]
 }

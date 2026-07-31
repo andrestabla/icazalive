@@ -202,6 +202,9 @@ export const users = pgTable("users", {
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
   timezone: text("timezone"),
+  mfaEnabled: boolean("mfa_enabled").notNull().default(false),
+  mfaSecret: text("mfa_secret"),
+  mfaEnrolledAt: timestamp("mfa_enrolled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -221,6 +224,20 @@ export const authSessions = pgTable(
     index("auth_sessions_user_idx").on(table.userId),
     index("auth_sessions_expires_idx").on(table.expiresAt),
   ],
+);
+
+export const mfaBackupCodes = pgTable(
+  "mfa_backup_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("mfa_backup_codes_user_idx").on(table.userId)],
 );
 
 export const events = pgTable("events", {

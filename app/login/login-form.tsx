@@ -12,6 +12,7 @@ export default function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mfaRequired, setMfaRequired] = useState(false);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -25,21 +26,30 @@ export default function LoginForm({
       body: JSON.stringify({
         email: form.get("email"),
         password: form.get("password"),
+        totpCode: form.get("totpCode") || undefined,
         returnTo,
       }),
     });
     const payload = (await response.json()) as {
-      data?: { returnTo: string };
+      data?: { returnTo?: string; mfaRequired?: boolean };
       error?: string;
+      mfaRequired?: boolean;
     };
 
+    if (payload.data?.mfaRequired) {
+      setMfaRequired(true);
+      setError("");
+      setLoading(false);
+      return;
+    }
     if (!response.ok || !payload.data) {
+      if (payload.mfaRequired) setMfaRequired(true);
       setError(payload.error ?? "No fue posible iniciar sesión.");
       setLoading(false);
       return;
     }
 
-    window.location.assign(payload.data.returnTo);
+    window.location.assign(payload.data.returnTo!);
   };
 
   return (
@@ -85,6 +95,23 @@ export default function LoginForm({
                 <button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}>{showPassword ? "Ocultar" : "Ver"}</button>
               </div>
             </label>
+            {mfaRequired && (
+              <label>
+                Código de verificación
+                <input
+                  name="totpCode"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  maxLength={11}
+                  placeholder="Código de tu app o de respaldo"
+                  autoFocus
+                />
+                <small className="field-help">
+                  Ingresa el código de 6 dígitos de tu app autenticadora o un código de respaldo.
+                </small>
+              </label>
+            )}
             {error && <div className="login-error" role="alert">ⓘ {error}</div>}
             <button className="login-submit" disabled={loading}>{loading ? "Validando…" : "Ingresar a Icaza Live"}<span>→</span></button>
           </form>

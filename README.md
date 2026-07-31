@@ -15,7 +15,7 @@ matriz técnica contiene 109 requisitos; la auditoría vigente registra:
 - 54 requisitos parciales.
 - 12 requisitos pendientes.
 - 12 requisitos que requieren despliegue o pruebas de infraestructura.
-- Índice ponderado actual: 53,2%.
+- Índice ponderado actual: 53,7%.
 
 Los estados parciales no equivalen a cumplimiento contractual final. En
 particular, Zoom, Amazon IVS/S3, entrega de email, SSO y MFA continúan
@@ -42,7 +42,7 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0021` son la fuente de verdad del
+Las migraciones `drizzle/0000` a `drizzle/0022` son la fuente de verdad del
 esquema. Las más recientes incorporan: votos de preguntas (`question_votes`),
 vigencia de contraseñas (`users.password_changed_at`), plazo de autogestión por
 evento (`0016`); organizadores por evento (`event_organizers`) y URL de
@@ -50,7 +50,7 @@ redirección post-registro (`0017`); respuestas de feedback
 (`event_feedback_responses`), configuración de encuesta por evento y zona
 horaria por usuario (`0018`); colores de marca por evento (`0019`); video
 pregrabado y redirección final para eventos simulados (`0020`); plantillas
-reutilizables de eventos (`0021`).
+reutilizables de eventos (`0021`); segundo factor TOTP y códigos de respaldo (`0022`).
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;
@@ -100,6 +100,9 @@ detén el servidor, ejecuta el script y vuelve a iniciarlo.
 - Seguridad de cuentas: contraseñas de mínimo 12 caracteres con mayúscula,
   minúscula, número y símbolo; vigencia de 180 días con avisos automáticos y
   cambio autoservicio desde el perfil (cierra las demás sesiones abiertas).
+- Verificación en dos pasos (TOTP) sin dependencias externas: activación desde
+  el perfil con app autenticadora, paso adicional en el login y 8 códigos de
+  respaldo de un solo uso.
 - Analítica global y por evento sobre registros, asistencia, interacción,
   comunicaciones y preparación técnica.
 - Equipo, marca, integraciones, auditoría, privacidad/derechos de datos y Centro

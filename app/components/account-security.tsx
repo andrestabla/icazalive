@@ -37,6 +37,57 @@ export default function AccountSecurity() {
   const [success, setSuccess] = useState(false);
   const [timezone, setTimezone] = useState<string>("");
   const [timezoneNotice, setTimezoneNotice] = useState("");
+  const [mfa, setMfa] = useState<{ enabled: boolean; backupCodesRemaining: number } | null>(null);
+  const [mfaSetup, setMfaSetup] = useState<{ secret: string; otpauth: string } | null>(null);
+  const [mfaBackupCodes, setMfaBackupCodes] = useState<string[] | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaNotice, setMfaNotice] = useState("");
+  const [mfaBusy, setMfaBusy] = useState(false);
+
+  const refreshMfa = () => {
+    fetch("/api/auth/mfa")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (payload?.data) setMfa(payload.data);
+      })
+      .catch(() => undefined);
+  };
+
+  const mfaAction = async (action: "start" | "activate" | "disable") => {
+    setMfaBusy(true);
+    setMfaNotice("");
+    const response = await fetch("/api/auth/mfa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, code: mfaCode || undefined }),
+    });
+    const payload = (await response.json()) as {
+      data?: { secret?: string; otpauth?: string; backupCodes?: string[]; enabled?: boolean };
+      error?: string;
+    };
+    setMfaBusy(false);
+    if (!response.ok || !payload.data) {
+      setMfaNotice(payload.error ?? "No fue posible completar la acción.");
+      return;
+    }
+    if (action === "start" && payload.data.secret) {
+      setMfaSetup({ secret: payload.data.secret, otpauth: payload.data.otpauth! });
+      setMfaCode("");
+    }
+    if (action === "activate" && payload.data.backupCodes) {
+      setMfaBackupCodes(payload.data.backupCodes);
+      setMfaSetup(null);
+      setMfaCode("");
+      setMfaNotice("Segundo factor activado. Guarda tus códigos de respaldo.");
+      refreshMfa();
+    }
+    if (action === "disable") {
+      setMfaBackupCodes(null);
+      setMfaCode("");
+      setMfaNotice("Segundo factor desactivado.");
+      refreshMfa();
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +107,7 @@ export default function AccountSecurity() {
           }
         }
         setTimezone((payload.data.timezone as string | null) ?? "");
+        refreshMfa();
       })
       .catch(() => undefined);
     return () => {
@@ -158,6 +210,57 @@ export default function AccountSecurity() {
               </select>
               {timezoneNotice && <small role="status">{timezoneNotice}</small>}
             </label>
+            <div className="mfa-section">
+              <b>Verificación en dos pasos (TOTP)</b>
+              {mfa?.enabled && !mfaBackupCodes && (
+                <>
+                  <p className="account-password-alert success">
+                    Activa · {mfa.backupCodesRemaining} código{mfa.backupCodesRemaining === 1 ? "" : "s"} de respaldo disponibles.
+                  </p>
+                  <div className="mfa-inline">
+                    <input
+                      value={mfaCode}
+                      onChange={(input) => setMfaCode(input.target.value)}
+                      placeholder="Código para confirmar"
+                      inputMode="numeric"
+                      aria-label="Código para desactivar el segundo factor"
+                    />
+                    <button disabled={mfaBusy || !mfaCode} onClick={() => void mfaAction("disable")}>Desactivar</button>
+                  </div>
+                </>
+              )}
+              {!mfa?.enabled && !mfaSetup && (
+                <div className="mfa-inline">
+                  <p>Protege tu cuenta con una app autenticadora.</p>
+                  <button disabled={mfaBusy} onClick={() => void mfaAction("start")}>Configurar</button>
+                </div>
+              )}
+              {mfaSetup && (
+                <div className="mfa-setup">
+                  <p>1. Agrega esta clave en tu app autenticadora (entrada manual):</p>
+                  <code>{mfaSetup.secret}</code>
+                  <p>2. Ingresa el código de 6 dígitos que genera la app:</p>
+                  <div className="mfa-inline">
+                    <input
+                      value={mfaCode}
+                      onChange={(input) => setMfaCode(input.target.value)}
+                      placeholder="000000"
+                      inputMode="numeric"
+                      maxLength={6}
+                      aria-label="Código de verificación de la app"
+                    />
+                    <button disabled={mfaBusy || mfaCode.length !== 6} onClick={() => void mfaAction("activate")}>Activar</button>
+                  </div>
+                </div>
+              )}
+              {mfaBackupCodes && (
+                <div className="mfa-backup-codes">
+                  <p>Guarda estos códigos de respaldo — cada uno sirve una sola vez y no volverán a mostrarse:</p>
+                  <code>{mfaBackupCodes.join("  ")}</code>
+                </div>
+              )}
+              {mfaNotice && <small role="status">{mfaNotice}</small>}
+            </div>
             {!success ? (
               <>
                 <p>La política exige renovar la contraseña cada seis meses. Debe tener al menos 12 caracteres e incluir mayúscula, minúscula, número y símbolo.</p>
