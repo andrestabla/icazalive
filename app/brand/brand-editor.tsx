@@ -43,8 +43,10 @@ function brandVariables(brand: PublicBrand) {
 
 export default function BrandEditor({
   initialBrand,
+  previewEventSlug,
 }: {
   initialBrand: PublicBrand;
+  previewEventSlug: string | null;
 }) {
   const [brand, setBrand] = useState(initialBrand);
   const [saving, setSaving] = useState(false);
@@ -97,13 +99,15 @@ export default function BrandEditor({
           <h1>Marca</h1>
           <p>Personaliza la experiencia que verán tus participantes.</p>
         </div>
-        <Link
-          href="/register/liderazgo-que-transforma"
-          target="_blank"
-          className="secondary-action link-button"
-        >
-          Abrir página pública ↗
-        </Link>
+        {previewEventSlug && (
+          <Link
+            href={`/register/${previewEventSlug}`}
+            target="_blank"
+            className="secondary-action link-button"
+          >
+            Abrir página pública ↗
+          </Link>
+        )}
       </header>
 
       {message && <div className="detail-message" role="status">{message}</div>}

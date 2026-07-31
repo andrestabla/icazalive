@@ -176,6 +176,13 @@
       "when": 1785523494381,
       "tag": "0024_magenta_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1785530741719,
+      "tag": "0025_quick_joseph",
+      "breakpoints": true
     }
   ]
 }

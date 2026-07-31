@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
 import {
   createParticipantUrls,
   renderParticipantCommunication,
@@ -28,6 +29,8 @@ type InvitationInput = {
 };
 
 export async function POST(request: Request) {
+  const permissionCheck = await requireApiPermission("participants.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const currentUser = await requireApiUser();
   if (!currentUser) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });

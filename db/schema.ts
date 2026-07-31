@@ -226,6 +226,44 @@ export const authSessions = pgTable(
   ],
 );
 
+export const rolePermissions = pgTable(
+  "role_permissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    role: userRole("role").notNull(),
+    permission: text("permission").notNull(),
+    allowed: boolean("allowed").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("role_permissions_role_permission_unique").on(
+      table.role,
+      table.permission,
+    ),
+  ],
+);
+
+export const userPermissions = pgTable(
+  "user_permissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    permission: text("permission").notNull(),
+    allowed: boolean("allowed").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("user_permissions_user_permission_unique").on(
+      table.userId,
+      table.permission,
+    ),
+    index("user_permissions_user_idx").on(table.userId),
+  ],
+);
+
 export const mfaBackupCodes = pgTable(
   "mfa_backup_codes",
   {

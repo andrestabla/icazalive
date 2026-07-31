@@ -1,18 +1,15 @@
-import { redirect } from "next/navigation";
 import AdminSidebar from "@/app/components/admin-sidebar";
-import { requirePageUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/page-guards";
 
-export default async function BrandLayout({
+export default async function ModuleLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requirePageUser();
-  if (user.role === "participant") redirect("/");
-
+  const { user, granted } = await requirePermission("brand.view");
   return (
     <main className="app-shell">
-      <AdminSidebar user={user} active="Marca" />
+      <AdminSidebar user={user} granted={Array.from(granted)} active="Marca" />
       <section className="workspace module-workspace">{children}</section>
     </main>
   );

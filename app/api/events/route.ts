@@ -12,6 +12,7 @@ import {
 import type { EventTemplatePayload } from "@/app/api/event-templates/route";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
 import {
   attachScheduleConflicts,
   findScheduleConflicts,
@@ -44,6 +45,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const permissionCheck = await requireApiPermission("events.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const currentUser = await requireApiUser();
   if (!currentUser) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });

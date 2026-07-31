@@ -1,15 +1,15 @@
 import AdminSidebar from "@/app/components/admin-sidebar";
-import { requirePageUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/page-guards";
 
-export default async function AuditLayout({
+export default async function ModuleLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requirePageUser();
+  const { user, granted } = await requirePermission("audit.view");
   return (
     <main className="app-shell">
-      <AdminSidebar user={user} active="Auditoría" />
+      <AdminSidebar user={user} granted={Array.from(granted)} active="Auditoría" />
       <section className="workspace module-workspace">{children}</section>
     </main>
   );

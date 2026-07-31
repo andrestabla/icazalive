@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { brandSettings } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
 import { getBrandSettings } from "@/lib/brand";
 import { DEFAULT_BRAND } from "@/lib/brand-config";
 
@@ -55,6 +56,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const permissionCheck = await requireApiPermission("brand.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const auth = await requireStaff();
   if ("error" in auth) return auth.error;
 

@@ -884,3 +884,42 @@ button { font: inherit; }
 .mfa-inline button:disabled { opacity: .5; }
 .mfa-setup code, .mfa-backup-codes code { display: block; padding: 9px 11px; background: #f7f6f9; border: 1px solid #e8e5ed; border-radius: 8px; font-size: 12px; letter-spacing: .06em; word-break: break-all; user-select: all; }
 .mfa-section small { color: #257e64; font-size: 12px; }
+
+/* Acceso restringido y 404 */
+.access-denied { max-width: 620px; margin: 40px auto; padding: 34px; background: #fff; border: 1px solid var(--line); border-radius: 14px; text-align: center; }
+.access-denied > span { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #fff1e2; color: #a66924; font-size: 24px; margin-bottom: 16px; }
+.access-denied h1 { font-size: 24px; margin: 6px 0 10px; letter-spacing: -.4px; }
+.access-denied > p:not(.eyebrow) { color: #7f7b8b; font-size: 14px; line-height: 1.6; margin: 0; }
+.access-denied-modules { margin-top: 26px; padding-top: 20px; border-top: 1px solid #efedf2; }
+.access-denied-modules small { display: block; color: #a09cab; font-size: 11px; font-weight: 720; letter-spacing: .1em; margin-bottom: 12px; }
+.access-denied-modules > div { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.access-denied-modules a { border: 1px solid #e3dcfb; border-radius: 9px; background: #f0ecff; color: #6040d3; padding: 9px 14px; font-size: 13px; font-weight: 650; text-decoration: none; }
+.notfound-shell { min-height: 100vh; display: grid; place-items: center; background: var(--canvas); padding: 24px; }
+.notfound-card { max-width: 480px; padding: 38px; background: #fff; border: 1px solid var(--line); border-radius: 16px; text-align: center; box-shadow: 0 18px 50px #2d233310; }
+.notfound-card .brand-mark { margin: 0 auto 18px; }
+.notfound-card h1 { font-size: 26px; margin: 6px 0 12px; letter-spacing: -.5px; }
+.notfound-card > p:not(.eyebrow) { color: #7f7b8b; font-size: 14px; line-height: 1.6; margin: 0 0 24px; }
+.notfound-actions { display: flex; gap: 10px; justify-content: center; align-items: center; }
+.notfound-secondary { color: #6040d3; font-size: 13px; font-weight: 650; text-decoration: none; }
+
+/* Administración de permisos */
+.permissions-panel { overflow: hidden; }
+.permissions-table { padding: 4px 0 10px; }
+.permissions-head, .permissions-row { display: grid; grid-template-columns: minmax(220px, 1fr) 170px 170px; gap: 16px; align-items: center; padding: 10px 20px; }
+.permissions-head { background: #f8f7fa; border-bottom: 1px solid #eceaf0; color: #9b97a3; font-size: 11px; font-weight: 720; letter-spacing: .06em; text-transform: uppercase; }
+.permissions-group { border-bottom: 1px solid #f2f0f5; padding-bottom: 6px; }
+.permissions-group:last-child { border-bottom: 0; }
+.permissions-module { margin: 0; padding: 14px 20px 6px; color: #6040d3; font-size: 12px; font-weight: 720; letter-spacing: .04em; text-transform: uppercase; }
+.permissions-row { font-size: 13px; color: #5d5967; }
+.permissions-row:hover { background: #faf9fc; }
+.permission-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: #77737f; }
+.permission-toggle input { width: 16px; height: 16px; accent-color: #6946df; }
+.permission-toggle input:disabled { cursor: not-allowed; }
+.permissions-row.user i { font-style: normal; font-size: 12px; font-weight: 650; border-radius: 8px; padding: 4px 9px; justify-self: start; }
+.permissions-row.user i.yes { background: #e9f7f1; color: #257e64; }
+.permissions-row.user i.no { background: #f2f1f5; color: #85818e; }
+.permissions-row.user select { border: 1px solid #dedbe7; border-radius: 8px; background: #fff; color: #5c5967; padding: 8px 10px; font-size: 12px; }
+@media (max-width: 860px) {
+  .permissions-head, .permissions-row { grid-template-columns: 1fr; gap: 8px; }
+  .permissions-head { display: none; }
+}

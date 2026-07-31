@@ -2,13 +2,56 @@ import Link from "next/link";
 import AccountSecurity from "@/app/components/account-security";
 import type { AuthenticatedUser } from "@/lib/auth";
 
+export type SidebarSection =
+  | "Resumen"
+  | "Eventos"
+  | "Participantes"
+  | "Analítica"
+  | "Integraciones"
+  | "Marca"
+  | "Equipo"
+  | "Permisos"
+  | "Auditoría"
+  | "Privacidad";
+
+// La navegación se arma con los permisos efectivos del usuario: solo se
+// muestran los módulos a los que realmente puede entrar.
+const workspaceModules: {
+  label: SidebarSection;
+  href: string;
+  icon: string;
+  permission: string;
+}[] = [
+  { label: "Resumen", href: "/", icon: "⌂", permission: "dashboard.view" },
+  { label: "Eventos", href: "/events", icon: "◫", permission: "events.view" },
+  { label: "Participantes", href: "/participants", icon: "♙", permission: "participants.view" },
+  { label: "Analítica", href: "/analytics", icon: "⌁", permission: "analytics.view" },
+];
+
+const settingsModules: {
+  label: SidebarSection;
+  href: string;
+  icon: string;
+  permission: string;
+}[] = [
+  { label: "Integraciones", href: "/integrations", icon: "⌘", permission: "integrations.view" },
+  { label: "Marca", href: "/brand", icon: "◇", permission: "brand.view" },
+  { label: "Equipo", href: "/team", icon: "♧", permission: "team.view" },
+  { label: "Permisos", href: "/permissions", icon: "⚿", permission: "permissions.manage" },
+  { label: "Auditoría", href: "/audit", icon: "≋", permission: "audit.view" },
+  { label: "Privacidad", href: "/privacy/manage", icon: "§", permission: "privacy.view" },
+];
+
 export default function AdminSidebar({
   user,
+  granted,
   active,
 }: {
   user: AuthenticatedUser;
-  active: "Resumen" | "Eventos" | "Participantes" | "Analítica" | "Integraciones" | "Marca" | "Equipo" | "Auditoría" | "Privacidad";
+  granted: string[];
+  active: SidebarSection;
 }) {
+  const allowed = new Set(granted);
   const initials = user.name
     .split(/\s+/)
     .slice(0, 2)
@@ -21,6 +64,13 @@ export default function AdminSidebar({
     participant: "Participante",
   };
 
+  const visibleWorkspace = workspaceModules.filter((item) =>
+    allowed.has(item.permission),
+  );
+  const visibleSettings = settingsModules.filter((item) =>
+    allowed.has(item.permission),
+  );
+
   return (
     <aside className="sidebar">
       <Link href="/" className="brand brand-link">
@@ -28,17 +78,38 @@ export default function AdminSidebar({
         <span>Icaza Live</span>
       </Link>
       <nav aria-label="Navegación principal">
-        <p className="nav-label">ESPACIO DE TRABAJO</p>
-        <Link href="/" className={`nav-item ${active === "Resumen" ? "active" : ""}`}><span>⌂</span>Resumen</Link>
-        <Link href="/events" className={`nav-item ${active === "Eventos" ? "active" : ""}`}><span>◫</span>Eventos</Link>
-        <Link href="/participants" className={`nav-item ${active === "Participantes" ? "active" : ""}`}><span>♙</span>Participantes</Link>
-        <Link href="/analytics" className={`nav-item ${active === "Analítica" ? "active" : ""}`}><span>⌁</span>Analítica</Link>
-        <p className="nav-label second">CONFIGURACIÓN</p>
-        <Link href="/integrations" className={`nav-item ${active === "Integraciones" ? "active" : ""}`}><span>⌘</span>Integraciones</Link>
-        <Link href="/brand" className={`nav-item ${active === "Marca" ? "active" : ""}`}><span>◇</span>Marca</Link>
-        {user.role === "administrator" && <Link href="/team" className={`nav-item ${active === "Equipo" ? "active" : ""}`}><span>♧</span>Equipo</Link>}
-        {user.role === "administrator" && <Link href="/audit" className={`nav-item ${active === "Auditoría" ? "active" : ""}`}><span>≋</span>Auditoría</Link>}
-        {user.role === "administrator" && <Link href="/privacy/manage" className={`nav-item ${active === "Privacidad" ? "active" : ""}`}><span>§</span>Privacidad</Link>}
+        {visibleWorkspace.length > 0 && (
+          <>
+            <p className="nav-label">ESPACIO DE TRABAJO</p>
+            {visibleWorkspace.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-item ${active === item.label ? "active" : ""}`}
+                aria-current={active === item.label ? "page" : undefined}
+              >
+                <span>{item.icon}</span>
+                {item.label}
+              </Link>
+            ))}
+          </>
+        )}
+        {visibleSettings.length > 0 && (
+          <>
+            <p className="nav-label second">CONFIGURACIÓN</p>
+            {visibleSettings.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-item ${active === item.label ? "active" : ""}`}
+                aria-current={active === item.label ? "page" : undefined}
+              >
+                <span>{item.icon}</span>
+                {item.label}
+              </Link>
+            ))}
+          </>
+        )}
       </nav>
       <div className="sidebar-bottom">
         <Link href="/help" className="help-card help-card-link">

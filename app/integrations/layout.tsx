@@ -1,15 +1,15 @@
 import AdminSidebar from "@/app/components/admin-sidebar";
-import { requirePageUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/page-guards";
 
-export default async function IntegrationsLayout({
+export default async function ModuleLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requirePageUser();
+  const { user, granted } = await requirePermission("integrations.view");
   return (
     <main className="app-shell">
-      <AdminSidebar user={user} active="Integraciones" />
+      <AdminSidebar user={user} granted={Array.from(granted)} active="Integraciones" />
       <section className="workspace module-workspace">{children}</section>
     </main>
   );

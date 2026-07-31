@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { integrationConnections } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
 import {
   evaluateIntegration,
   type ManagedIntegrationProvider,
@@ -67,6 +68,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const permissionCheck = await requireApiPermission("integrations.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const auth = await requireStaff();
   if ("error" in auth) return auth.error;
 

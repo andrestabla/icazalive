@@ -1,17 +1,15 @@
 import AdminSidebar from "@/app/components/admin-sidebar";
-import { requirePageUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { requirePermission } from "@/lib/page-guards";
 
-export default async function ParticipantsLayout({
+export default async function ModuleLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requirePageUser();
-  if (user.role === "participant") redirect("/");
+  const { user, granted } = await requirePermission("participants.view");
   return (
     <main className="app-shell">
-      <AdminSidebar user={user} active="Participantes" />
+      <AdminSidebar user={user} granted={Array.from(granted)} active="Participantes" />
       <section className="workspace module-workspace">{children}</section>
     </main>
   );

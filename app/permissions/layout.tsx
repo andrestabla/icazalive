@@ -1,15 +1,15 @@
 import AdminSidebar from "@/app/components/admin-sidebar";
 import { requirePermission } from "@/lib/page-guards";
 
-export default async function ModuleLayout({
+export default async function PermissionsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, granted } = await requirePermission("team.view");
+  const { user, granted } = await requirePermission("permissions.manage");
   return (
     <main className="app-shell">
-      <AdminSidebar user={user} granted={Array.from(granted)} active="Equipo" />
+      <AdminSidebar user={user} granted={Array.from(granted)} active="Permisos" />
       <section className="workspace module-workspace">{children}</section>
     </main>
   );

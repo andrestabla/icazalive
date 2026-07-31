@@ -120,9 +120,11 @@ function relativeTime(value: string, reference: string) {
 export default function Dashboard({
   user,
   initialData,
+  granted,
 }: {
   user: AuthenticatedUser;
   initialData: DashboardSummary;
+  granted: string[];
 }) {
   const [data, setData] = useState(initialData);
   const [showCreate, setShowCreate] = useState(false);
@@ -243,7 +245,7 @@ export default function Dashboard({
 
   return (
     <main className="app-shell">
-      <AdminSidebar user={user} active="Resumen" />
+      <AdminSidebar user={user} granted={granted} active="Resumen" />
 
       <section className="workspace">
         <header className="topbar">

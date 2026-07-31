@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { getAuditEntries, type AuditOutcome } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
 
 export const runtime = "nodejs";
 
 const outcomes: AuditOutcome[] = ["success", "denied", "failure"];
 
 export async function GET(request: Request) {
+  const permissionCheck = await requireApiPermission("audit.view");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const user = await requireApiUser();
   if (!user) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });

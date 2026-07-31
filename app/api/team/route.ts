@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { authSessions, events, users } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
-import { requireApiUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
 import { hashPassword } from "@/lib/password";
 import { isValidPassword, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
 
@@ -13,18 +13,10 @@ const staffRoles = ["administrator", "organizer"] as const;
 type StaffRole = (typeof staffRoles)[number];
 
 async function requireAdministrator() {
-  const user = await requireApiUser();
-  if (!user) {
-    return {
-      error: NextResponse.json({ error: "No autenticado." }, { status: 401 }),
-    };
-  }
-  if (user.role !== "administrator") {
-    return {
-      error: NextResponse.json({ error: "No autorizado." }, { status: 403 }),
-    };
-  }
-  return { user };
+  // El acceso al equipo se rige por permisos administrables, no por el rol fijo.
+  const check = await requireApiPermission("team.manage");
+  if ("error" in check) return check;
+  return { user: check.user };
 }
 
 function safeMember(record: typeof users.$inferSelect) {

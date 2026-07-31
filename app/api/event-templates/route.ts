@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser, type AuthenticatedUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
 
 export const runtime = "nodejs";
 
@@ -93,6 +94,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const permissionCheck = await requireApiPermission("events.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const auth = await requireStaff();
   if ("error" in auth) return auth.error;
 
@@ -190,6 +193,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const permissionCheck = await requireApiPermission("events.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const auth = await requireStaff();
   if ("error" in auth) return auth.error;
 
