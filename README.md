@@ -42,7 +42,7 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0022` son la fuente de verdad del
+Las migraciones `drizzle/0000` a `drizzle/0023` son la fuente de verdad del
 esquema. Las más recientes incorporan: votos de preguntas (`question_votes`),
 vigencia de contraseñas (`users.password_changed_at`), plazo de autogestión por
 evento (`0016`); organizadores por evento (`event_organizers`) y URL de
@@ -50,7 +50,7 @@ redirección post-registro (`0017`); respuestas de feedback
 (`event_feedback_responses`), configuración de encuesta por evento y zona
 horaria por usuario (`0018`); colores de marca por evento (`0019`); video
 pregrabado y redirección final para eventos simulados (`0020`); plantillas
-reutilizables de eventos (`0021`); segundo factor TOTP y códigos de respaldo (`0022`).
+reutilizables de eventos (`0021`); segundo factor TOTP y códigos de respaldo (`0022`); reintentos del worker de correo (`0023`).
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;
@@ -108,9 +108,13 @@ detén el servidor, ejecuta el script y vuelve a iniciarlo.
 - Equipo, marca, integraciones, auditoría, privacidad/derechos de datos y Centro
   de ayuda multilingüe.
 
-La cola local de comunicaciones persiste mensajes y estados, pero todavía no
-envía correos reales. El siguiente paso de esa capa es conectar un proveedor,
-crear el worker/planificador y añadir reintentos, rebotes y seguimiento.
+El worker/planificador de comunicaciones ya procesa la cola: confirmaciones al
+instante y recordatorios al vencer su hora, con reintentos (backoff, máx. 3) y
+estados por entrega. En local entrega al buzón de vista previa; para envío real
+basta definir `RESEND_API_KEY` y `EMAIL_FROM`. Se ejecuta al consultar la
+pestaña Comunicaciones o con el botón "Procesar cola ahora"; en producción se
+recomienda además un cron que llame al endpoint de proceso. Quedan pendientes
+rebotes y seguimiento de entregabilidad.
 
 ## Desarrollo local
 

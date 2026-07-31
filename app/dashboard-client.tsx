@@ -1,5 +1,13 @@
 "use client";
 
+type EventTemplateSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  format: string;
+  durationMinutes: number;
+};
+
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useState } from "react";

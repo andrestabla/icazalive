@@ -490,6 +490,8 @@ export const communicationDeliveries = pgTable(
     body: text("body").notNull().default(""),
     scheduledFor: timestamp("scheduled_for", { withTimezone: true }).notNull(),
     sentAt: timestamp("sent_at", { withTimezone: true }),
+    attempts: integer("attempts").notNull().default(0),
+    providerId: text("provider_id"),
     error: text("error"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

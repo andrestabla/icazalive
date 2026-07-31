@@ -288,6 +288,7 @@ export default function EventDetail({
   const [newResourceKind, setNewResourceKind] =
     useState<InteractionResource["kind"]>("link");
   const [communicationItems, setCommunicationItems] = useState(communications);
+  const [liveDeliveryStats, setLiveDeliveryStats] = useState(deliveryStats);
   const [selectedCommunicationId, setSelectedCommunicationId] = useState(
     communications[0]?.id ?? "",
   );
@@ -829,7 +830,16 @@ export default function EventDetail({
     (item) => item.id === selectedCommunicationId,
   );
   const deliveryTotal = (status: DeliveryStat["status"]) =>
-    deliveryStats.find((item) => item.status === status)?.total ?? 0;
+    liveDeliveryStats.find((item) => item.status === status)?.total ?? 0;
+
+  const refreshCommunications = async () => {
+    const response = await fetch(`/api/events/${event.slug}/communications`);
+    if (!response.ok) return;
+    const payload = (await response.json()) as {
+      data?: { stats: DeliveryStat[] };
+    };
+    if (payload.data) setLiveDeliveryStats(payload.data.stats);
+  };
   const previewText = (value: string) =>
     value
       .replaceAll("{{participant_name}}", "María")
@@ -1107,8 +1117,28 @@ export default function EventDetail({
           <div className="communication-stats">
             <div><small>EN COLA</small><strong>{deliveryTotal("queued")}</strong><span>Listos para enviar</span></div>
             <div><small>PROGRAMADOS</small><strong>{deliveryTotal("scheduled")}</strong><span>Según la fecha del evento</span></div>
-            <div><small>ENVIADOS</small><strong>{deliveryTotal("sent")}</strong><span>Proveedor aún no conectado</span></div>
-            <div><small>CON ERROR</small><strong>{deliveryTotal("failed")}</strong><span>Requieren atención</span></div>
+            <div><small>ENVIADOS</small><strong>{deliveryTotal("sent")}</strong><span>Al buzón local o al proveedor</span></div>
+            <div><small>CON ERROR</small><strong>{deliveryTotal("failed")}</strong><span>Reintentos agotados</span></div>
+            <button
+              className="worker-run-button"
+              disabled={saving}
+              onClick={() => {
+                void fetch(`/api/events/${event.slug}/communications/process`, { method: "POST" })
+                  .then((response) => response.json())
+                  .then((payload: { data?: { sent: number; retried: number; failed: number; provider: string }; error?: string }) => {
+                    if (payload.data) {
+                      setMessage(
+                        `Worker ejecutado (proveedor ${payload.data.provider === "local" ? "buzón local" : payload.data.provider}): ${payload.data.sent} enviadas, ${payload.data.retried} reintentos, ${payload.data.failed} fallidas.`,
+                      );
+                      void refreshCommunications();
+                    } else {
+                      setMessage(payload.error ?? "No fue posible procesar la cola.");
+                    }
+                  });
+              }}
+            >
+              Procesar cola ahora ⟳
+            </button>
           </div>
           <div className="communications-grid">
             <section className="panel communication-list-panel">

@@ -8,6 +8,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { processDueDeliveries } from "@/lib/communication-worker";
 
 export const runtime = "nodejs";
 
@@ -43,6 +44,10 @@ export async function GET(_: Request, context: RouteContext) {
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
+
+  // Planificador perezoso: al consultar la pestaña se procesan las entregas
+  // vencidas, de modo que confirmaciones y recordatorios avanzan sin cron.
+  await processDueDeliveries(event.id);
 
   const [messages, stats] = await Promise.all([
     db

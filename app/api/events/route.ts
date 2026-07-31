@@ -175,7 +175,7 @@ export async function POST(request: Request) {
           helpText: field.helpText,
           options: field.options,
           position: field.position,
-        })),
+        })) as (typeof eventRegistrationFields.$inferInsert)[],
       );
     }
     if (template?.communications.length) {
