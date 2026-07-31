@@ -169,6 +169,13 @@
       "when": 1785522460284,
       "tag": "0023_dapper_fallen_one",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785523494381,
+      "tag": "0024_magenta_boomer",
+      "breakpoints": true
     }
   ]
 }

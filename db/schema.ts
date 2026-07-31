@@ -815,6 +815,8 @@ export const auditLogs = pgTable(
     details: jsonb("details").$type<Record<string, string | number | boolean | null>>(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
+    previousHash: text("previous_hash"),
+    entryHash: text("entry_hash"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

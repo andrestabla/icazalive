@@ -139,6 +139,7 @@ export default function AuditLogClient({
   initialData: AuditData;
 }) {
   const userTimezone = useUserTimezone();
+  const [integrity, setIntegrity] = useState("");
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState("");
   const [outcome, setOutcome] = useState("");
@@ -249,7 +250,26 @@ export default function AuditLogClient({
         >
           ↓ Exportar CSV
         </button>
+          <button
+            className="secondary-action"
+            onClick={() => {
+              setIntegrity("Verificando…");
+              void fetch("/api/audit/verify")
+                .then((response) => response.json())
+                .then((payload: { data?: { ok: boolean; checked: number; legacy: number; brokenAt: string | null } }) => {
+                  if (!payload.data) { setIntegrity("No fue posible verificar."); return; }
+                  setIntegrity(
+                    payload.data.ok
+                      ? `Cadena íntegra: ${payload.data.checked} entradas verificadas${payload.data.legacy ? ` (${payload.data.legacy} previas a la cadena)` : ""}.`
+                      : `⚠ Alteración detectada en la entrada ${payload.data.brokenAt}.`,
+                  );
+                });
+            }}
+          >
+            ✓ Verificar integridad
+          </button>
       </header>
+      {integrity && <div className="detail-message" role="status">{integrity}</div>}
 
       <section className="audit-stats">
         <article>

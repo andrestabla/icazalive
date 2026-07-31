@@ -42,7 +42,7 @@ Los datos de eventos, registros, comunicaciones, interacción, auditoría,
 privacidad y configuración pública se almacenan en PostgreSQL/PGlite. Los
 secretos de proveedores permanecen exclusivamente en variables de entorno.
 
-Las migraciones `drizzle/0000` a `drizzle/0023` son la fuente de verdad del
+Las migraciones `drizzle/0000` a `drizzle/0024` son la fuente de verdad del
 esquema. Las más recientes incorporan: votos de preguntas (`question_votes`),
 vigencia de contraseñas (`users.password_changed_at`), plazo de autogestión por
 evento (`0016`); organizadores por evento (`event_organizers`) y URL de
@@ -50,7 +50,7 @@ redirección post-registro (`0017`); respuestas de feedback
 (`event_feedback_responses`), configuración de encuesta por evento y zona
 horaria por usuario (`0018`); colores de marca por evento (`0019`); video
 pregrabado y redirección final para eventos simulados (`0020`); plantillas
-reutilizables de eventos (`0021`); segundo factor TOTP y códigos de respaldo (`0022`); reintentos del worker de correo (`0023`).
+reutilizables de eventos (`0021`); segundo factor TOTP y códigos de respaldo (`0022`); reintentos del worker de correo (`0023`); cadena de integridad de auditoría (`0024`).
 
 Importante: PGlite es una base embebida en el proceso. No ejecutes migraciones,
 seeds o scripts que escriban en la base mientras `npm run dev` está activo;
@@ -233,6 +233,20 @@ versiones de los documentos, consultar evidencia de consentimiento y gestionar
 solicitudes. Las inscripciones guardan las versiones aceptadas, fecha, contexto
 técnico y una huella SHA-256 del correo. Las exportaciones verificadas se
 generan en JSON y la eliminación requiere confirmación explícita del correo.
+
+## Respaldos e integridad
+
+Con el servidor detenido:
+
+```bash
+npm run db:backup
+npm run db:restore -- ~/.icaza-live/backups/backup-<fecha>
+```
+
+El respaldo copia la base PGlite y los videos a `~/.icaza-live/backups`. La
+bitácora de auditoría usa una cadena de hashes SHA-256 (cada entrada firma la
+anterior); el botón "Verificar integridad" de la pantalla de Auditoría detecta
+cualquier registro alterado o eliminado de la cadena.
 
 ## Verificación
 

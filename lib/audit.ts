@@ -1,4 +1,5 @@
-import { and, count, desc, eq, ilike, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNotNull, or, type SQL } from "drizzle-orm";
+import { createHash } from "node:crypto";
 import { getDb } from "@/db";
 import { auditLogs, users } from "@/db/schema";
 import type { AuthenticatedUser } from "@/lib/auth";
@@ -36,7 +37,32 @@ export async function writeAuditLog({
       null;
     const userAgent = request?.headers.get("user-agent")?.slice(0, 500) ?? null;
 
-    await getDb().insert(auditLogs).values({
+    const db = getDb();
+    // Cadena de integridad: cada entrada firma la anterior (SHA-256).
+    const [last] = await db
+      .select({ entryHash: auditLogs.entryHash })
+      .from(auditLogs)
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(1);
+    const previousHash = last?.entryHash ?? "genesis";
+    const createdAt = new Date();
+    const entryHash = createHash("sha256")
+      .update(
+        JSON.stringify({
+          previousHash,
+          actorEmail: actor?.email ?? actorEmail ?? null,
+          action,
+          resourceType,
+          resourceId: resourceId ?? null,
+          outcome,
+          summary,
+          details: details ?? null,
+          createdAt: createdAt.toISOString(),
+        }),
+      )
+      .digest("hex");
+
+    await db.insert(auditLogs).values({
       actorUserId: actor?.id ?? null,
       actorEmail: actor?.email ?? actorEmail ?? null,
       action,
@@ -47,6 +73,9 @@ export async function writeAuditLog({
       details,
       ipAddress,
       userAgent,
+      previousHash,
+      entryHash,
+      createdAt,
     });
   } catch (error) {
     console.error("No fue posible registrar la acción en auditoría.", error);
@@ -147,4 +176,63 @@ export async function getAuditEntries(filters: AuditFilters = {}) {
     },
     pagination: { limit, offset },
   };
+}
+
+
+// Recorre la cadena de hashes y detecta cualquier alteración o faltante.
+export async function verifyAuditChain(): Promise<{
+  ok: boolean;
+  checked: number;
+  legacy: number;
+  brokenAt: string | null;
+}> {
+  const rows = await getDb()
+    .select({
+      id: auditLogs.id,
+      actorEmail: auditLogs.actorEmail,
+      action: auditLogs.action,
+      resourceType: auditLogs.resourceType,
+      resourceId: auditLogs.resourceId,
+      outcome: auditLogs.outcome,
+      summary: auditLogs.summary,
+      details: auditLogs.details,
+      createdAt: auditLogs.createdAt,
+      previousHash: auditLogs.previousHash,
+      entryHash: auditLogs.entryHash,
+    })
+    .from(auditLogs)
+    .where(isNotNull(auditLogs.entryHash))
+    .orderBy(auditLogs.createdAt);
+
+  const [{ total: legacy } = { total: 0 }] = await getDb()
+    .select({ total: count() })
+    .from(auditLogs);
+
+  let expectedPrevious: string | null = null;
+  let checked = 0;
+  for (const row of rows) {
+    const recomputed = createHash("sha256")
+      .update(
+        JSON.stringify({
+          previousHash: row.previousHash,
+          actorEmail: row.actorEmail,
+          action: row.action,
+          resourceType: row.resourceType,
+          resourceId: row.resourceId,
+          outcome: row.outcome,
+          summary: row.summary,
+          details: row.details ?? null,
+          createdAt: row.createdAt.toISOString(),
+        }),
+      )
+      .digest("hex");
+    const linkOk =
+      expectedPrevious === null || row.previousHash === expectedPrevious;
+    if (recomputed !== row.entryHash || !linkOk) {
+      return { ok: false, checked, legacy: legacy - rows.length, brokenAt: row.id };
+    }
+    expectedPrevious = row.entryHash;
+    checked += 1;
+  }
+  return { ok: true, checked, legacy: legacy - rows.length, brokenAt: null };
 }
