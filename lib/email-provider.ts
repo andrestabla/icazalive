@@ -1,24 +1,52 @@
-// Interfaz de proveedor de correo. En local entrega al "buzón de vista
-// previa" (la entrega queda registrada con su cuerpo renderizado). Al
-// desplegar, define RESEND_API_KEY y EMAIL_FROM para envío real vía API
-// sin cambiar el worker.
+import { readSesConfig, sendWithSes } from "@/lib/aws-ses";
+
+// Interfaz de proveedor de correo saliente. El orden de preferencia es:
+// 1. Amazon SES si están definidas sus variables de entorno.
+// 2. Resend si se definió RESEND_API_KEY.
+// 3. Buzón local de vista previa (desarrollo): la entrega se registra con su
+//    cuerpo renderizado, sin salir del equipo.
+// Las credenciales viven solo en variables de entorno; nunca en la base.
+
+export type EmailProviderName = "ses" | "resend" | "local";
 
 export type EmailResult =
   | { ok: true; providerId: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; retryable?: boolean };
 
 export type OutgoingEmail = {
   to: string;
   subject: string;
   body: string;
+  replyTo?: string;
 };
 
-export function activeProviderName(): "resend" | "local" {
-  return process.env.RESEND_API_KEY ? "resend" : "local";
+export function activeProviderName(): EmailProviderName {
+  if (readSesConfig()) return "ses";
+  if (process.env.RESEND_API_KEY) return "resend";
+  return "local";
 }
 
+export const providerLabels: Record<EmailProviderName, string> = {
+  ses: "Amazon SES",
+  resend: "Resend",
+  local: "Buzón local de vista previa",
+};
+
 export async function sendEmail(email: OutgoingEmail): Promise<EmailResult> {
-  if (activeProviderName() === "resend") {
+  const provider = activeProviderName();
+
+  if (provider === "ses") {
+    const config = readSesConfig()!;
+    const result = await sendWithSes(config, {
+      ...email,
+      replyTo: email.replyTo ?? process.env.EMAIL_REPLY_TO,
+    });
+    return result.ok
+      ? { ok: true, providerId: result.messageId }
+      : { ok: false, error: result.error, retryable: result.retryable };
+  }
+
+  if (provider === "resend") {
     try {
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -35,7 +63,11 @@ export async function sendEmail(email: OutgoingEmail): Promise<EmailResult> {
       });
       if (!response.ok) {
         const detail = await response.text();
-        return { ok: false, error: `Resend ${response.status}: ${detail.slice(0, 200)}` };
+        return {
+          ok: false,
+          error: `Resend ${response.status}: ${detail.slice(0, 200)}`,
+          retryable: response.status === 429 || response.status >= 500,
+        };
       }
       const payload = (await response.json()) as { id?: string };
       return { ok: true, providerId: payload.id ?? "resend" };
@@ -43,9 +75,11 @@ export async function sendEmail(email: OutgoingEmail): Promise<EmailResult> {
       return {
         ok: false,
         error: error instanceof Error ? error.message : "Fallo de red del proveedor.",
+        retryable: true,
       };
     }
   }
+
   // Proveedor local: la entrega se considera realizada al buzón de vista previa.
-  return { ok: true, providerId: `local-preview` };
+  return { ok: true, providerId: "local-preview" };
 }

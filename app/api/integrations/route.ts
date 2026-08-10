@@ -5,6 +5,8 @@ import { integrationConnections } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
+import { readSesConfig, verifySesAccess } from "@/lib/aws-ses";
+import { activeProviderName, providerLabels } from "@/lib/email-provider";
 import {
   evaluateIntegration,
   type ManagedIntegrationProvider,
@@ -16,6 +18,7 @@ const providers: ManagedIntegrationProvider[] = [
   "zoom",
   "amazon_ivs",
   "amazon_s3",
+  "email",
 ];
 
 async function requireStaff() {
@@ -138,6 +141,32 @@ export async function PATCH(request: Request) {
       { status: 400 },
     );
   }
+  if (body.provider === "email") {
+    if (
+      accountLabel &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountLabel)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "El remitente debe ser una dirección de correo válida y verificada en SES.",
+        },
+        { status: 400 },
+      );
+    }
+    if (
+      externalAccountId &&
+      !/^[A-Za-z0-9_-]{1,64}$/.test(externalAccountId)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "El conjunto de configuración de SES solo admite letras, números, guiones y guiones bajos.",
+        },
+        { status: 400 },
+      );
+    }
+  }
 
   const safeRecord = {
     provider: body.provider,
@@ -147,12 +176,45 @@ export async function PATCH(request: Request) {
   };
   const evaluation = evaluateIntegration(safeRecord);
   const now = new Date();
+
+  // Para el correo, "revisar" hace una consulta real a SES con las
+  // credenciales del servidor: confirma acceso y si la cuenta está en sandbox.
+  let providerCheck: {
+    ok: boolean;
+    detail: string;
+    sandbox?: boolean;
+    quota?: number;
+    credentialsMissing?: boolean;
+  } | null = null;
+  if (body.provider === "email" && body.action === "check") {
+    const sesConfig = readSesConfig();
+    if (!sesConfig) {
+      // Aún no hay credenciales: es una configuración incompleta, no un fallo.
+      providerCheck = {
+        ok: false,
+        credentialsMissing: true,
+        detail:
+          "Faltan variables de entorno de SES. Define AWS_SES_ACCESS_KEY_ID, AWS_SES_SECRET_ACCESS_KEY, AWS_SES_REGION y EMAIL_FROM para verificar la conexión.",
+      };
+    } else {
+      providerCheck = await verifySesAccess({
+        ...sesConfig,
+        region: region ?? sesConfig.region,
+      });
+    }
+  }
+
+  // "error" se reserva para credenciales presentes que SES rechaza.
   const status =
-    existing?.status === "connected"
-      ? ("connected" as const)
-      : evaluation.ready
-        ? ("configured" as const)
-        : ("pending" as const);
+    body.provider === "email" && providerCheck && !providerCheck.credentialsMissing
+      ? providerCheck.ok
+        ? ("connected" as const)
+        : ("error" as const)
+      : existing?.status === "connected" && body.provider !== "email"
+        ? ("connected" as const)
+        : evaluation.ready
+          ? ("configured" as const)
+          : ("pending" as const);
 
   const [connection] = await db
     .insert(integrationConnections)
@@ -199,6 +261,11 @@ export async function PATCH(request: Request) {
     data: {
       connection,
       evaluation,
+      providerCheck,
+      activeEmailProvider:
+        body.provider === "email"
+          ? providerLabels[activeProviderName()]
+          : undefined,
     },
   });
 }

@@ -82,7 +82,7 @@ type IdentityItem = {
   evaluation: IdentityEvaluation;
 };
 
-type WizardKind = "zoom" | "aws" | "identity";
+type WizardKind = "zoom" | "aws" | "identity" | "email";
 
 const providerContent: Record<
   ManagedIntegrationProvider,
@@ -120,6 +120,15 @@ const providerContent: Record<
     resourceLabel: "Nombre del bucket",
     resourcePlaceholder: "icaza-live-recordings",
   },
+  email: {
+    name: "Amazon SES",
+    eyebrow: "CORREO SALIENTE",
+    description:
+      "Confirmaciones, recordatorios e invitaciones enviadas a los asistentes.",
+    logo: "aws",
+    resourceLabel: "Conjunto de configuración (opcional)",
+    resourcePlaceholder: "icaza-live-eventos",
+  },
 };
 
 const statusLabels: Record<ConnectionStatus, string> = {
@@ -154,6 +163,13 @@ const wizardContent: Record<
     description:
       "Deja lista la federación corporativa y la política de segundo factor sin almacenar secretos.",
     steps: ["Proveedor", "Protocolo", "MFA", "Revisión"],
+  },
+  email: {
+    eyebrow: "ASISTENTE DE CORREO",
+    title: "Configurar correo saliente con Amazon SES",
+    description:
+      "Define el remitente verificado y la región; las credenciales permanecen en variables del servidor.",
+    steps: ["Cómo funciona", "Remitente", "Credenciales", "Verificación"],
   },
 };
 
@@ -234,6 +250,17 @@ export default function IntegrationsClient({
     initialConnections.find((item) => item.connection.provider === "amazon_s3")!
       .connection,
   );
+  const [emailDraft, setEmailDraft] = useState(
+    initialConnections.find((item) => item.connection.provider === "email")!
+      .connection,
+  );
+  const [emailCheck, setEmailCheck] = useState<{
+    ok: boolean;
+    detail: string;
+    sandbox?: boolean;
+    quota?: number;
+    credentialsMissing?: boolean;
+  } | null>(null);
   const [identityDraft, setIdentityDraft] = useState(initialIdentity.settings);
 
   const itemFor = (provider: ManagedIntegrationProvider) =>
@@ -241,6 +268,7 @@ export default function IntegrationsClient({
   const zoomItem = itemFor("zoom");
   const ivsItem = itemFor("amazon_ivs");
   const s3Item = itemFor("amazon_s3");
+  const emailItem = itemFor("email");
   const readyConnections =
     items.filter((item) => item.evaluation.ready).length +
     (identity.evaluation.ready ? 1 : 0);
@@ -288,7 +316,15 @@ export default function IntegrationsClient({
       }),
     });
     const payload = (await response.json()) as {
-      data?: IntegrationItem;
+      data?: IntegrationItem & {
+        providerCheck?: {
+          ok: boolean;
+          detail: string;
+          sandbox?: boolean;
+          quota?: number;
+          credentialsMissing?: boolean;
+        } | null;
+      };
       error?: string;
     };
     setSavingProvider(null);
@@ -308,6 +344,7 @@ export default function IntegrationsClient({
       },
       evaluation: payload.data.evaluation,
     };
+    const providerCheck = payload.data.providerCheck ?? null;
     setItems((currentItems) =>
       currentItems.map((currentItem) =>
         currentItem.connection.provider === connection.provider
@@ -315,7 +352,7 @@ export default function IntegrationsClient({
           : currentItem,
       ),
     );
-    return normalized;
+    return { ...normalized, providerCheck };
   };
 
   const saveConnection = async (
@@ -412,6 +449,18 @@ export default function IntegrationsClient({
             ? "El entorno de AWS quedó preparado."
             : "AWS quedó preconfigurado; faltan credenciales o recursos del servidor.",
         );
+      } else if (wizard === "email") {
+        const saved = await persistConnection(emailDraft, "check");
+        setEmailCheck(saved.providerCheck ?? null);
+        setMessage(
+          saved.providerCheck?.ok
+            ? `Correo saliente conectado con Amazon SES. ${saved.providerCheck.detail}`
+            : saved.providerCheck?.credentialsMissing
+              ? `Configuración guardada. ${saved.providerCheck.detail}`
+              : saved.providerCheck
+                ? `SES rechazó la conexión: ${saved.providerCheck.detail}`
+                : "El correo quedó preconfigurado; faltan las credenciales de SES en el servidor.",
+        );
       } else {
         await saveIdentity();
         setMessage(
@@ -492,7 +541,7 @@ export default function IntegrationsClient({
               secretos al entorno de despliegue.
             </p>
           </div>
-          <span>3 asistentes disponibles</span>
+          <span>4 asistentes disponibles</span>
         </div>
         <div className="setup-wizard-grid">
           <article className="panel setup-wizard-card zoom-wizard-card">
@@ -600,6 +649,40 @@ export default function IntegrationsClient({
                 disabled={!canManageIdentity}
                 onClick={() => openWizard("identity")}
               >
+                Abrir asistente →
+              </button>
+            </footer>
+          </article>
+
+          <article className="panel setup-wizard-card email-wizard-card">
+            <header>
+              <span className="service-logo aws">ses</span>
+              <i className={emailItem.connection.status}>
+                {statusLabels[emailItem.connection.status]}
+              </i>
+            </header>
+            <p className="eyebrow">CORREO SALIENTE</p>
+            <h3>Amazon SES</h3>
+            <p>
+              Remitente verificado y región para enviar confirmaciones,
+              recordatorios e invitaciones.
+            </p>
+            <div className="wizard-card-progress">
+              <span
+                style={{
+                  width: `${completionPercent(
+                    emailItem.evaluation.completed,
+                    emailItem.evaluation.total,
+                  )}%`,
+                }}
+              />
+            </div>
+            <footer>
+              <small>
+                {emailItem.evaluation.completed}/{emailItem.evaluation.total}{" "}
+                requisitos
+              </small>
+              <button onClick={() => openWizard("email")}>
                 Abrir asistente →
               </button>
             </footer>
@@ -1270,6 +1353,170 @@ export default function IntegrationsClient({
                     el servidor.
                   </p>
                   {requirementList(identity.evaluation.requirements)}
+                </div>
+              )}
+
+              {wizard === "email" && wizardStep === 0 && (
+                <div className="wizard-intro">
+                  <p>
+                    Icaza Live envía confirmaciones de registro, recordatorios
+                    e invitaciones. Amazon SES entrega esos correos con la
+                    reputación y las métricas de AWS.
+                  </p>
+                  <div className="wizard-flow">
+                    <div>
+                      <b>1 · Cola local</b>
+                      <small>
+                        Cada registro genera su mensaje con el cuerpo ya
+                        renderizado y su hora de envío.
+                      </small>
+                    </div>
+                    <div>
+                      <b>2 · Worker</b>
+                      <small>
+                        Procesa lo vencido y reintenta con espera creciente si
+                        el envío falla.
+                      </small>
+                    </div>
+                    <div>
+                      <b>3 · Amazon SES</b>
+                      <small>
+                        Entrega el correo desde tu dominio verificado y reporta
+                        el identificador del mensaje.
+                      </small>
+                    </div>
+                  </div>
+                  <p className="wizard-note">
+                    Mientras SES no esté configurado, los correos se guardan en
+                    el buzón local de vista previa: puedes revisar el contenido
+                    exacto sin enviar nada al exterior.
+                  </p>
+                </div>
+              )}
+
+              {wizard === "email" && wizardStep === 1 && (
+                <div className="wizard-form-grid email-form">
+                  <label>
+                    Remitente verificado en SES
+                    <input
+                      type="email"
+                      value={emailDraft.accountLabel ?? ""}
+                      placeholder="eventos@tudominio.com"
+                      onChange={(input) =>
+                        setEmailDraft((draft) => ({
+                          ...draft,
+                          accountLabel: input.target.value || null,
+                        }))
+                      }
+                    />
+                    <small>
+                      Debe ser una dirección o dominio verificado en la consola
+                      de SES; de lo contrario AWS rechaza el envío.
+                    </small>
+                  </label>
+                  <label>
+                    Región de SES
+                    <input
+                      value={emailDraft.region ?? ""}
+                      placeholder="us-east-1"
+                      onChange={(input) =>
+                        setEmailDraft((draft) => ({
+                          ...draft,
+                          region: input.target.value || null,
+                        }))
+                      }
+                    />
+                    <small>
+                      Usa la región donde verificaste el dominio. La identidad
+                      no se comparte entre regiones.
+                    </small>
+                  </label>
+                  <label>
+                    Conjunto de configuración (opcional)
+                    <input
+                      value={emailDraft.externalAccountId ?? ""}
+                      placeholder="icaza-live-eventos"
+                      onChange={(input) =>
+                        setEmailDraft((draft) => ({
+                          ...draft,
+                          externalAccountId: input.target.value || null,
+                        }))
+                      }
+                    />
+                    <small>
+                      Permite seguir aperturas, rebotes y quejas desde AWS.
+                    </small>
+                  </label>
+                </div>
+              )}
+
+              {wizard === "email" && wizardStep === 2 && (
+                <div className="wizard-secrets">
+                  <p>
+                    Estas variables van en el archivo <code>.env</code> local o
+                    en los Secrets del despliegue. Nunca se guardan en la base
+                    de datos ni se muestran en la interfaz.
+                  </p>
+                  <div className="wizard-secret-list">
+                    <div>
+                      <code>AWS_SES_ACCESS_KEY_ID</code>
+                      <small>Clave de un usuario IAM con permiso ses:SendEmail</small>
+                    </div>
+                    <div>
+                      <code>AWS_SES_SECRET_ACCESS_KEY</code>
+                      <small>Secreto asociado a esa clave</small>
+                    </div>
+                    <div>
+                      <code>AWS_SES_REGION</code>
+                      <small>
+                        {emailDraft.region
+                          ? `Debe coincidir con ${emailDraft.region}`
+                          : "Región donde verificaste el remitente"}
+                      </small>
+                    </div>
+                    <div>
+                      <code>EMAIL_FROM</code>
+                      <small>
+                        {emailDraft.accountLabel
+                          ? `Debe coincidir con ${emailDraft.accountLabel}`
+                          : "Dirección del remitente verificado"}
+                      </small>
+                    </div>
+                    <div>
+                      <code>EMAIL_REPLY_TO</code>
+                      <small>Opcional: dirección para las respuestas</small>
+                    </div>
+                  </div>
+                  <p className="wizard-note">
+                    Concede al usuario IAM únicamente <code>ses:SendEmail</code>{" "}
+                    y <code>ses:GetAccount</code>. Evita usar credenciales de
+                    administrador.
+                  </p>
+                </div>
+              )}
+
+              {wizard === "email" && wizardStep === 3 && (
+                <div className="wizard-review">
+                  <span className="wizard-review-icon email-review">✉</span>
+                  <h3>Verificar la conexión con SES</h3>
+                  <p>
+                    Al finalizar, la plataforma consultará tu cuenta de SES con
+                    las credenciales del servidor para confirmar el acceso y
+                    detectar si la cuenta sigue en modo prueba (sandbox).
+                  </p>
+                  {requirementList(emailItem.evaluation.requirements)}
+                  {emailCheck && (
+                    <p
+                      className={`wizard-note ${emailCheck.ok ? "ok" : "warning"}`}
+                      role="status"
+                    >
+                      {emailCheck.ok ? "✓ " : "⚠ "}
+                      {emailCheck.detail}
+                      {emailCheck.quota
+                        ? ` Cuota diaria: ${emailCheck.quota.toLocaleString("es-CO")} correos.`
+                        : ""}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

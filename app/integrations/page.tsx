@@ -20,6 +20,7 @@ const providers: ManagedIntegrationProvider[] = [
   "zoom",
   "amazon_ivs",
   "amazon_s3",
+  "email",
 ];
 
 export default async function IntegrationsPage() {

@@ -2,7 +2,11 @@ import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { communicationDeliveries } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
-import { activeProviderName, sendEmail } from "@/lib/email-provider";
+import {
+  activeProviderName,
+  sendEmail,
+  type EmailProviderName,
+} from "@/lib/email-provider";
 
 const MAX_ATTEMPTS = 3;
 const BATCH_SIZE = 50;
@@ -12,7 +16,7 @@ export type WorkerSummary = {
   sent: number;
   retried: number;
   failed: number;
-  provider: "resend" | "local";
+  provider: EmailProviderName;
 };
 
 // Planificador/worker de la cola de comunicaciones: procesa confirmaciones en
@@ -70,7 +74,9 @@ export async function processDueDeliveries(
     }
 
     const attempts = delivery.attempts + 1;
-    if (attempts >= MAX_ATTEMPTS) {
+    // Un error permanente (credenciales, remitente sin verificar) no se
+    // reintenta: se marca fallida de inmediato para no repetir la llamada.
+    if (result.retryable === false || attempts >= MAX_ATTEMPTS) {
       summary.failed += 1;
       await db
         .update(communicationDeliveries)

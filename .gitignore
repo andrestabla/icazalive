@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Local PostgreSQL data
 /.data/
+
+# TypeScript build info
+tsconfig.tsbuildinfo
