@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "test": "npm run build",
     "lint": "eslint . --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
@@ -16,7 +16,8 @@
     "db:seed": "tsx scripts/db-seed.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "db:backup": "tsx scripts/db-backup.ts",
-    "db:restore": "tsx scripts/db-restore.ts"
+    "db:restore": "tsx scripts/db-restore.ts",
+    "dev:replit": "next dev -H 0.0.0.0 -p ${PORT:-3000}"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",

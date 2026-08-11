@@ -1,0 +1,24 @@
+# Configuración para ejecutar Icaza Live en Replit.
+# El botón Run levanta el servidor de desarrollo; Deploy compila y sirve la
+# versión de producción. Requiere DATABASE_URL apuntando a PostgreSQL.
+
+modules = ["nodejs-22", "postgresql-16"]
+run = "npm run dev:replit"
+entrypoint = "app/page.tsx"
+
+hidden = [".next", "node_modules"]
+
+[nix]
+channel = "stable-24_11"
+
+[env]
+NEXT_TELEMETRY_DISABLED = "1"
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["sh", "-c", "npm ci && npm run build"]
+run = ["sh", "-c", "npm run start"]
+
+[[ports]]
+localPort = 3000
+externalPort = 80

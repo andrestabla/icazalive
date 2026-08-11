@@ -25,6 +25,16 @@ export function getDb(): LocalDatabase {
       schema,
     }) as unknown as LocalDatabase;
   } else {
+    // PGlite guarda en el disco local del proceso. En un entorno desplegado
+    // (Replit, contenedores) ese disco es efímero: los datos se perderían en
+    // cada reinicio, así que se exige DATABASE_URL de forma explícita.
+    if (process.env.NODE_ENV === "production" && !process.env.ALLOW_EPHEMERAL_DB) {
+      throw new Error(
+        "Falta DATABASE_URL. En producción Icaza Live requiere PostgreSQL administrado; " +
+          "PGlite guarda en disco efímero y perdería los datos en cada reinicio. " +
+          "Define DATABASE_URL, o ALLOW_EPHEMERAL_DB=1 si aceptas datos temporales.",
+      );
+    }
     const dataDirectory = getLocalDatabasePath();
     mkdirSync(dirname(dataDirectory), { recursive: true });
     const client = new PGlite(dataDirectory);

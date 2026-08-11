@@ -155,15 +155,28 @@ npm run db:seed
 Para Replit o producción, define `DATABASE_URL` con una instancia PostgreSQL.
 El mismo esquema y las mismas migraciones se utilizan en ambos entornos.
 
-Antes de migrar a Replit:
+### Despliegue en Replit
 
-1. Crear la base PostgreSQL administrada.
-2. Configurar `DATABASE_URL` y los secretos descritos en `.env.example`.
-3. Ejecutar `npm run db:migrate` y luego `npm run db:seed` únicamente si se
-   requiere información inicial.
-4. Validar `/api/health`, login, registro, acceso personal y auditoría.
-5. Conectar los proveedores externos de forma gradual, sin trasladar secretos
+El repositorio incluye `.replit` con la configuración de ejecución. Importa el
+repositorio con **Import from GitHub** (no le pidas al agente que construya la
+aplicación: reescribiría el proyecto en lugar de ejecutarlo) y luego:
+
+1. Crear la base PostgreSQL administrada desde la pestaña **Database**.
+2. En **Secrets**, definir `DATABASE_URL` y los valores de `.env.example` que
+   apliquen. Sin `DATABASE_URL` la aplicación se detiene con un mensaje
+   explícito en producción: PGlite guarda en disco efímero y perdería los datos
+   en cada reinicio.
+3. En el Shell: `npm ci`, luego `npm run db:migrate` y `npm run db:seed`
+   (este último solo si se requiere información inicial).
+4. Pulsar **Run** para el entorno de desarrollo o **Deploy** para publicar.
+   El script `start` escucha en `0.0.0.0` y en el puerto de `$PORT`.
+5. Validar `/api/health`, login, registro, acceso personal y auditoría.
+6. Conectar los proveedores externos de forma gradual, sin trasladar secretos
    desde formularios o datos locales.
+
+Los videos pregrabados se guardan en `~/.icaza-live/media`, que tampoco
+persiste en un despliegue: para producción deben servirse desde S3 mediante la
+integración correspondiente.
 
 ## Integraciones
 
