@@ -74,8 +74,7 @@ export default function AdminSidebar({
   return (
     <aside className="sidebar">
       <Link href="/" className="brand brand-link">
-        <div className="brand-mark">I</div>
-        <span>Icaza Live</span>
+        <img className="brand-logo" src="/icaza-live-logo.png" alt="Icaza Jammoul Live" />
       </Link>
       <nav aria-label="Navegación principal">
         {visibleWorkspace.length > 0 && (

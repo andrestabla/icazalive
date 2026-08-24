@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #17152f;
-  --muted: #747287;
-  --line: #e9e7f0;
-  --purple: #6946e8;
-  --purple-dark: #5536ce;
+  --ink: #12304d;
+  --muted: #60758a;
+  --line: #dce7ec;
+  --purple: #075a96;
+  --purple-dark: #064775;
+  --green: #18a44a;
   --surface: #ffffff;
-  --canvas: #f7f7fa;
+  --canvas: #f4f9fb;
 }
 
 * { box-sizing: border-box; }
@@ -20,9 +21,10 @@ button { font: inherit; }
   position: fixed; inset: 0 auto 0 0; width: 244px; padding: 27px 18px 18px;
   background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; z-index: 5;
 }
-.brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 28px; font-size: 20px; font-weight: 760; letter-spacing: -.4px; }
+.brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 28px; font-size: 20px; font-weight: 760; letter-spacing: -.4px; }
 .brand-link { color: inherit; text-decoration: none; }
-.brand-mark { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(145deg, #7b5cf0, #5131c9); color: #fff; display: grid; place-items: center; font-weight: 800; box-shadow: 0 7px 15px #6846e833; }
+.brand-logo { display: block; width: 184px; height: auto; object-fit: contain; }
+.brand-mark { width: 32px; height: 32px; border-radius: 10px; background: var(--green); color: #fff; display: grid; place-items: center; font-weight: 800; box-shadow: 0 7px 15px #18a44a33; }
 .nav-label { margin: 5px 12px 9px; font-size: 13px; color: #a09dac; letter-spacing: .11em; font-weight: 750; }
 .nav-label.second { margin-top: 25px; }
 .nav-item { width: 100%; border: 0; background: transparent; padding: 10px 12px; border-radius: 9px; display: flex; align-items: center; gap: 12px; color: #656275; font-size: 16px; cursor: pointer; margin: 2px 0; text-align: left; }
@@ -179,10 +181,10 @@ button { font: inherit; }
 
 /* Authentication */
 .login-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(390px, 1.05fr) minmax(430px, .95fr); background: #fff; }
-.login-story { position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 100vh; padding: 38px clamp(38px, 5vw, 76px); color: #fff; background: radial-gradient(circle at 78% 18%, #9f86ff55 0 10%, transparent 36%), radial-gradient(circle at 13% 88%, #16b59a35 0 5%, transparent 34%), linear-gradient(145deg, #20194c, #3e287e 60%, #5434a5); }
+.login-story { position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 100vh; padding: 38px clamp(38px, 5vw, 76px); color: #fff; background: radial-gradient(circle at 78% 18%, #2f9dd155 0 10%, transparent 36%), radial-gradient(circle at 13% 88%, #18a44a45 0 5%, transparent 34%), linear-gradient(145deg, #063b65, #075a96 60%, #0b76a7); }
 .login-story::before { content: ""; position: absolute; width: 470px; height: 470px; border: 1px solid #ffffff18; border-radius: 50%; right: -180px; top: 15%; box-shadow: 0 0 0 70px #ffffff09, 0 0 0 140px #ffffff06; }
 .login-story::after { content: ""; position: absolute; width: 150px; height: 210px; right: 8%; bottom: 8%; border: 1px solid #ffffff18; border-radius: 90px 90px 20px 20px; transform: rotate(24deg); background: linear-gradient(150deg, #ffffff0f, transparent); }
-.login-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; font-size: 19px; font-weight: 730; }.login-brand .brand-mark { background: #fff; color: #5f3fd0; box-shadow: none; }
+.login-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; font-size: 19px; font-weight: 730; }.login-logo { display: block; width: min(285px, 70%); height: auto; object-fit: contain; }
 .story-copy { position: relative; z-index: 1; margin: auto 0; max-width: 560px; }
 .story-label { color: #c9bcff; font-size: 13px; font-weight: 740; letter-spacing: .17em; }
 .story-copy h1 { font-size: clamp(40px, 5vw, 67px); line-height: .98; letter-spacing: -.055em; margin: 20px 0 24px; }
@@ -208,7 +210,7 @@ button { font: inherit; }
 .registration-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(420px, 1.05fr) minmax(450px, .95fr); background: #fff; }
 .registration-hero { position: relative; overflow: hidden; min-height: 100vh; padding: 38px clamp(40px, 5.5vw, 78px); display: flex; flex-direction: column; color: #fff; background: linear-gradient(145deg, #24194f, #51339a); }.registration-hero.hybrid { background: linear-gradient(145deg, #153d3b, #176e65 58%, #2e8e7e); }.registration-hero.simulated { background: linear-gradient(145deg, #4b2a20, #984f32 62%, #c26d3d); }
 .registration-hero::after { content: ""; position: absolute; width: 480px; height: 480px; right: -210px; top: 13%; border: 1px solid #ffffff17; border-radius: 50%; box-shadow: 0 0 0 75px #ffffff08, 0 0 0 150px #ffffff05; }
-.public-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; font-size: 19px; font-weight: 730; }.public-brand .brand-mark { background: #fff; color: #5e3dcc; box-shadow: none; }
+.public-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; font-size: 19px; font-weight: 730; }.public-brand-logo { display: block; width: 160px; height: auto; object-fit: contain; }.official-brand-logo { max-width: min(160px, 48vw); }
 .registration-event { position: relative; z-index: 1; margin: auto 0; max-width: 570px; }.public-badges { display: flex; align-items: center; gap: 9px; }.public-badges span, .public-badges i { padding: 5px 8px; border-radius: 5px; font-size: 11px; font-style: normal; font-weight: 730; }.public-badges span { background: #ffffff1b; color: #e8e2ff; }.public-badges i { color: #bfb4e0; border: 1px solid #ffffff19; }
 .registration-event h1 { font-size: clamp(37px, 4.5vw, 61px); line-height: 1.02; letter-spacing: -.052em; margin: 19px 0; }.registration-event > p { color: #d9d3e9; font-size: 15px; line-height: 1.7; max-width: 500px; }
 .public-event-details { margin-top: 38px; display: grid; gap: 13px; }.public-event-details > div { display: grid; grid-template-columns: 33px 1fr; align-items: center; gap: 10px; }.public-event-details > div > span { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 8px; background: #ffffff12; color: #d8ccff; }.public-event-details p { margin: 0; }.public-event-details small, .public-event-details b { display: block; }.public-event-details small { color: #aFA6c7; font-size: 11px; margin-bottom: 3px; }.public-event-details b { font-size: 13px; font-weight: 570; }
@@ -896,7 +898,66 @@ button { font: inherit; }
 .access-denied-modules a { border: 1px solid #e3dcfb; border-radius: 9px; background: #f0ecff; color: #6040d3; padding: 9px 14px; font-size: 13px; font-weight: 650; text-decoration: none; }
 .notfound-shell { min-height: 100vh; display: grid; place-items: center; background: var(--canvas); padding: 24px; }
 .notfound-card { max-width: 480px; padding: 38px; background: #fff; border: 1px solid var(--line); border-radius: 16px; text-align: center; box-shadow: 0 18px 50px #2d233310; }
-.notfound-card .brand-mark { margin: 0 auto 18px; }
+.notfound-logo { display: block; width: min(220px, 70%); height: auto; margin: 0 auto 18px; }
+
+/* Icaza Jammoul brand palette */
+.login-brand .login-logo,
+.login-mobile-brand .login-logo {
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+}
+.public-brand-logo.official-brand-logo {
+  width: min(160px, 48vw);
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+.primary-button,
+.login-submit,
+.room-question-form button {
+  background: var(--purple);
+}
+.primary-button:hover,
+.login-submit:hover,
+.room-question-form button:hover {
+  background: var(--purple-dark);
+}
+.nav-item.active {
+  background: #e7f4ed;
+  color: var(--green);
+}
+.nav-item.active span,
+.panel-heading button,
+.panel-heading > a,
+.detail-link,
+.back-button {
+  color: var(--purple);
+}
+.format-badge.live,
+.status.violet,
+.stat-icon.purple,
+.notice,
+.secondary-button {
+  background: #e8f2f8;
+  color: var(--purple);
+}
+.catalog-accent.live,
+.calendar-grid a,
+.event-calendar > footer i,
+.detail-tabs button.active {
+  border-color: var(--purple);
+}
+.catalog-accent.live,
+.event-calendar > footer i {
+  background: var(--purple);
+}
+.detail-tabs button.active {
+  color: var(--purple);
+}
+.login-submit {
+  box-shadow: 0 6px 13px #075a9630;
+}
 .notfound-card h1 { font-size: 26px; margin: 6px 0 12px; letter-spacing: -.5px; }
 .notfound-card > p:not(.eyebrow) { color: #7f7b8b; font-size: 14px; line-height: 1.6; margin: 0 0 24px; }
 .notfound-actions { display: flex; gap: 10px; justify-content: center; align-items: center; }

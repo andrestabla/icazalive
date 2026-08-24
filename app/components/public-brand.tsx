@@ -18,9 +18,15 @@ export default function PublicBrandIdentity({
           height={32}
         />
       ) : (
-        <div className="brand-mark">{brand.markText}</div>
+        <img
+          className="public-brand-logo official-brand-logo"
+          src="/icaza-live-logo.png"
+          alt="Icaza Jammoul Live"
+          width={160}
+          height={39}
+        />
       )}
-      <span>{brand.organizationName}</span>
+      {brand.logoUrl ? <span>{brand.organizationName}</span> : null}
     </div>
   );
 }

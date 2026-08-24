@@ -1,8 +1,4 @@
-# Configuración para ejecutar Icaza Live en Replit.
-# El botón Run levanta el servidor de desarrollo; Deploy compila y sirve la
-# versión de producción. Requiere DATABASE_URL apuntando a PostgreSQL.
-
-modules = ["nodejs-22", "postgresql-16"]
+modules = ["nodejs-22", "postgresql-16", "python-base-3.13"]
 run = "npm run dev:replit"
 entrypoint = "app/page.tsx"
 

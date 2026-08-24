@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <main className="notfound-shell">
       <div className="notfound-card">
-        <div className="brand-mark">I</div>
+        <img className="notfound-logo" src="/icaza-live-logo.png" alt="Icaza Jammoul Live" />
         <p className="eyebrow">ERROR 404</p>
         <h1>No encontramos esta página</h1>
         <p>

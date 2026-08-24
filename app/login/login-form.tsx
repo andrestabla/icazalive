@@ -56,8 +56,7 @@ export default function LoginForm({
     <main className="login-shell">
       <section className="login-story">
         <div className="login-brand">
-          <div className="brand-mark">I</div>
-          <span>Icaza Live</span>
+          <img className="login-logo" src="/icaza-live-logo.png" alt="Icaza Jammoul Live" />
         </div>
         <div className="story-copy">
           <span className="story-label">EVENTOS QUE CONECTAN</span>
@@ -75,8 +74,7 @@ export default function LoginForm({
       <section className="login-panel">
         <div className="login-card">
           <div className="login-mobile-brand">
-            <div className="brand-mark">I</div>
-            <span>Icaza Live</span>
+            <img className="login-logo" src="/icaza-live-logo.png" alt="Icaza Jammoul Live" />
           </div>
           <p className="eyebrow">BIENVENIDO DE NUEVO</p>
           <h2>Inicia sesión</h2>
