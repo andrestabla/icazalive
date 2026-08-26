@@ -6,6 +6,7 @@ import {
   evaluateStreamingConfiguration,
   getCredentialAvailability,
 } from "@/lib/streaming";
+import { checkZoomConnection } from "@/lib/zoom";
 import StudioClient from "./studio-client";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,8 @@ export default async function StudioPage({
 
   if (!record) notFound();
 
-  const credentials = getCredentialAvailability();
+  const zoomCheck = await checkZoomConnection();
+  const credentials = getCredentialAvailability(zoomCheck.ok);
   const checks = evaluateStreamingConfiguration({
     mode: record.session.streamingMode,
     startsAt: record.session.startsAt,

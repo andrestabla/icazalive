@@ -5,12 +5,11 @@ export const runtime = "nodejs";
 export async function GET() {
   return NextResponse.json(
     {
-      status: "pending_configuration",
+      status: "managed_by_replit",
       message:
-        "El callback de Zoom está reservado. La autorización real se habilitará al conectar la app OAuth y su almacenamiento cifrado de tokens.",
+        "La autorización de Zoom se administra de forma segura mediante la conexión de Replit.",
     },
     {
-      status: 501,
       headers: { "Cache-Control": "no-store" },
     },
   );

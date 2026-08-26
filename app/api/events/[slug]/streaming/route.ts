@@ -10,6 +10,7 @@ import {
   hasBlockingStreamingChecks,
   type StreamingMode,
 } from "@/lib/streaming";
+import { checkZoomConnection } from "@/lib/zoom";
 
 export const runtime = "nodejs";
 
@@ -73,7 +74,8 @@ export async function GET(_: Request, context: RouteContext) {
     );
   }
 
-  const credentials = getCredentialAvailability();
+  const zoomCheck = await checkZoomConnection();
+  const credentials = getCredentialAvailability(zoomCheck.ok);
   const checks = evaluateStreamingConfiguration({
     mode: record.session.streamingMode,
     startsAt: record.session.startsAt,
@@ -208,7 +210,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         : record.session.ivsChannelArn,
     playbackUrl:
       playbackUrl !== undefined ? playbackUrl : record.session.playbackUrl,
-    ...getCredentialAvailability(),
+    ...getCredentialAvailability((await checkZoomConnection()).ok),
   };
   const checks = evaluateStreamingConfiguration(merged);
   const hasBlockingChecks = hasBlockingStreamingChecks(checks);
@@ -263,7 +265,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     data: {
       session: updated,
       checks,
-      credentials: getCredentialAvailability(),
+      credentials: getCredentialAvailability((await checkZoomConnection()).ok),
     },
   });
 }

@@ -11,6 +11,7 @@ import {
   evaluateIntegration,
   type ManagedIntegrationProvider,
 } from "@/lib/integrations";
+import { checkZoomConnection } from "@/lib/zoom";
 
 export const runtime = "nodejs";
 
@@ -168,17 +169,6 @@ export async function PATCH(request: Request) {
     }
   }
 
-  const safeRecord = {
-    provider: body.provider,
-    accountLabel,
-    externalAccountId,
-    region,
-  };
-  const evaluation = evaluateIntegration(safeRecord);
-  const now = new Date();
-
-  // Para el correo, "revisar" hace una consulta real a SES con las
-  // credenciales del servidor: confirma acceso y si la cuenta está en sandbox.
   let providerCheck: {
     ok: boolean;
     detail: string;
@@ -186,6 +176,31 @@ export async function PATCH(request: Request) {
     quota?: number;
     credentialsMissing?: boolean;
   } | null = null;
+  let zoomConnected = false;
+  if (body.provider === "zoom") {
+    const zoomCheck = await checkZoomConnection();
+    zoomConnected = zoomCheck.ok;
+    providerCheck = {
+      ok: zoomCheck.ok,
+      detail: zoomCheck.detail,
+    };
+    if (zoomCheck.ok) {
+      accountLabel ??= zoomCheck.profile?.email ?? null;
+      externalAccountId ??= zoomCheck.profile?.id ?? null;
+    }
+  }
+
+  const safeRecord = {
+    provider: body.provider,
+    accountLabel,
+    externalAccountId,
+    region,
+  };
+  const evaluation = evaluateIntegration(safeRecord, { zoomConnected });
+  const now = new Date();
+
+  // Para el correo, "revisar" hace una consulta real a SES con las
+  // credenciales del servidor: confirma acceso y si la cuenta está en sandbox.
   if (body.provider === "email" && body.action === "check") {
     const sesConfig = readSesConfig();
     if (!sesConfig) {
@@ -206,7 +221,9 @@ export async function PATCH(request: Request) {
 
   // "error" se reserva para credenciales presentes que SES rechaza.
   const status =
-    body.provider === "email" && providerCheck && !providerCheck.credentialsMissing
+    (body.provider === "email" || body.provider === "zoom") &&
+    providerCheck &&
+    !providerCheck.credentialsMissing
       ? providerCheck.ok
         ? ("connected" as const)
         : ("error" as const)

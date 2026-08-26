@@ -18,6 +18,10 @@ export type SafeIntegrationRecord = {
   region: string | null;
 };
 
+export type IntegrationEvaluationOptions = {
+  zoomConnected?: boolean;
+};
+
 export function getIntegrationEnvironment() {
   return {
     zoomClientId: Boolean(process.env.ZOOM_CLIENT_ID),
@@ -40,28 +44,31 @@ export function getIntegrationEnvironment() {
   };
 }
 
-export function evaluateIntegration(record: SafeIntegrationRecord) {
+export function evaluateIntegration(
+  record: SafeIntegrationRecord,
+  options: IntegrationEvaluationOptions = {},
+) {
   const environment = getIntegrationEnvironment();
   let requirements: IntegrationRequirement[];
 
   if (record.provider === "zoom") {
     requirements = [
       {
-        key: "zoom_client_id",
-        label: "ZOOM_CLIENT_ID",
-        ready: environment.zoomClientId,
+        key: "zoom_connector",
+        label: "Conexión OAuth administrada por Replit",
+        ready: Boolean(options.zoomConnected),
         source: "server",
       },
       {
-        key: "zoom_client_secret",
-        label: "ZOOM_CLIENT_SECRET",
-        ready: environment.zoomClientSecret,
+        key: "zoom_profile",
+        label: "Perfil de la cuenta Zoom disponible",
+        ready: Boolean(options.zoomConnected),
         source: "server",
       },
       {
-        key: "zoom_redirect_uri",
-        label: "URL de retorno OAuth",
-        ready: environment.zoomRedirectUri,
+        key: "zoom_meetings",
+        label: "Acceso a reuniones Zoom",
+        ready: Boolean(options.zoomConnected),
         source: "server",
       },
     ];

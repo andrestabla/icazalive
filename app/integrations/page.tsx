@@ -12,6 +12,7 @@ import {
   evaluateIntegration,
   type ManagedIntegrationProvider,
 } from "@/lib/integrations";
+import { checkZoomConnection } from "@/lib/zoom";
 import IntegrationsClient from "./integrations-client";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ const providers: ManagedIntegrationProvider[] = [
 export default async function IntegrationsPage() {
   const db = getDb();
   const user = await requirePageUser();
-  const [records, identityRecords, eventCount, readySessionCount] = await Promise.all([
+  const [records, identityRecords, eventCount, readySessionCount, zoomCheck] = await Promise.all([
     db
       .select()
       .from(integrationConnections)
@@ -37,11 +38,12 @@ export default async function IntegrationsPage() {
       .select({ total: count() })
       .from(sessions)
       .where(eq(sessions.streamingStatus, "ready")),
+    checkZoomConnection(),
   ]);
   const connections = providers
     .map((provider) => {
       const stored = records.find((record) => record.provider === provider);
-      return stored ?? {
+      const record = stored ?? {
         id: `pending-${provider}`,
         provider,
         status: "disconnected" as const,
@@ -52,6 +54,15 @@ export default async function IntegrationsPage() {
         createdAt: new Date(0),
         updatedAt: new Date(0),
       };
+      return provider === "zoom" && zoomCheck.ok
+        ? {
+            ...record,
+            status: "connected" as const,
+            accountLabel: record.accountLabel ?? zoomCheck.profile?.email ?? null,
+            externalAccountId:
+              record.externalAccountId ?? zoomCheck.profile?.id ?? null,
+          }
+        : record;
     })
     .map((record) => ({
       connection: {
@@ -66,7 +77,7 @@ export default async function IntegrationsPage() {
         accountLabel: record.accountLabel,
         externalAccountId: record.externalAccountId,
         region: record.region,
-      }),
+      }, { zoomConnected: record.provider === "zoom" && zoomCheck.ok }),
     }));
   const identityRecord = identityRecords[0];
   const safeIdentitySettings = identityRecord ?? {

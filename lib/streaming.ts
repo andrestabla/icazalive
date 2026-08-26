@@ -23,10 +23,11 @@ type StreamingConfiguration = {
   awsCredentialsConfigured: boolean;
 };
 
-export function getCredentialAvailability() {
+export function getCredentialAvailability(zoomConnectorReady = false) {
   return {
     zoomCredentialsConfigured: Boolean(
-      process.env.ZOOM_CLIENT_ID && process.env.ZOOM_CLIENT_SECRET,
+      zoomConnectorReady ||
+        (process.env.ZOOM_CLIENT_ID && process.env.ZOOM_CLIENT_SECRET),
     ),
     awsCredentialsConfigured: Boolean(
       process.env.AWS_REGION &&

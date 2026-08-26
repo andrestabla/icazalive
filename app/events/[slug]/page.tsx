@@ -13,6 +13,7 @@ import {
   evaluateStreamingConfiguration,
   getCredentialAvailability,
 } from "@/lib/streaming";
+import { checkZoomConnection } from "@/lib/zoom";
 import EventDetail from "./event-detail";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export default async function EventDetailPage({
     integrations,
     communications,
     deliveryStats,
+    zoomCheck,
   ] = await Promise.all([
     db.select().from(sessions).where(eq(sessions.eventId, event.id)).orderBy(sessions.startsAt),
     db.select({ total: count() }).from(registrations).where(eq(registrations.eventId, event.id)),
@@ -51,8 +53,9 @@ export default async function EventDetailPage({
       .from(communicationDeliveries)
       .where(eq(communicationDeliveries.eventId, event.id))
       .groupBy(communicationDeliveries.status),
+    checkZoomConnection(),
   ]);
-  const credentials = getCredentialAvailability();
+  const credentials = getCredentialAvailability(zoomCheck.ok);
   const mainSession = sessionRecords[0];
   const streamingChecks = mainSession
     ? evaluateStreamingConfiguration({
