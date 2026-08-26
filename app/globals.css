@@ -1003,3 +1003,10 @@ button { font: inherit; }
 .wizard-review-icon.email-review { background: #eee9ff; color: #6240d6; }
 .wizard-form-grid.email-form { grid-template-columns: 1fr; }
 .wizard-form-grid.email-form > label > small { color: #918d9b; font-size: 12px; font-weight: 450; line-height: 1.5; }
+
+/* Sincronización de sesiones con Zoom */
+.session-zoom-link { display: inline-block; margin-top: 5px; color: #1676d2; font-size: 11px; font-weight: 700; text-decoration: none; }
+.session-zoom-link:hover { color: #0e5ba8; text-decoration: underline; }
+.zoom-sync-note { margin: 0; color: #6e7380; font-size: 12px; line-height: 1.5; }
+.zoom-sync-note a { color: #1676d2; font-weight: 700; text-decoration: none; }
+.zoom-sync-note a:hover { color: #0e5ba8; text-decoration: underline; }

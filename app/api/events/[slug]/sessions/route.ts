@@ -4,6 +4,11 @@ import { getDb } from "@/db";
 import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import {
+  createZoomMeeting,
+  deleteZoomMeeting,
+  updateZoomMeeting,
+} from "@/lib/zoom";
 
 export const runtime = "nodejs";
 
@@ -66,6 +71,16 @@ function scheduleFitsEvent(
     schedule.startsAt.getTime() >= event.startsAt.getTime() &&
     schedule.endsAt.getTime() <= event.endsAt.getTime()
   );
+}
+
+function usesZoom(streamingMode: string) {
+  return streamingMode === "zoom_to_ivs" || streamingMode === "zoom_only";
+}
+
+function zoomSyncError(error: unknown) {
+  return error instanceof Error && error.message
+    ? error.message
+    : "No fue posible sincronizar la reunión de Zoom.";
 }
 
 async function hasDuplicateTitle(
@@ -148,14 +163,35 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
+  const streamingMode = event.format === "simulated" ? "simulated" : "zoom_to_ivs";
+  let zoomMeeting: Awaited<ReturnType<typeof createZoomMeeting>> | null = null;
+  if (usesZoom(streamingMode)) {
+    try {
+      zoomMeeting = await createZoomMeeting({
+        topic: `${event.title} · ${title}`,
+        startsAt: schedule.startsAt,
+        endsAt: schedule.endsAt,
+        timeZone: event.timezone,
+      });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: `La sesión no se creó porque Zoom no pudo preparar la reunión: ${zoomSyncError(error)}`,
+        },
+        { status: 502 },
+      );
+    }
+  }
+
   const [created] = await getDb()
     .insert(sessions)
     .values({
       eventId: event.id,
       title,
       ...schedule,
-      streamingMode:
-        event.format === "simulated" ? "simulated" : "zoom_to_ivs",
+      streamingMode,
+      zoomMeetingId: zoomMeeting?.id ? String(zoomMeeting.id) : null,
+      zoomJoinUrl: zoomMeeting?.join_url ?? null,
     })
     .returning();
 
@@ -169,6 +205,7 @@ export async function POST(request: Request, context: RouteContext) {
       eventId: event.id,
       startsAt: created.startsAt.toISOString(),
       endsAt: created.endsAt.toISOString(),
+      zoomMeetingId: created.zoomMeetingId,
     },
     request,
   });
@@ -238,6 +275,39 @@ export async function PATCH(request: Request, context: RouteContext) {
   const scheduleChanged =
     target.startsAt.getTime() !== schedule.startsAt.getTime() ||
     target.endsAt.getTime() !== schedule.endsAt.getTime();
+  let zoomMeeting = target.zoomMeetingId
+    ? { id: target.zoomMeetingId, joinUrl: target.zoomJoinUrl }
+    : null;
+  if (usesZoom(target.streamingMode)) {
+    try {
+      if (target.zoomMeetingId) {
+        await updateZoomMeeting(target.zoomMeetingId, {
+          topic: `${event.title} · ${title}`,
+          startsAt: schedule.startsAt,
+          endsAt: schedule.endsAt,
+          timeZone: event.timezone,
+        });
+      } else {
+        const createdMeeting = await createZoomMeeting({
+          topic: `${event.title} · ${title}`,
+          startsAt: schedule.startsAt,
+          endsAt: schedule.endsAt,
+          timeZone: event.timezone,
+        });
+        zoomMeeting = {
+          id: String(createdMeeting.id),
+          joinUrl: createdMeeting.join_url ?? null,
+        };
+      }
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: `La sesión no se actualizó porque Zoom no pudo sincronizar la reunión: ${zoomSyncError(error)}`,
+        },
+        { status: 502 },
+      );
+    }
+  }
   const [updated] = await getDb()
     .update(sessions)
     .set({
@@ -249,6 +319,8 @@ export async function PATCH(request: Request, context: RouteContext) {
             technicalCheckAt: null,
           }
         : {}),
+      zoomMeetingId: zoomMeeting?.id ?? null,
+      zoomJoinUrl: zoomMeeting?.joinUrl ?? null,
       updatedAt: new Date(),
     })
     .where(eq(sessions.id, target.id))
@@ -265,6 +337,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       scheduleChanged,
       startsAt: updated.startsAt.toISOString(),
       endsAt: updated.endsAt.toISOString(),
+      zoomMeetingId: updated.zoomMeetingId,
     },
     request,
   });
@@ -309,6 +382,27 @@ export async function DELETE(request: Request, context: RouteContext) {
       { error: "El evento debe conservar al menos una sesión." },
       { status: 409 },
     );
+  }
+
+  const [sessionToDelete] = await getDb()
+    .select({
+      id: sessions.id,
+      zoomMeetingId: sessions.zoomMeetingId,
+    })
+    .from(sessions)
+    .where(eq(sessions.id, target[0].id))
+    .limit(1);
+  if (sessionToDelete?.zoomMeetingId) {
+    try {
+      await deleteZoomMeeting(sessionToDelete.zoomMeetingId);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: `La sesión no se eliminó porque Zoom no pudo retirar la reunión asociada: ${zoomSyncError(error)}`,
+        },
+        { status: 502 },
+      );
+    }
   }
 
   await getDb().delete(sessions).where(eq(sessions.id, target[0].id));

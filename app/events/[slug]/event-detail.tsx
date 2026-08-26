@@ -962,6 +962,16 @@ export default function EventDetail({
                     <div>
                       <b>{session.title}{session.id === streamingSession?.id && <i>Principal</i>}</b>
                       <p>{formatStableTime(new Date(session.startsAt), event.timezone)} — {formatStableTime(new Date(session.endsAt), event.timezone)}</p>
+                      {session.zoomJoinUrl && (
+                        <a
+                          className="session-zoom-link"
+                          href={session.zoomJoinUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Abrir reunión de Zoom
+                        </a>
+                      )}
                     </div>
                     <span className="session-provider">
                       {session.streamingMode === "simulated"
@@ -1725,7 +1735,7 @@ export default function EventDetail({
             <div className="streaming-pipeline" aria-label="Flujo de transmisión">
               <article className={streamingSession.streamingMode === "ivs_direct" ? "muted" : ""}>
                 <span className="service-logo zoom">zoom</span>
-                <div><small>FUENTE</small><b>{streamingSession.streamingMode === "ivs_direct" ? "Entrada directa" : "Zoom Meeting"}</b><p>{streamingCredentials.zoomCredentialsConfigured ? "Credenciales disponibles" : "Credenciales pendientes"}</p></div>
+                <div><small>FUENTE</small><b>{streamingSession.streamingMode === "ivs_direct" ? "Entrada directa" : "Zoom Meeting"}</b><p>{streamingCredentials.zoomCredentialsConfigured ? "Conexión segura disponible" : "Conexión pendiente"}</p></div>
               </article>
               <i>→</i>
               <article className={streamingSession.streamingMode === "zoom_only" ? "muted" : ""}>
@@ -1798,6 +1808,22 @@ export default function EventDetail({
                           />
                         </label>
                       </div>
+                      <p className="zoom-sync-note">
+                        {streamingSession.zoomJoinUrl ? (
+                          <>
+                            Esta reunión se sincroniza con Zoom.{" "}
+                            <a
+                              href={streamingSession.zoomJoinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Abrir enlace de participantes
+                            </a>
+                          </>
+                        ) : (
+                          "Guarda una sesión con Zoom activo para crear y sincronizar su reunión."
+                        )}
+                      </p>
                     </fieldset>
                   )}
 
