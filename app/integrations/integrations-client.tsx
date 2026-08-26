@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  ServiceLogo,
+  type ServiceLogoName,
+} from "@/app/components/service-logo";
 import type {
   IdentityProtocol,
   MfaMethod,
@@ -90,7 +94,7 @@ const providerContent: Record<
     name: string;
     eyebrow: string;
     description: string;
-    logo: string;
+    logo: ServiceLogoName;
     resourceLabel: string;
     resourcePlaceholder: string;
   }
@@ -108,7 +112,7 @@ const providerContent: Record<
     eyebrow: "DISTRIBUCIÓN EN VIVO",
     description:
       "Canales de video administrados y reproducción de baja latencia.",
-    logo: "aws",
+    logo: "amazon_ivs",
     resourceLabel: "ARN de canal predeterminado (opcional)",
     resourcePlaceholder: "arn:aws:ivs:...",
   },
@@ -116,7 +120,7 @@ const providerContent: Record<
     name: "Amazon S3",
     eyebrow: "GRABACIONES",
     description: "Almacenamiento de grabaciones y recursos posteriores.",
-    logo: "aws",
+    logo: "amazon_s3",
     resourceLabel: "Nombre del bucket",
     resourcePlaceholder: "icaza-live-recordings",
   },
@@ -125,7 +129,7 @@ const providerContent: Record<
     eyebrow: "CORREO SALIENTE",
     description:
       "Confirmaciones, recordatorios e invitaciones enviadas a los asistentes.",
-    logo: "aws",
+    logo: "amazon_ses",
     resourceLabel: "Conjunto de configuración (opcional)",
     resourcePlaceholder: "icaza-live-eventos",
   },
@@ -546,7 +550,7 @@ export default function IntegrationsClient({
         <div className="setup-wizard-grid">
           <article className="panel setup-wizard-card zoom-wizard-card">
             <header>
-              <span className="service-logo zoom">zoom</span>
+              <ServiceLogo service="zoom" />
               <i className={zoomItem.connection.status}>
                 {statusLabels[zoomItem.connection.status]}
               </i>
@@ -580,7 +584,7 @@ export default function IntegrationsClient({
 
           <article className="panel setup-wizard-card aws-wizard-card">
             <header>
-              <span className="service-logo aws">aws</span>
+              <ServiceLogo service="amazon_ivs" />
               <i
                 className={
                   ivsItem.evaluation.ready && s3Item.evaluation.ready
@@ -656,7 +660,7 @@ export default function IntegrationsClient({
 
           <article className="panel setup-wizard-card email-wizard-card">
             <header>
-              <span className="service-logo aws">ses</span>
+              <ServiceLogo service="amazon_ses" />
               <i className={emailItem.connection.status}>
                 {statusLabels[emailItem.connection.status]}
               </i>
@@ -703,9 +707,9 @@ export default function IntegrationsClient({
         <div className="integration-flow">
           <span className="identity-logo compact">ID</span>
           <i>→</i>
-          <span className="service-logo zoom">zoom</span>
+          <ServiceLogo service="zoom" />
           <i>→</i>
-          <span className="service-logo aws">IVS</span>
+          <ServiceLogo service="amazon_ivs" />
           <i>→</i>
           <span className="flow-audience">♙</span>
           <small>＋ S3</small>
@@ -733,9 +737,7 @@ export default function IntegrationsClient({
               key={item.connection.provider}
             >
               <header>
-                <span className={`service-logo ${content.logo}`}>
-                  {content.logo}
-                </span>
+                <ServiceLogo service={content.logo} />
                 <div>
                   <p className="eyebrow">{content.eyebrow}</p>
                   <h2>{content.name}</h2>
@@ -939,7 +941,7 @@ export default function IntegrationsClient({
               {wizard === "zoom" && wizardStep === 0 && (
                 <div className="wizard-intro">
                   <div className="wizard-pipeline">
-                    <span className="service-logo zoom">zoom</span>
+                    <ServiceLogo service="zoom" />
                     <i>OAuth 2.0</i>
                     <span className="wizard-app-node">Icaza Live</span>
                     <i>reunión</i>
@@ -1037,13 +1039,13 @@ export default function IntegrationsClient({
               {wizard === "aws" && wizardStep === 0 && (
                 <div className="wizard-intro">
                   <div className="wizard-pipeline">
-                    <span className="service-logo zoom">zoom</span>
+                    <ServiceLogo service="zoom" />
                     <i>RTMP</i>
-                    <span className="service-logo aws">IVS</span>
+                    <ServiceLogo service="amazon_ivs" />
                     <i>playback</i>
                     <span className="flow-audience">♙</span>
                     <i>＋</i>
-                    <span className="service-logo aws">S3</span>
+                    <ServiceLogo service="amazon_s3" />
                   </div>
                   <h3>Arquitectura de streaming preparada</h3>
                   <p>

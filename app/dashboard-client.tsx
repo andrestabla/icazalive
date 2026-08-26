@@ -9,6 +9,7 @@ type EventTemplateSummary = {
 };
 
 import Link from "next/link";
+import { ServiceLogo } from "@/app/components/service-logo";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import AdminSidebar from "@/app/components/admin-sidebar";
@@ -459,7 +460,7 @@ export default function Dashboard({
               </div>
             </div>
             <div className="integration">
-              <div className="service-logo zoom">zoom</div>
+              <ServiceLogo service="zoom" />
               <div>
                 <h3>Zoom</h3>
                 <p>{zoom?.accountLabel ?? "Webinars y Meetings"}</p>
@@ -469,7 +470,7 @@ export default function Dashboard({
               </span>
             </div>
             <div className="integration">
-              <div className="service-logo aws">aws</div>
+              <ServiceLogo service="amazon_ivs" />
               <div>
                 <h3>Amazon IVS</h3>
                 <p>{ivs?.accountLabel ?? "Streaming de baja latencia"}</p>

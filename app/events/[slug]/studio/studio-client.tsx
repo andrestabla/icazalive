@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ServiceLogo } from "@/app/components/service-logo";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
 
 type StudioSession = {
@@ -119,8 +120,8 @@ export default function StudioClient({
             </div>
           </div>
           <div className="studio-sources">
-            <div><span className="service-logo zoom">zoom</span><p><b>Fuente Zoom</b><small>{session.zoomMeetingId ? `Reunión ${session.zoomMeetingId}` : "Sin reunión configurada"}</small></p></div>
-            <div><span className="service-logo aws">aws</span><p><b>Salida Amazon IVS</b><small>{session.ivsChannelArn ? "Canal configurado" : "Sin canal configurado"}</small></p></div>
+            <div><ServiceLogo service="zoom" /><p><b>Fuente Zoom</b><small>{session.zoomMeetingId ? `Reunión ${session.zoomMeetingId}` : "Sin reunión configurada"}</small></p></div>
+            <div><ServiceLogo service="amazon_ivs" /><p><b>Salida Amazon IVS</b><small>{session.ivsChannelArn ? "Canal configurado" : "Sin canal configurado"}</small></p></div>
             <div><span>⌁</span><p><b>Reproducción</b><small>{session.playbackUrl ? "URL disponible" : "Pendiente"}</small></p></div>
           </div>
         </section>

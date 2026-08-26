@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
+import { ServiceLogo } from "@/app/components/service-logo";
 import {
   confirmableTransitions,
   eventStatusTransitions,
@@ -1014,8 +1015,8 @@ export default function EventDetail({
             </section>
             <section className="panel transmission-card">
               <div className="panel-heading"><div><h2>Transmisión</h2><p>Servicios del evento.</p></div></div>
-              <div className="transmission-service"><span className="service-logo zoom">zoom</span><div><b>Zoom</b><small>{zoom?.accountLabel ?? "Sin cuenta"}</small></div><i className={zoom?.status ?? "pending"}>{zoom?.status === "connected" ? "Conectado" : "Pendiente"}</i></div>
-              <div className="transmission-service"><span className="service-logo aws">aws</span><div><b>Amazon IVS</b><small>{ivs?.accountLabel ?? "Entorno local"}</small></div><i className={ivs?.status ?? "disconnected"}>{ivs?.status === "connected" ? "Conectado" : "Local"}</i></div>
+              <div className="transmission-service"><ServiceLogo service="zoom" /><div><b>Zoom</b><small>{zoom?.accountLabel ?? "Sin cuenta"}</small></div><i className={zoom?.status ?? "pending"}>{zoom?.status === "connected" ? "Conectado" : "Pendiente"}</i></div>
+              <div className="transmission-service"><ServiceLogo service="amazon_ivs" /><div><b>Amazon IVS</b><small>{ivs?.accountLabel ?? "Entorno local"}</small></div><i className={ivs?.status ?? "disconnected"}>{ivs?.status === "connected" ? "Conectado" : "Local"}</i></div>
               <button onClick={() => setActiveTab("Transmisión")} className="secondary-button">Configurar transmisión</button>
             </section>
             <OrganizersPanel eventSlug={event.slug} />
@@ -1734,12 +1735,12 @@ export default function EventDetail({
 
             <div className="streaming-pipeline" aria-label="Flujo de transmisión">
               <article className={streamingSession.streamingMode === "ivs_direct" ? "muted" : ""}>
-                <span className="service-logo zoom">zoom</span>
+                <ServiceLogo service="zoom" />
                 <div><small>FUENTE</small><b>{streamingSession.streamingMode === "ivs_direct" ? "Entrada directa" : "Zoom Meeting"}</b><p>{streamingCredentials.zoomCredentialsConfigured ? "Conexión segura disponible" : "Conexión pendiente"}</p></div>
               </article>
               <i>→</i>
               <article className={streamingSession.streamingMode === "zoom_only" ? "muted" : ""}>
-                <span className="service-logo aws">aws</span>
+                <ServiceLogo service="amazon_ivs" />
                 <div><small>DISTRIBUCIÓN</small><b>{streamingSession.streamingMode === "zoom_only" ? "Directo desde Zoom" : "Amazon IVS"}</b><p>{streamingCredentials.awsCredentialsConfigured ? `Región ${streamingCredentials.awsRegion}` : "Credenciales pendientes"}</p></div>
               </article>
               <i>→</i>
@@ -1776,7 +1777,7 @@ export default function EventDetail({
                   {(streamingSession.streamingMode === "zoom_to_ivs" ||
                     streamingSession.streamingMode === "zoom_only") && (
                     <fieldset>
-                      <legend><span className="service-logo zoom">zoom</span><div><b>Zoom</b><small>Fuente del presentador</small></div></legend>
+                      <legend><ServiceLogo service="zoom" /><div><b>Zoom</b><small>Fuente del presentador</small></div></legend>
                       <div className="streaming-field-row">
                         <label>
                           ID de la reunión
@@ -1830,7 +1831,7 @@ export default function EventDetail({
                   {(streamingSession.streamingMode === "zoom_to_ivs" ||
                     streamingSession.streamingMode === "ivs_direct") && (
                     <fieldset>
-                      <legend><span className="service-logo aws">aws</span><div><b>Amazon IVS</b><small>Distribución de baja latencia</small></div></legend>
+                      <legend><ServiceLogo service="amazon_ivs" /><div><b>Amazon IVS</b><small>Distribución de baja latencia</small></div></legend>
                       <label>
                         ARN del canal
                         <input
