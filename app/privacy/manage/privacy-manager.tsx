@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AdminIcon } from "@/app/components/admin-icon";
 import { useMemo, useState, type FormEvent } from "react";
 
 type LegalDocument = {
@@ -234,40 +235,40 @@ export default function PrivacyManager({
           <p>Versiona políticas, demuestra consentimientos y atiende derechos.</p>
         </div>
         <Link href="/privacy" target="_blank" className="secondary-action link-button">
-          Abrir Centro público ↗
+          Abrir Centro público <AdminIcon name="arrow-right" />
         </Link>
       </header>
 
       {message && <div className="detail-message" role="status">{message}</div>}
-      {error && <div className="brand-error" role="alert">ⓘ {error}</div>}
+      {error && <div className="brand-error" role="alert"><AdminIcon name="info" /> {error}</div>}
 
       <section className="privacy-admin-stats">
         <article>
-          <span>§</span>
+          <span><AdminIcon name="privacy" /></span>
           <div><strong>2</strong><p>documentos vigentes</p></div>
         </article>
         <article>
-          <span>◇</span>
+          <span><AdminIcon name="activity" /></span>
           <div><strong>{activeRequests.length}</strong><p>solicitudes activas</p></div>
         </article>
         <article className={dueSoon ? "warning" : ""}>
-          <span>!</span>
+          <span><AdminIcon name="warning" /></span>
           <div><strong>{dueSoon}</strong><p>vencen en 7 días</p></div>
         </article>
         <article>
-          <span>✓</span>
+          <span><AdminIcon name="check" /></span>
           <div><strong>{initialConsents.length}</strong><p>evidencias recientes</p></div>
         </article>
       </section>
 
       <nav className="privacy-admin-tabs" aria-label="Secciones de privacidad">
-        <button className={tab === "documents" ? "active" : ""} onClick={() => setTab("documents")}>
+        <button className={tab === "documents" ? "active" : ""} aria-pressed={tab === "documents"} onClick={() => setTab("documents")}>
           Políticas y versiones
         </button>
-        <button className={tab === "requests" ? "active" : ""} onClick={() => setTab("requests")}>
+        <button className={tab === "requests" ? "active" : ""} aria-pressed={tab === "requests"} onClick={() => setTab("requests")}>
           Solicitudes <span>{activeRequests.length}</span>
         </button>
-        <button className={tab === "consents" ? "active" : ""} onClick={() => setTab("consents")}>
+        <button className={tab === "consents" ? "active" : ""} aria-pressed={tab === "consents"} onClick={() => setTab("consents")}>
           Evidencia de consentimiento
         </button>
       </nav>
@@ -387,7 +388,7 @@ export default function PrivacyManager({
           if (event.target === event.currentTarget && saving !== "request") setSelected(null);
         }}>
           <form className="modal privacy-request-modal" onSubmit={updateRequest}>
-            <button type="button" className="modal-close" aria-label="Cerrar solicitud" onClick={() => setSelected(null)}>×</button>
+            <button type="button" className="modal-close" aria-label="Cerrar solicitud" onClick={() => setSelected(null)}><AdminIcon name="close" /></button>
             <p className="eyebrow">SOLICITUD #{selected.id.slice(0, 8)}</p>
             <h2>{typeLabels[selected.type]}</h2>
             <div className="privacy-request-identity">
@@ -411,7 +412,7 @@ export default function PrivacyManager({
             </label>
             <div className="privacy-request-modal-actions">
               {selected.identityVerified && (selected.type === "access" || selected.type === "portability") && (
-                <a href={`/api/data-rights/${selected.id}/export`}>↓ Exportar datos verificados</a>
+                <a href={`/api/data-rights/${selected.id}/export`}><AdminIcon name="download" /> Exportar datos verificados</a>
               )}
               <button className="primary-button" disabled={saving === "request"}>
                 {saving === "request" ? "Guardando…" : "Guardar trazabilidad"}

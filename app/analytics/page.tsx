@@ -1,5 +1,6 @@
 import { desc, sql } from "drizzle-orm";
 import Link from "next/link";
+import { AdminIcon } from "@/app/components/admin-icon";
 import { getDb } from "@/db";
 import { events, registrations } from "@/db/schema";
 import { getEventAnalytics } from "@/lib/event-analytics";
@@ -116,19 +117,19 @@ export default async function AnalyticsPage() {
 
       <section className="analytics-kpis global" aria-label="Indicadores globales">
         <article>
-          <span className="analytics-kpi-icon purple">♙</span>
+          <span className="analytics-kpi-icon purple"><AdminIcon name="users" /></span>
           <div><small>REGISTROS</small><strong>{totals.registrations.toLocaleString("es-CO")}</strong><p>en {eventRecords.length} eventos</p></div>
         </article>
         <article>
-          <span className="analytics-kpi-icon blue">↗</span>
+          <span className="analytics-kpi-icon blue"><AdminIcon name="activity" /></span>
           <div><small>VISITAS A SALA</small><strong>{totals.roomVisitors.toLocaleString("es-CO")}</strong><p>accesos individuales</p></div>
         </article>
         <article>
-          <span className="analytics-kpi-icon green">◎</span>
+          <span className="analytics-kpi-icon green"><AdminIcon name="attendance" /></span>
           <div><small>PARTICIPACIÓN</small><strong>{globalParticipation}%</strong><p>{totals.engaged} participantes activos</p></div>
         </article>
         <article>
-          <span className="analytics-kpi-icon amber">✉</span>
+          <span className="analytics-kpi-icon amber"><AdminIcon name="mail" /></span>
           <div><small>MENSAJES PREPARADOS</small><strong>{totals.readyMessages.toLocaleString("es-CO")}</strong><p>en cola o programados</p></div>
         </article>
       </section>
@@ -216,7 +217,15 @@ export default async function AnalyticsPage() {
                 <article key={event.id}>
                   <div className="analytics-event-name">
                     <span className={event.format}>
-                      {event.format === "live" ? "●" : event.format === "hybrid" ? "◇" : "▷"}
+                      <AdminIcon
+                        name={
+                          event.format === "live"
+                            ? "event-live"
+                            : event.format === "hybrid"
+                              ? "event-hybrid"
+                              : "event-simulated"
+                        }
+                      />
                     </span>
                     <p>
                       <b>{event.title}</b>
@@ -234,14 +243,14 @@ export default async function AnalyticsPage() {
                       {streamingReady ? `${streamingReady} lista${streamingReady === 1 ? "" : "s"}` : "Pendiente"}
                     </span>
                   </div>
-                  <Link href={`/events/${event.slug}`}>Ver evento →</Link>
+                  <Link href={`/events/${event.slug}`}>Ver evento <AdminIcon name="arrow-right" /></Link>
                 </article>
               );
             })}
           </div>
         ) : (
           <div className="module-empty">
-            <span>⌁</span>
+            <span><AdminIcon name="analytics" /></span>
             <h2>Aún no hay datos para analizar</h2>
             <p>Crea tu primer evento para comenzar a medir resultados.</p>
           </div>

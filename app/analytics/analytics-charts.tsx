@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type DailyRow = { eventId: string; day: string; total: number };
 type StatusRow = { eventId: string; status: string; total: number };
@@ -155,7 +156,7 @@ export default function AnalyticsCharts({
               <small>Últimos {DAYS_WINDOW} días · {totalWindow} registro{totalWindow === 1 ? "" : "s"}</small>
             </div>
             <button onClick={() => downloadSvgAsPng(lineRef.current, "registros-por-dia.png")}>
-              Descargar PNG ↓
+               <AdminIcon name="download" /> Descargar PNG
             </button>
           </header>
           <svg
@@ -228,7 +229,7 @@ export default function AnalyticsCharts({
               <small>{distributionTotal} registro{distributionTotal === 1 ? "" : "s"} en total</small>
             </div>
             <button onClick={() => downloadSvgAsPng(donutRef.current, "estados-de-registro.png")}>
-              Descargar PNG ↓
+               <AdminIcon name="download" /> Descargar PNG
             </button>
           </header>
           {distributionTotal ? (
@@ -282,7 +283,7 @@ export default function AnalyticsCharts({
               </ul>
             </div>
           ) : (
-            <div className="analytics-donut-empty">Sin registros para el filtro seleccionado.</div>
+            <div className="analytics-donut-empty"><AdminIcon name="analytics" /> Sin registros para el filtro seleccionado.</div>
           )}
         </article>
       </div>

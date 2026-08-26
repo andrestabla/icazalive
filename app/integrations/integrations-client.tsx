@@ -6,6 +6,7 @@ import {
   ServiceLogo,
   type ServiceLogoName,
 } from "@/app/components/service-logo";
+import { AdminIcon } from "@/app/components/admin-icon";
 import type {
   IdentityProtocol,
   MfaMethod,
@@ -204,7 +205,7 @@ function requirementList(requirements: IntegrationRequirement[]) {
       {requirements.map((requirement) => (
         <div key={requirement.key}>
           <span className={requirement.ready ? "ready" : ""}>
-            {requirement.ready ? "✓" : "·"}
+            <AdminIcon name={requirement.ready ? "check" : "info"} />
           </span>
           <p>
             <b>{requirement.label}</b>
@@ -511,14 +512,14 @@ export default function IntegrationsClient({
 
       <div className="integration-summary">
         <article>
-          <span>⌘</span>
+           <span><AdminIcon name="integrations" /></span>
           <div>
             <strong>{readyConnections}/4</strong>
             <p>servicios preparados</p>
           </div>
         </article>
         <article>
-          <span>✓</span>
+           <span><AdminIcon name="check" /></span>
           <div>
             <strong>
               {completedRequirements}/{totalRequirements}
@@ -527,7 +528,7 @@ export default function IntegrationsClient({
           </div>
         </article>
         <article>
-          <span>◉</span>
+           <span><AdminIcon name="activity" /></span>
           <div>
             <strong>{readySessionCount}</strong>
             <p>sesiones listas de {eventCount} eventos</p>
@@ -576,8 +577,8 @@ export default function IntegrationsClient({
                 {zoomItem.evaluation.completed}/{zoomItem.evaluation.total}{" "}
                 requisitos
               </small>
-              <button onClick={() => openWizard("zoom")}>
-                Abrir asistente →
+               <button onClick={() => openWizard("zoom")}>
+                 Abrir asistente <AdminIcon name="arrow-right" />
               </button>
             </footer>
           </article>
@@ -615,7 +616,7 @@ export default function IntegrationsClient({
                 {awsCompleted}/{awsTotal} requisitos
               </small>
               <button onClick={() => openWizard("aws")}>
-                Abrir asistente →
+                 Abrir asistente <AdminIcon name="arrow-right" />
               </button>
             </footer>
           </article>
@@ -653,7 +654,7 @@ export default function IntegrationsClient({
                 disabled={!canManageIdentity}
                 onClick={() => openWizard("identity")}
               >
-                Abrir asistente →
+                 Abrir asistente <AdminIcon name="arrow-right" />
               </button>
             </footer>
           </article>
@@ -687,7 +688,7 @@ export default function IntegrationsClient({
                 requisitos
               </small>
               <button onClick={() => openWizard("email")}>
-                Abrir asistente →
+                 Abrir asistente <AdminIcon name="arrow-right" />
               </button>
             </footer>
           </article>
@@ -711,7 +712,7 @@ export default function IntegrationsClient({
           <i>→</i>
           <ServiceLogo service="amazon_ivs" />
           <i>→</i>
-          <span className="flow-audience">♙</span>
+           <span className="flow-audience"><AdminIcon name="users" /></span>
           <small>＋ S3</small>
         </div>
       </section>
@@ -762,7 +763,7 @@ export default function IntegrationsClient({
                   {item.evaluation.requirements.map((requirement) => (
                     <div key={requirement.key}>
                       <span className={requirement.ready ? "ready" : ""}>
-                        {requirement.ready ? "✓" : "·"}
+                        <AdminIcon name={requirement.ready ? "check" : "info"} />
                       </span>
                       <p>
                         <b>{requirement.label}</b>
@@ -910,7 +911,7 @@ export default function IntegrationsClient({
               disabled={wizardSaving}
               onClick={() => setWizard(null)}
             >
-              ×
+              <AdminIcon name="close" />
             </button>
             <p className="eyebrow">{wizardContent[wizard].eyebrow}</p>
             <h2 id="wizard-title">{wizardContent[wizard].title}</h2>
@@ -931,7 +932,7 @@ export default function IntegrationsClient({
                         : ""
                   }
                 >
-                  <span>{index < wizardStep ? "✓" : index + 1}</span>
+                  <span>{index < wizardStep ? <AdminIcon name="check" /> : index + 1}</span>
                   <small>{step}</small>
                 </div>
               ))}
@@ -945,7 +946,7 @@ export default function IntegrationsClient({
                     <i>OAuth 2.0</i>
                     <span className="wizard-app-node">Icaza Live</span>
                     <i>reunión</i>
-                    <span className="flow-audience">♙</span>
+              <span className="flow-audience"><AdminIcon name="users" /></span>
                   </div>
                   <h3>Flujo de autorización preparado</h3>
                   <p>
@@ -1043,7 +1044,7 @@ export default function IntegrationsClient({
                     <i>RTMP</i>
                     <ServiceLogo service="amazon_ivs" />
                     <i>playback</i>
-                    <span className="flow-audience">♙</span>
+                    <span className="flow-audience"><AdminIcon name="users" /></span>
                     <i>＋</i>
                     <ServiceLogo service="amazon_s3" />
                   </div>
@@ -1499,7 +1500,7 @@ export default function IntegrationsClient({
 
               {wizard === "email" && wizardStep === 3 && (
                 <div className="wizard-review">
-                  <span className="wizard-review-icon email-review">✉</span>
+                  <span className="wizard-review-icon email-review"><AdminIcon name="mail" /></span>
                   <h3>Verificar la conexión con SES</h3>
                   <p>
                     Al finalizar, la plataforma consultará tu cuenta de SES con
@@ -1512,7 +1513,7 @@ export default function IntegrationsClient({
                       className={`wizard-note ${emailCheck.ok ? "ok" : "warning"}`}
                       role="status"
                     >
-                      {emailCheck.ok ? "✓ " : "⚠ "}
+                      <AdminIcon name={emailCheck.ok ? "check" : "warning"} />
                       {emailCheck.detail}
                       {emailCheck.quota
                         ? ` Cuota diaria: ${emailCheck.quota.toLocaleString("es-CO")} correos.`
@@ -1525,7 +1526,7 @@ export default function IntegrationsClient({
 
             {wizardError && (
               <div className="wizard-error" role="alert">
-                ⓘ {wizardError}
+                <AdminIcon name="info" /> {wizardError}
               </div>
             )}
             <footer className="wizard-actions">
@@ -1534,7 +1535,7 @@ export default function IntegrationsClient({
                 disabled={wizardStep === 0 || wizardSaving}
                 onClick={() => setWizardStep((step) => step - 1)}
               >
-                ← Anterior
+                <AdminIcon name="back" /> Anterior
               </button>
               <span>
                 Paso {wizardStep + 1} de {wizardContent[wizard].steps.length}
@@ -1544,7 +1545,7 @@ export default function IntegrationsClient({
                   className="primary-button"
                   onClick={() => setWizardStep((step) => step + 1)}
                 >
-                  Continuar →
+                  Continuar <AdminIcon name="arrow-right" />
                 </button>
               ) : (
                 <button

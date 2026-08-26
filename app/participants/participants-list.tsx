@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useUserTimezone } from "@/lib/use-user-timezone";
 import { downloadXlsx } from "@/lib/xlsx-export";
+import { AdminIcon } from "@/app/components/admin-icon";
 import ParticipantInviter from "./participant-inviter";
 
 type RegistrationStatus =
@@ -271,7 +272,7 @@ export default function ParticipantsList() {
             disabled={!filtered.length || loading}
             onClick={() => setExportOpen(true)}
           >
-            ↓ Exportar
+            <AdminIcon name="download" /> Exportar
           </button>
           <ParticipantInviter
             onImported={() => setRefreshKey((current) => current + 1)}
@@ -286,20 +287,20 @@ export default function ParticipantsList() {
       )}
       {error && (
         <div className="participant-error" role="alert">
-          ⓘ {error}
+          <AdminIcon name="info" /> {error}
         </div>
       )}
 
       <section className="participant-stats">
         <article>
-          <span className="stat-icon blue">♙</span>
+          <span className="stat-icon blue"><AdminIcon name="users" /></span>
           <div>
             <strong>{records.length}</strong>
             <p>Registros totales</p>
           </div>
         </article>
         <article>
-          <span className="stat-icon green">✓</span>
+           <span className="stat-icon green"><AdminIcon name="attendance" /></span>
           <div>
             <strong>
               {records.filter((item) => item.status === "attended").length}
@@ -308,7 +309,7 @@ export default function ParticipantsList() {
           </div>
         </article>
         <article>
-          <span className="stat-icon purple">◎</span>
+           <span className="stat-icon purple"><AdminIcon name="events" /></span>
           <div>
             <strong>{new Set(records.map((item) => item.eventId)).size}</strong>
             <p>Eventos con registros</p>
@@ -318,7 +319,7 @@ export default function ParticipantsList() {
 
       <section className="panel filter-panel">
         <label className="search-field">
-          <span>⌕</span>
+           <span><AdminIcon name="search" /></span>
           <input
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1); }}
@@ -403,7 +404,7 @@ export default function ParticipantsList() {
               </Link>
               <time>{formatDate(record.registeredAt, userTimezone)}</time>
               <span className={`participant-status ${record.status}`}>
-                ● {statusLabels[record.status]}
+                <AdminIcon name={record.status === "confirmed" || record.status === "attended" ? "check" : record.status === "cancelled" || record.status === "absent" ? "close" : "activity"} /> {statusLabels[record.status]}
               </span>
               <button
                 className="participant-manage"
@@ -423,7 +424,7 @@ export default function ParticipantsList() {
               disabled={currentPage <= 1}
               onClick={() => setPage(currentPage - 1)}
             >
-              ← Anterior
+              <AdminIcon name="back" /> Anterior
             </button>
             <span>
               Página <b>{currentPage}</b> de {pageCount} · {filtered.length}{" "}
@@ -433,7 +434,7 @@ export default function ParticipantsList() {
               disabled={currentPage >= pageCount}
               onClick={() => setPage(currentPage + 1)}
             >
-              Siguiente →
+              Siguiente <AdminIcon name="arrow-right" />
             </button>
           </footer>
         )}
@@ -448,8 +449,8 @@ export default function ParticipantsList() {
             aria-labelledby="export-modal-title"
             onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
           >
-            <button className="modal-close" onClick={() => setExportOpen(false)} aria-label="Cerrar">×</button>
-            <div className="modal-icon">↓</div>
+             <button className="modal-close" onClick={() => setExportOpen(false)} aria-label="Cerrar"><AdminIcon name="close" /></button>
+             <div className="modal-icon"><AdminIcon name="download" /></div>
             <h2 id="export-modal-title">Exportar participantes</h2>
             <p>
               Se exportará la vista filtrada actual ({filtered.length} registro{filtered.length === 1 ? "" : "s"}).
@@ -522,7 +523,7 @@ export default function ParticipantsList() {
               onClick={() => setSelected(null)}
               aria-label="Cerrar"
             >
-              ×
+               <AdminIcon name="close" />
             </button>
             <div className="participant-modal-head">
               <span>
@@ -611,7 +612,7 @@ export default function ParticipantsList() {
             )}
             <div className="participant-modal-actions">
               <Link href={`/events/${selected.eventSlug}`}>
-                Abrir evento ↗
+                 Abrir evento <AdminIcon name="arrow-right" />
               </Link>
               <button
                 className="primary-button"

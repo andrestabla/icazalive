@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type EventOption = {
   id: string;
@@ -249,7 +250,7 @@ export default function ParticipantInviter({
   return (
     <>
       <button className="primary-button" onClick={() => setOpen(true)}>
-        + Invitar participantes
+        <AdminIcon name="add" /> Invitar participantes
       </button>
       {open && (
         <div className="modal-backdrop" onMouseDown={close}>
@@ -266,7 +267,7 @@ export default function ParticipantInviter({
               onClick={close}
               aria-label="Cerrar"
             >
-              ×
+              <AdminIcon name="close" />
             </button>
             <p className="eyebrow">CRECIMIENTO DE AUDIENCIA</p>
             <h2 id="participant-invite-title">Invitar participantes</h2>
@@ -278,6 +279,7 @@ export default function ParticipantInviter({
             <div className="participant-invite-tabs">
               <button
                 className={mode === "manual" ? "active" : ""}
+                aria-pressed={mode === "manual"}
                 onClick={() => {
                   setMode("manual");
                   setResult(null);
@@ -288,6 +290,7 @@ export default function ParticipantInviter({
               </button>
               <button
                 className={mode === "import" ? "active" : ""}
+                aria-pressed={mode === "import"}
                 onClick={() => {
                   setMode("import");
                   setResult(null);
@@ -300,7 +303,7 @@ export default function ParticipantInviter({
 
             {result ? (
               <div className="participant-invite-result">
-                <span>✓</span>
+                <span><AdminIcon name="check" /></span>
                 <h3>Invitaciones preparadas</h3>
                 <p>
                   {result.summary.created} nuevas · {result.summary.updated}{" "}
@@ -319,7 +322,7 @@ export default function ParticipantInviter({
                     key={invitation.registrationId}
                   >
                     <span>{invitation.name}<small>{invitation.email}</small></span>
-                    Gestionar ↗
+                    Gestionar <AdminIcon name="arrow-right" />
                   </a>
                 ))}
                 {result.skipped.length > 0 && (
@@ -413,7 +416,7 @@ export default function ParticipantInviter({
                     </small>
                   </span>
                 </label>
-                {error && <div className="participant-error">ⓘ {error}</div>}
+                {error && <div className="participant-error"><AdminIcon name="info" /> {error}</div>}
                 <div className="participant-invite-actions">
                   <button type="button" onClick={close}>Cancelar</button>
                   <button

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type CatalogModule = {
   module: string;
@@ -103,14 +104,14 @@ export default function PermissionsManager() {
       </header>
 
       {notice && <div className="detail-message" role="status">{notice}</div>}
-      {error && <div className="participant-error" role="alert">ⓘ {error}</div>}
+       {error && <div className="participant-error" role="alert"><AdminIcon name="info" /> {error}</div>}
 
       <nav className="detail-tabs" aria-label="Ámbito de permisos">
         <button className={tab === "roles" ? "active" : ""} onClick={() => setTab("roles")}>
-          Por rol (valores por defecto)
+           <AdminIcon name="permissions" /> Por rol (valores por defecto)
         </button>
         <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}>
-          Por usuario (excepciones)
+           <AdminIcon name="users" /> Por usuario (excepciones)
         </button>
       </nav>
 

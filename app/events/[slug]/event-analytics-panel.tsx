@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 import type { EventAnalytics } from "@/lib/event-analytics";
 
 const pollStatusLabels = {
@@ -107,12 +108,12 @@ export default function EventAnalyticsPanel({
       <div className="analytics-print-bar">
         <p>Informe del evento generado localmente.</p>
         <button type="button" onClick={() => window.print()}>
-          Imprimir / guardar PDF ⎙
+          <AdminIcon name="download" /> Imprimir / guardar PDF
         </button>
       </div>
       <section className="analytics-kpis" aria-label="Métricas del evento">
         <article>
-          <span className="analytics-kpi-icon purple">♙</span>
+          <span className="analytics-kpi-icon purple"><AdminIcon name="users" /></span>
           <div>
             <small>REGISTRADOS</small>
             <strong>{registration.total.toLocaleString("es-CO")}</strong>
@@ -120,7 +121,7 @@ export default function EventAnalyticsPanel({
           </div>
         </article>
         <article>
-          <span className="analytics-kpi-icon blue">↗</span>
+          <span className="analytics-kpi-icon blue"><AdminIcon name="activity" /></span>
           <div>
             <small>VISITARON LA SALA</small>
             <strong>{registration.roomVisitors.toLocaleString("es-CO")}</strong>
@@ -128,7 +129,7 @@ export default function EventAnalyticsPanel({
           </div>
         </article>
         <article>
-          <span className="analytics-kpi-icon green">◎</span>
+          <span className="analytics-kpi-icon green"><AdminIcon name="attendance" /></span>
           <div>
             <small>PARTICIPACIÓN</small>
             <strong>{interaction.participationRate}%</strong>
@@ -136,7 +137,7 @@ export default function EventAnalyticsPanel({
           </div>
         </article>
         <article>
-          <span className="analytics-kpi-icon amber">✉</span>
+          <span className="analytics-kpi-icon amber"><AdminIcon name="mail" /></span>
           <div>
             <small>MENSAJES PREPARADOS</small>
             <strong>{readyMessages.toLocaleString("es-CO")}</strong>
@@ -202,10 +203,10 @@ export default function EventAnalyticsPanel({
               </div>
             </div>
             <div className="analytics-engagement-stats">
-              <div><span>?</span><p><b>{interaction.questions}</b><small>preguntas</small></p></div>
-              <div><span>✓</span><p><b>{interaction.answeredQuestions}</b><small>respondidas</small></p></div>
-              <div><span>▥</span><p><b>{interaction.polls}</b><small>encuestas</small></p></div>
-              <div><span>●</span><p><b>{interaction.votes}</b><small>votos</small></p></div>
+              <div><span><AdminIcon name="question" /></span><p><b>{interaction.questions}</b><small>preguntas</small></p></div>
+              <div><span><AdminIcon name="check" /></span><p><b>{interaction.answeredQuestions}</b><small>respondidas</small></p></div>
+              <div><span><AdminIcon name="poll" /></span><p><b>{interaction.polls}</b><small>encuestas</small></p></div>
+              <div><span><AdminIcon name="activity" /></span><p><b>{interaction.votes}</b><small>votos</small></p></div>
             </div>
           </div>
         </section>

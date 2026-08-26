@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ServiceLogo } from "@/app/components/service-logo";
+import { AdminIcon } from "@/app/components/admin-icon";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
 
 type StudioSession = {
@@ -81,7 +82,7 @@ export default function StudioClient({
     <>
       <div className="detail-breadcrumb">
         <Link href={`/events/${event.slug}`}>{event.title}</Link>
-        <span>›</span>
+        <span><AdminIcon name="arrow-right" /></span>
         Sala técnica
       </div>
       <header className="studio-header">
@@ -92,7 +93,7 @@ export default function StudioClient({
         </div>
         <div className="studio-header-actions">
           <span className={`studio-status ${session.streamingStatus}`}>
-            ● {statusLabels[session.streamingStatus]}
+            <AdminIcon name={session.streamingStatus === "live" ? "event-live" : session.streamingStatus === "ready" ? "check" : session.streamingStatus === "error" ? "close" : "activity"} /> {statusLabels[session.streamingStatus]}
           </span>
           <Link href={`/events/${event.slug}`} className="secondary-action link-button">
             Volver al evento
@@ -110,19 +111,19 @@ export default function StudioClient({
               <i>LOCAL</i>
             </div>
             <div className="studio-stage-empty">
-              <span>◉</span>
+              <span><AdminIcon name="event-live" /></span>
               <h2>La señal aún no está conectada</h2>
               <p>Esta vista mostrará la salida de Amazon IVS cuando estén disponibles las credenciales y el canal.</p>
             </div>
             <div className="studio-stage-bottom">
-              <span>◉ {event.title}</span>
+              <span><AdminIcon name="event-live" /> {event.title}</span>
               <small>Sin emisión pública</small>
             </div>
           </div>
           <div className="studio-sources">
             <div><ServiceLogo service="zoom" /><p><b>Fuente Zoom</b><small>{session.zoomMeetingId ? `Reunión ${session.zoomMeetingId}` : "Sin reunión configurada"}</small></p></div>
             <div><ServiceLogo service="amazon_ivs" /><p><b>Salida Amazon IVS</b><small>{session.ivsChannelArn ? "Canal configurado" : "Sin canal configurado"}</small></p></div>
-            <div><span>⌁</span><p><b>Reproducción</b><small>{session.playbackUrl ? "URL disponible" : "Pendiente"}</small></p></div>
+            <div><span><AdminIcon name="event-simulated" /></span><p><b>Reproducción</b><small>{session.playbackUrl ? "URL disponible" : "Pendiente"}</small></p></div>
           </div>
         </section>
 
@@ -133,7 +134,7 @@ export default function StudioClient({
           <div className="technical-check-list">
             {checks.map((check) => (
               <div className={check.status} key={check.id}>
-                <span>{check.status === "pass" ? "✓" : check.status === "warning" ? "!" : "×"}</span>
+                <span><AdminIcon name={check.status === "pass" ? "check" : check.status === "warning" ? "warning" : "close"} /></span>
                 <p><b>{check.label}</b><small>{check.detail}</small></p>
               </div>
             ))}

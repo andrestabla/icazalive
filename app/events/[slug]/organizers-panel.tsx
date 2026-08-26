@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type Organizer = {
   userId: string;
@@ -79,7 +80,7 @@ export default function OrganizersPanel({ eventSlug }: { eventSlug: string }) {
     <section className="panel organizers-panel">
       <div className="panel-heading">
         <div>
-          <h2>Organizadores</h2>
+          <h2><AdminIcon name="team" /> Organizadores</h2>
           <p>Propietario y coorganizadores del evento.</p>
         </div>
       </div>
@@ -109,7 +110,7 @@ export default function OrganizersPanel({ eventSlug }: { eventSlug: string }) {
                     )
                   }
                 >
-                  Hacer propietario
+                  <AdminIcon name="permissions" /> Hacer propietario
                 </button>
                 <button
                   disabled={saving}
@@ -122,7 +123,7 @@ export default function OrganizersPanel({ eventSlug }: { eventSlug: string }) {
                     )
                   }
                 >
-                  Retirar
+                  <AdminIcon name="close" /> Retirar
                 </button>
               </div>
             )}
@@ -159,7 +160,7 @@ export default function OrganizersPanel({ eventSlug }: { eventSlug: string }) {
               );
             }}
           >
-            {saving ? "…" : "Agregar"}
+            {saving ? <AdminIcon name="refresh" /> : <AdminIcon name="add" />} {saving ? "Guardando…" : "Agregar"}
           </button>
         </div>
       )}

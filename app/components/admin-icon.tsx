@@ -16,6 +16,19 @@ export type AdminIconName =
   | "bell"
   | "alert"
   | "warning"
+  | "search"
+  | "list"
+  | "calendar"
+  | "download"
+  | "clock"
+  | "duplicate"
+  | "refresh"
+  | "mail"
+  | "question"
+  | "chat"
+  | "reaction"
+  | "poll"
+  | "upvote"
   | "info"
   | "check"
   | "add"
@@ -47,6 +60,19 @@ function IconPaths({ name }: { name: AdminIconName }) {
     bell: <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></>,
     alert: <><path d="M12 3 2.8 20h18.4Z" /><path d="M12 9v4M12 16h.01" /></>,
     warning: <><path d="M12 3 2.8 20h18.4Z" /><path d="M12 9v4M12 16h.01" /></>,
+    search: <><circle cx="10.8" cy="10.8" r="6.3" /><path d="m16 16 4.5 4.5" /></>,
+    list: <><path d="M8 6h12M8 12h12M8 18h12" /><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></>,
+    calendar: <><rect x="3" y="4.5" width="18" height="17" rx="2" /><path d="M8 2.5v4M16 2.5v4M3 9.5h18M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01" /></>,
+    download: <><path d="M12 3v12M7 10l5 5 5-5M4 20h16" /></>,
+    clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3 2" /></>,
+    duplicate: <><rect x="8" y="8" width="11" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" /></>,
+    refresh: <><path d="M20 11a8 8 0 0 0-14-4L4 9M4 5v4h4M4 13a8 8 0 0 0 14 4l2-2M20 19v-4h-4" /></>,
+    mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></>,
+    question: <><circle cx="12" cy="12" r="9" /><path d="M9.7 9.2a2.5 2.5 0 1 1 4.2 1.8c-1.2 1-1.9 1.5-1.9 3M12 17h.01" /></>,
+    chat: <><path d="M5 18.5 3.5 21l4.2-1.5H18a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v7.5a3 3 0 0 0 2 2.8Z" /><path d="M8 10h8M8 14h5" /></>,
+    reaction: <><circle cx="12" cy="12" r="9" /><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5M9 9.5h.01M15 9.5h.01" /></>,
+    poll: <><path d="M5 20V10M11 20V4M17 20v-7M3 20h18" /><path d="M4 10h2M10 4h2M16 13h2" /></>,
+    upvote: <><path d="m12 19V5M6 11l6-6 6 6" /></>,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
     check: <><path d="m5 12 4.3 4.3L19 6.7" /></>,
     add: <><path d="M12 5v14M5 12h14" /></>,

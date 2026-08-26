@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type FeedbackSummary = {
   enabled: boolean;
@@ -87,7 +88,7 @@ export default function FeedbackAdminPanel({
           <p>Calificaciones enviadas por los asistentes desde su enlace personal al finalizar el evento.</p>
         </div>
         <button onClick={exportCsv} disabled={!summary?.responses.length}>
-          Exportar CSV <span>↓</span>
+          <AdminIcon name="download" /> Exportar CSV
         </button>
       </div>
 

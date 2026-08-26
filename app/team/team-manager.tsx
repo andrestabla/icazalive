@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type StaffRole = "administrator" | "organizer";
 
@@ -198,17 +199,17 @@ export default function TeamManager({
           <h1>Equipo</h1>
           <p>Gestiona quién puede crear eventos y configurar la plataforma.</p>
         </div>
-        <button className="primary-button" onClick={openInvite}>＋ Añadir miembro</button>
+         <button className="primary-button" onClick={openInvite}><AdminIcon name="add" /> Añadir miembro</button>
       </header>
 
       {message && <div className="detail-message" role="status">{message}</div>}
-      {error && <div className="team-error" role="alert">ⓘ {error}</div>}
+       {error && <div className="team-error" role="alert"><AdminIcon name="info" /> {error}</div>}
 
-      <section className="team-stats">
-        <article><span className="stat-icon purple">♧</span><div><strong>{members.length}</strong><p>miembros totales</p></div></article>
-        <article><span className="stat-icon green">✓</span><div><strong>{activeMembers}</strong><p>accesos activos</p></div></article>
-        <article><span className="stat-icon blue">◇</span><div><strong>{administrators}</strong><p>administradores</p></div></article>
-        <article><span className="stat-icon orange">↗</span><div><strong>{recentAccess}</strong><p>han iniciado sesión</p></div></article>
+       <section className="team-stats">
+         <article><span className="stat-icon purple"><AdminIcon name="users" /></span><div><strong>{members.length}</strong><p>miembros totales</p></div></article>
+         <article><span className="stat-icon green"><AdminIcon name="check" /></span><div><strong>{activeMembers}</strong><p>accesos activos</p></div></article>
+         <article><span className="stat-icon blue"><AdminIcon name="permissions" /></span><div><strong>{administrators}</strong><p>administradores</p></div></article>
+         <article><span className="stat-icon orange"><AdminIcon name="activity" /></span><div><strong>{recentAccess}</strong><p>han iniciado sesión</p></div></article>
       </section>
 
       <section className="panel team-panel">
@@ -291,7 +292,7 @@ export default function TeamManager({
       </section>
 
       <section className="panel local-team-note">
-        <span>⌁</span>
+         <span><AdminIcon name="info" /></span>
         <div>
           <p className="eyebrow">ACCESOS LOCALES</p>
           <h2>Sin invitaciones por correo todavía</h2>
@@ -302,10 +303,10 @@ export default function TeamManager({
       {inviteOpen && (
         <div className="modal-backdrop" onMouseDown={() => setInviteOpen(false)}>
           <section className="modal team-modal" role="dialog" aria-modal="true" aria-labelledby="team-invite-title" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="modal-close" onClick={() => setInviteOpen(false)} aria-label="Cerrar">×</button>
+           <button className="modal-close" onClick={() => setInviteOpen(false)} aria-label="Cerrar"><AdminIcon name="close" /></button>
             {createdAccess ? (
               <div className="team-access-created">
-                <span>✓</span>
+                 <span><AdminIcon name="check" /></span>
                 <p className="eyebrow">CUENTA CREADA</p>
                 <h2 id="team-invite-title">Comparte el acceso con seguridad</h2>
                 <p>Esta contraseña se muestra para que puedas entregarla al nuevo miembro.</p>
@@ -314,7 +315,7 @@ export default function TeamManager({
               </div>
             ) : (
               <>
-                <span className="modal-icon">♧</span>
+                 <span className="modal-icon"><AdminIcon name="users" /></span>
                 <p className="eyebrow">NUEVO MIEMBRO</p>
                 <h2 id="team-invite-title">Crear acceso local</h2>
                 <p>El miembro podrá iniciar sesión inmediatamente con estas credenciales.</p>
@@ -335,8 +336,8 @@ export default function TeamManager({
       {resetMember && (
         <div className="modal-backdrop" onMouseDown={() => setResetMember(null)}>
           <section className="modal team-modal reset" role="dialog" aria-modal="true" aria-labelledby="team-reset-title" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="modal-close" onClick={() => setResetMember(null)} aria-label="Cerrar">×</button>
-            <span className="modal-icon">↻</span>
+             <button className="modal-close" onClick={() => setResetMember(null)} aria-label="Cerrar"><AdminIcon name="close" /></button>
+             <span className="modal-icon"><AdminIcon name="refresh" /></span>
             <p className="eyebrow">RESTABLECER ACCESO</p>
             <h2 id="team-reset-title">Nueva contraseña para {resetMember.name}</h2>
             <p>La sesión actual del miembro se cerrará y deberá usar la nueva contraseña.</p>
@@ -355,8 +356,8 @@ export default function TeamManager({
             aria-labelledby="team-delete-title"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <button className="modal-close" disabled={saving === deleteMember.id} onClick={() => setDeleteMember(null)} aria-label="Cerrar">×</button>
-            <div className="modal-icon danger">!</div>
+             <button className="modal-close" disabled={saving === deleteMember.id} onClick={() => setDeleteMember(null)} aria-label="Cerrar"><AdminIcon name="close" /></button>
+             <div className="modal-icon danger"><AdminIcon name="warning" /></div>
             <h2 id="team-delete-title">Eliminar la cuenta de {deleteMember.name}</h2>
             <p>
               Esta acción es definitiva: borra la cuenta, sus sesiones y sus asignaciones.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type VideoInfo = {
   hasVideo: boolean;
@@ -133,7 +134,7 @@ export default function RecordedVideoPanel({
       <div className="recorded-video-body">
         {info?.hasVideo ? (
           <div className="recorded-video-current">
-            <span>▶</span>
+             <span><AdminIcon name="event-simulated" /></span>
             <div>
               <b>{info.name ?? "video.mp4"}</b>
               <small>
@@ -144,7 +145,7 @@ export default function RecordedVideoPanel({
               </small>
             </div>
             <button disabled={uploading} onClick={() => void removeVideo()}>
-              Eliminar
+               <AdminIcon name="close" /> Eliminar
             </button>
           </div>
         ) : (

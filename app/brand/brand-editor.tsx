@@ -3,6 +3,7 @@
 import type { CSSProperties, FormEvent } from "react";
 import { useState } from "react";
 import Link from "next/link";
+import { AdminIcon } from "@/app/components/admin-icon";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import { DEFAULT_BRAND, type PublicBrand } from "@/lib/brand-config";
 
@@ -105,13 +106,13 @@ export default function BrandEditor({
             target="_blank"
             className="secondary-action link-button"
           >
-            Abrir página pública ↗
+            Abrir página pública <AdminIcon name="arrow-right" />
           </Link>
         )}
       </header>
 
       {message && <div className="detail-message" role="status">{message}</div>}
-      {error && <div className="brand-error" role="alert">ⓘ {error}</div>}
+      {error && <div className="brand-error" role="alert"><AdminIcon name="info" /> {error}</div>}
 
       <div className="brand-editor-grid">
         <form className="panel brand-settings-panel" onSubmit={save}>
@@ -277,11 +278,11 @@ export default function BrandEditor({
               <h3>Regístrate al evento</h3>
               <label>Nombre completo<span /></label>
               <label>Correo electrónico<span /></label>
-              <button type="button">{brand.registrationButtonLabel} →</button>
+              <button type="button">{brand.registrationButtonLabel} <AdminIcon name="arrow-right" /></button>
             </div>
           </section>
           <div className="brand-preview-note">
-            <span>✓</span>
+            <span><AdminIcon name="check" /></span>
             <p><b>Aplicación global</b><small>La misma identidad aparecerá en el registro y en el lobby de todos los eventos.</small></p>
           </div>
         </aside>

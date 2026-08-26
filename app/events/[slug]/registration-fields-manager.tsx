@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 import type {
   RegistrationFieldDefinition,
   RegistrationFieldType,
@@ -175,12 +176,12 @@ export default function RegistrationFieldsManager({
           className="secondary-action"
           onClick={() => setEditorOpen((open) => !open)}
         >
-          {editorOpen ? "Cerrar" : "+ Agregar campo"}
+          {editorOpen ? "Cerrar" : <><AdminIcon name="add" /> Agregar campo</>}
         </button>
       </div>
 
       {notice && <div className="detail-message">{notice}</div>}
-      {error && <div className="participant-error">ⓘ {error}</div>}
+      {error && <div className="participant-error"><AdminIcon name="info" /> {error}</div>}
 
       {editorOpen && (
         <form className="registration-field-editor" onSubmit={createField}>
@@ -265,7 +266,19 @@ export default function RegistrationFieldsManager({
         <div className="registration-custom-list">
           {fields.map((field) => (
             <article className={!field.active ? "inactive" : ""} key={field.id}>
-              <span>{field.type === "checkbox" ? "✓" : field.type === "select" ? "⌄" : field.type === "textarea" ? "¶" : "Aa"}</span>
+              <span>
+                <AdminIcon
+                  name={
+                    field.type === "checkbox"
+                      ? "check"
+                      : field.type === "select"
+                        ? "list"
+                        : field.type === "textarea"
+                          ? "chat"
+                          : "list"
+                  }
+                />
+              </span>
               <div>
                 <b>{field.label}</b>
                 <p>
@@ -283,7 +296,7 @@ export default function RegistrationFieldsManager({
                     void updateField(field, { required: !field.required })
                   }
                 >
-                  {field.required ? "Hacer opcional" : "Hacer obligatorio"}
+                  <AdminIcon name="check" /> {field.required ? "Hacer opcional" : "Hacer obligatorio"}
                 </button>
                 <button
                   disabled={saving === field.id}
@@ -291,14 +304,14 @@ export default function RegistrationFieldsManager({
                     void updateField(field, { active: !field.active })
                   }
                 >
-                  {field.active ? "Desactivar" : "Activar"}
+                  <AdminIcon name="refresh" /> {field.active ? "Desactivar" : "Activar"}
                 </button>
                 <button
                   className="danger"
                   disabled={saving === field.id}
                   onClick={() => void deleteField(field)}
                 >
-                  Eliminar
+                  <AdminIcon name="close" /> Eliminar
                 </button>
               </div>
             </article>

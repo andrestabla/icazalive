@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
 import { ServiceLogo } from "@/app/components/service-logo";
+import { AdminIcon, type AdminIconName } from "@/app/components/admin-icon";
 import {
   confirmableTransitions,
   eventStatusTransitions,
@@ -170,27 +171,27 @@ const statusLabels: Record<EventData["status"], string> = {
 
 const communicationLabels: Record<
   CommunicationMessage["type"],
-  { title: string; timing: string; icon: string }
+  { title: string; timing: string; icon: AdminIconName }
 > = {
   registration_confirmation: {
     title: "Confirmación de registro",
     timing: "Inmediatamente después del registro",
-    icon: "✓",
+    icon: "check",
   },
   reminder_24h: {
     title: "Recordatorio de 24 horas",
     timing: "24 horas antes del evento",
-    icon: "24",
+    icon: "clock",
   },
   reminder_1h: {
     title: "Recordatorio de 1 hora",
     timing: "1 hora antes del evento",
-    icon: "1h",
+    icon: "clock",
   },
   post_event: {
     title: "Seguimiento posterior",
     timing: "1 hora después del evento",
-    icon: "↗",
+    icon: "arrow-right",
   },
 };
 
@@ -918,7 +919,7 @@ export default function EventDetail({
 
   return (
     <>
-      <div className="detail-breadcrumb"><Link href="/events">Eventos</Link><span>›</span>{event.title}</div>
+      <div className="detail-breadcrumb"><Link href="/events">Eventos</Link><span><AdminIcon name="arrow-right" /></span>{event.title}</div>
       <header className="event-detail-header">
         <div className={`event-hero-date ${event.format}`}>
           <b>{new Intl.DateTimeFormat("es-CO", { day: "2-digit", timeZone: event.timezone }).format(start)}</b>
@@ -927,10 +928,10 @@ export default function EventDetail({
         <div className="event-title-block">
           <div className="catalog-badges">
             <span className={`format-badge ${event.format}`}>{event.format === "live" ? "En vivo" : event.format === "hybrid" ? "Híbrido" : "Simulado"}</span>
-            <span className={`status plain ${event.status}`}>● {statusLabels[event.status]}</span>
+            <span className={`status plain ${event.status}`}><AdminIcon name={event.status === "live" ? "event-live" : event.status === "cancelled" ? "close" : event.status === "completed" ? "check" : "activity"} /> {statusLabels[event.status]}</span>
           </div>
           <h1>{event.title}</h1>
-          <p>◷ {formatStableDateTime(start, event.timezone)} · {Math.round((end.getTime() - start.getTime()) / 60000)} min</p>
+          <p><AdminIcon name="clock" /> {formatStableDateTime(start, event.timezone)} · {Math.round((end.getTime() - start.getTime()) / 60000)} min</p>
         </div>
         <div className="detail-actions">
           <label className="status-control">
@@ -990,7 +991,7 @@ export default function EventDetail({
 
       <nav className="detail-tabs" aria-label="Secciones del evento">
         {["Resumen", "Registro", "Comunicaciones", "Transmisión", "Interacción", "Analítica"].map((tab) => (
-          <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => selectTab(tab)}>{tab}</button>
+          <button className={activeTab === tab ? "active" : ""} aria-pressed={activeTab === tab} key={tab} onClick={() => selectTab(tab)}>{tab}</button>
         ))}
       </nav>
 
@@ -1007,7 +1008,7 @@ export default function EventDetail({
                     setSessionEditor("new");
                   }}
                 >
-                  ＋ Añadir sesión
+                  <AdminIcon name="add" /> Añadir sesión
                 </button>
               </div>
               <div className="session-list">
@@ -1064,9 +1065,9 @@ export default function EventDetail({
             <section className="panel detail-panel">
               <div className="panel-heading"><div><h2>Preparación del evento</h2><p>Pasos esenciales antes de publicar.</p></div></div>
               <div className="readiness-list">
-                <div className="ready"><span>✓</span><div><b>Información principal</b><p>Fecha, formato y capacidad definidos.</p></div><small>Completo</small></div>
-                <div className={event.registrationOpen ? "ready" : ""}><span>{event.registrationOpen ? "✓" : "2"}</span><div><b>Página de registro</b><p>Configura campos, marca y mensajes.</p></div><small>{event.registrationOpen ? "Activa" : "Pendiente"}</small></div>
-                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? "✓" : "3"}</span><div><b>Transmisión</b><p>Configura Zoom y prepara el canal de IVS.</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista localmente" : "Pendiente"}</small></div>
+                <div className="ready"><span><AdminIcon name="check" /></span><div><b>Información principal</b><p>Fecha, formato y capacidad definidos.</p></div><small>Completo</small></div>
+                <div className={event.registrationOpen ? "ready" : ""}><span>{event.registrationOpen ? <AdminIcon name="check" /> : "2"}</span><div><b>Página de registro</b><p>Configura campos, marca y mensajes.</p></div><small>{event.registrationOpen ? "Activa" : "Pendiente"}</small></div>
+                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? <AdminIcon name="check" /> : "3"}</span><div><b>Transmisión</b><p>Configura Zoom y prepara el canal de IVS.</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista localmente" : "Pendiente"}</small></div>
               </div>
             </section>
           </div>
@@ -1089,11 +1090,11 @@ export default function EventDetail({
         <div className="registration-section">
           <div className="registration-admin-grid">
             <section className="panel registration-admin-card">
-              <span className={event.registrationOpen ? "active" : ""}>◎</span>
+              <span className={event.registrationOpen ? "active" : ""}><AdminIcon name={event.registrationOpen ? "attendance" : "close"} /></span>
               <p className="eyebrow">PÁGINA PÚBLICA</p>
               <h2>{event.registrationOpen ? "El registro está abierto" : "El registro está cerrado"}</h2>
               <p>Comparte el enlace público para que los asistentes completen sus datos y queden asociados automáticamente a este evento.</p>
-              <div className="public-link-box"><code>/register/{event.slug}</code><Link href={`/register/${event.slug}`} target="_blank">Abrir página ↗</Link></div>
+              <div className="public-link-box"><code>/register/{event.slug}</code><Link href={`/register/${event.slug}`} target="_blank">Abrir página <AdminIcon name="arrow-right" /></Link></div>
               <button className="primary-button" disabled={saving} onClick={() => void patchEvent({ registrationOpen: !event.registrationOpen })}>{event.registrationOpen ? "Cerrar inscripciones" : "Abrir inscripciones"}</button>
               <label className="self-service-cutoff">
                 Plazo de autogestión del asistente
@@ -1140,7 +1141,7 @@ export default function EventDetail({
               <strong>{registrationCount.toLocaleString("es-CO")}</strong>
               <p>Capacidad máxima: {event.maxAttendees.toLocaleString("es-CO")}</p>
               <div><span style={{ width: `${Math.min(100, (registrationCount / event.maxAttendees) * 100)}%` }} /></div>
-              <Link href="/participants">Ver participantes →</Link>
+              <Link href="/participants">Ver participantes <AdminIcon name="arrow-right" /></Link>
             </section>
           </div>
           <section className="panel event-brand-card">
@@ -1211,7 +1212,7 @@ export default function EventDetail({
                   });
               }}
             >
-              Procesar cola ahora ⟳
+              <AdminIcon name="refresh" /> Procesar cola ahora
             </button>
           </div>
           <div className="communications-grid">
@@ -1232,7 +1233,7 @@ export default function EventDetail({
                       key={item.id}
                       onClick={() => setSelectedCommunicationId(item.id)}
                     >
-                      <span className="communication-icon">{label.icon}</span>
+                      <span className="communication-icon"><AdminIcon name={label.icon} /></span>
                       <div>
                         <b>{label.title}</b>
                         <p>{label.timing}</p>
@@ -1257,7 +1258,7 @@ export default function EventDetail({
                 })}
               </div>
               <div className="local-queue-note">
-                <span>⌁</span>
+                        <span><AdminIcon name="mail" /></span>
                 <p><b>Modo local</b> Las entregas quedan registradas en la base de datos. Ningún correo saldrá hasta conectar Amazon SES u otro proveedor.</p>
               </div>
             </section>
@@ -1339,7 +1340,7 @@ export default function EventDetail({
                 </>
               ) : (
                 <div className="tab-placeholder">
-                  <span>✉</span>
+                  <span><AdminIcon name="mail" /></span>
                   <h2>Sin plantillas</h2>
                   <p>Ejecuta los datos iniciales para crear la secuencia del evento.</p>
                 </div>
@@ -1350,18 +1351,18 @@ export default function EventDetail({
       ) : activeTab === "Interacción" ? (
         interactionLoading || !interactionData ? (
           <section className="panel tab-placeholder">
-            <span>⌁</span>
+            <span><AdminIcon name="analytics" /></span>
             <h2>{interactionLoading ? "Cargando interacción…" : "Interacción no disponible"}</h2>
             <p>Preparando chat, preguntas, encuestas y recursos del evento.</p>
           </section>
         ) : (
           <div className="interaction-section">
             <div className="interaction-stats">
-              <article><span>?</span><div><strong>{pendingQuestions}</strong><p>preguntas pendientes</p></div></article>
-              <article><span>◉</span><div><strong>{openPolls}</strong><p>encuestas abiertas</p></div></article>
-              <article><span>✓</span><div><strong>{totalPollVotes}</strong><p>respuestas registradas</p></div></article>
-              <article><span>☵</span><div><strong>{publicChatMessages}</strong><p>mensajes públicos</p></div></article>
-              <article><span>👏</span><div><strong>{totalReactions}</strong><p>reacciones rápidas</p></div></article>
+              <article><span><AdminIcon name="question" /></span><div><strong>{pendingQuestions}</strong><p>preguntas pendientes</p></div></article>
+              <article><span><AdminIcon name="event-live" /></span><div><strong>{openPolls}</strong><p>encuestas abiertas</p></div></article>
+              <article><span><AdminIcon name="check" /></span><div><strong>{totalPollVotes}</strong><p>respuestas registradas</p></div></article>
+              <article><span><AdminIcon name="chat" /></span><div><strong>{publicChatMessages}</strong><p>mensajes públicos</p></div></article>
+              <article><span><AdminIcon name="reaction" /></span><div><strong>{totalReactions}</strong><p>reacciones rápidas</p></div></article>
             </div>
 
             <div className="interaction-grid">
@@ -1374,7 +1375,7 @@ export default function EventDetail({
                   {interactionData.questions.length ? (
                     interactionData.questions.map((question) => (
                       <article className={question.status} key={question.id}>
-                        <div className="question-votes"><b>▲</b><span>{question.upvotes}</span></div>
+                        <div className="question-votes"><b><AdminIcon name="upvote" /></b><span>{question.upvotes}</span></div>
                         <div className="question-content">
                           <div className="question-author">
                             <span>{question.authorName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</span>
@@ -1384,7 +1385,7 @@ export default function EventDetail({
                           <p>{question.question}</p>
                           <div className="question-actions">
                             {question.status !== "answered" && (
-                              <button disabled={interactionSaving === question.id} onClick={() => void updateQuestionStatus(question.id, "answered")}>✓ Marcar respondida</button>
+                              <button disabled={interactionSaving === question.id} onClick={() => void updateQuestionStatus(question.id, "answered")}><AdminIcon name="check" /> Marcar respondida</button>
                             )}
                             {question.status !== "dismissed" && (
                               <button disabled={interactionSaving === question.id} onClick={() => void updateQuestionStatus(question.id, "dismissed")}>Descartar</button>
@@ -1668,7 +1669,7 @@ export default function EventDetail({
                   <div className="managed-resource-list">
                     {interactionData.resources.map((resource) => (
                       <article className={resource.visible ? "" : "hidden"} key={resource.id}>
-                        <span>{resource.kind === "file" ? "↓" : "↗"}</span>
+                        <span><AdminIcon name={resource.kind === "file" ? "download" : "arrow-right"} /></span>
                         <p><b>{resource.title}</b><a href={resource.url} target="_blank" rel="noopener noreferrer">{resource.url}</a></p>
                         <button
                           disabled={interactionSaving === `resource-${resource.id}`}
@@ -1754,9 +1755,9 @@ export default function EventDetail({
             </div>
 
             <div className="local-interaction-note">
-              <span>⌁</span>
+              <span><AdminIcon name="activity" /></span>
               <p><b>Consola local sincronizada</b> La sala y esta vista consultan cambios cada 2 segundos. La infraestructura WebSocket/SSE y escalamiento horizontal se activarán al desplegar.</p>
-              <Link href={`/room/${event.slug}`} target="_blank">Abrir vista previa ↗</Link>
+              <Link href={`/room/${event.slug}`} target="_blank">Abrir vista previa <AdminIcon name="arrow-right" /></Link>
             </div>
           </div>
         )
@@ -1831,7 +1832,7 @@ export default function EventDetail({
               </article>
               <i>→</i>
               <article>
-                <span className="pipeline-audience">♙</span>
+                <span className="pipeline-audience"><AdminIcon name="users" /></span>
                 <div><small>AUDIENCIA</small><b>Participantes</b><p>{registrationCount.toLocaleString("es-CO")} registrados</p></div>
               </article>
             </div>
@@ -1884,7 +1885,7 @@ export default function EventDetail({
                         </label>
                       </div>
                       <div className={`zoom-sync-card ${zoomSyncStatus}`}>
-                        <span>{zoomSyncStatus === "synced" ? "✓" : zoomSyncStatus === "out_of_sync" ? "!" : "◷"}</span>
+                        <span><AdminIcon name={zoomSyncStatus === "synced" ? "check" : zoomSyncStatus === "out_of_sync" ? "warning" : "clock"} /></span>
                         <div>
                           <b>{zoomSyncCopy.title}</b>
                           <small>{zoomSyncCopy.detail}</small>
@@ -1998,7 +1999,7 @@ export default function EventDetail({
                 <div className="technical-check-list">
                   {technicalChecks.map((check) => (
                     <div className={check.status} key={check.id}>
-                      <span>{check.status === "pass" ? "✓" : check.status === "warning" ? "!" : "×"}</span>
+                      <span><AdminIcon name={check.status === "pass" ? "check" : check.status === "warning" ? "warning" : "close"} /></span>
                       <p><b>{check.label}</b><small>{check.detail}</small></p>
                     </div>
                   ))}
@@ -2017,7 +2018,7 @@ export default function EventDetail({
           </div>
         ) : (
           <section className="panel tab-placeholder">
-            <span>◉</span>
+            <span><AdminIcon name="event-live" /></span>
             <h2>Sin sesión principal</h2>
             <p>Crea una sesión para configurar Zoom y Amazon IVS.</p>
           </section>
@@ -2038,7 +2039,7 @@ export default function EventDetail({
         </>
       ) : (
         <section className="panel tab-placeholder">
-          <span>⌁</span>
+          <span><AdminIcon name="analytics" /></span>
           <h2>{activeTab}</h2>
           <p>Esta sección ya forma parte de la navegación y se conectará en el siguiente ciclo funcional.</p>
         </section>
@@ -2064,9 +2065,9 @@ export default function EventDetail({
               onClick={() => setSessionEditor(null)}
               aria-label="Cerrar"
             >
-              ×
+              <AdminIcon name="close" />
             </button>
-            <span className="modal-icon">◷</span>
+            <span className="modal-icon"><AdminIcon name="clock" /></span>
             <p className="eyebrow">
               {sessionEditor === "new" ? "NUEVA SESIÓN" : "EDITAR SESIÓN"}
             </p>
@@ -2228,9 +2229,9 @@ export default function EventDetail({
               onClick={() => setSessionToDelete(null)}
               aria-label="Cerrar"
             >
-              ×
+              <AdminIcon name="close" />
             </button>
-            <span className="modal-icon danger">×</span>
+            <span className="modal-icon danger"><AdminIcon name="close" /></span>
             <p className="eyebrow">ELIMINAR SESIÓN</p>
             <h2 id="session-delete-title">¿Eliminar “{sessionToDelete.title}”?</h2>
             <p>
@@ -2271,9 +2272,9 @@ export default function EventDetail({
             aria-labelledby="status-confirm-title"
             onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
           >
-            <button className="modal-close" disabled={saving} onClick={() => setPendingStatus(null)} aria-label="Cerrar">×</button>
+            <button className="modal-close" disabled={saving} onClick={() => setPendingStatus(null)} aria-label="Cerrar"><AdminIcon name="close" /></button>
             <div className={`modal-icon ${pendingStatus === "cancelled" ? "danger" : ""}`}>
-              {pendingStatus === "cancelled" ? "!" : "→"}
+              <AdminIcon name={pendingStatus === "cancelled" ? "warning" : "arrow-right"} />
             </div>
             <h2 id="status-confirm-title">{confirmableTransitions[pendingStatus].title}</h2>
             <p>{confirmableTransitions[pendingStatus].description}</p>

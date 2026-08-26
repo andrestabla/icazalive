@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 import { useUserTimezone } from "@/lib/use-user-timezone";
 
 type AuditOutcome = "success" | "denied" | "failure";
@@ -140,6 +141,7 @@ export default function AuditLogClient({
 }) {
   const userTimezone = useUserTimezone();
   const [integrity, setIntegrity] = useState("");
+  const [integrityWarning, setIntegrityWarning] = useState(false);
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState("");
   const [outcome, setOutcome] = useState("");
@@ -243,58 +245,62 @@ export default function AuditLogClient({
             plataforma.
           </p>
         </div>
-        <button
-          className="secondary-action"
-          disabled={!data.entries.length}
-          onClick={exportCsv}
-        >
-          ↓ Exportar CSV
-        </button>
+        <div className="audit-header-actions">
+          <button
+            className="secondary-action"
+            disabled={!data.entries.length}
+            onClick={exportCsv}
+          >
+            <AdminIcon name="download" /> Exportar CSV
+          </button>
           <button
             className="secondary-action"
             onClick={() => {
               setIntegrity("Verificando…");
+              setIntegrityWarning(false);
               void fetch("/api/audit/verify")
                 .then((response) => response.json())
                 .then((payload: { data?: { ok: boolean; checked: number; legacy: number; brokenAt: string | null } }) => {
-                  if (!payload.data) { setIntegrity("No fue posible verificar."); return; }
+                  if (!payload.data) { setIntegrityWarning(true); setIntegrity("No fue posible verificar."); return; }
+                  setIntegrityWarning(!payload.data.ok);
                   setIntegrity(
                     payload.data.ok
                       ? `Cadena íntegra: ${payload.data.checked} entradas verificadas${payload.data.legacy ? ` (${payload.data.legacy} previas a la cadena)` : ""}.`
-                      : `⚠ Alteración detectada en la entrada ${payload.data.brokenAt}.`,
+                      : `Alteración detectada en la entrada ${payload.data.brokenAt}.`,
                   );
                 });
             }}
           >
-            ✓ Verificar integridad
+            <AdminIcon name="check" /> Verificar integridad
           </button>
+        </div>
       </header>
-      {integrity && <div className="detail-message" role="status">{integrity}</div>}
+      {integrity && <div className={`detail-message audit-integrity-message ${integrityWarning ? "warning" : "success"}`} role="status"><AdminIcon name={integrityWarning ? "warning" : "check"} /> {integrity}</div>}
 
       <section className="audit-stats">
         <article>
-          <span className="audit-stat-icon purple">≋</span>
+          <span className="audit-stat-icon purple"><AdminIcon name="audit" /></span>
           <div>
             <strong>{data.summary.total}</strong>
             <p>acciones registradas</p>
           </div>
         </article>
         <article>
-          <span className="audit-stat-icon green">✓</span>
+          <span className="audit-stat-icon green"><AdminIcon name="check" /></span>
           <div>
             <strong>{data.summary.success}</strong>
             <p>operaciones correctas</p>
           </div>
         </article>
         <article>
-          <span className="audit-stat-icon amber">!</span>
+          <span className="audit-stat-icon amber"><AdminIcon name="warning" /></span>
           <div>
             <strong>{data.summary.denied}</strong>
             <p>acciones rechazadas</p>
           </div>
         </article>
         <article>
-          <span className="audit-stat-icon red">×</span>
+          <span className="audit-stat-icon red"><AdminIcon name="close" /></span>
           <div>
             <strong>{data.summary.failure}</strong>
             <p>intentos fallidos</p>
@@ -304,7 +310,7 @@ export default function AuditLogClient({
 
       <form className="panel audit-filters" onSubmit={submitFilters}>
         <label className="audit-search">
-          <span>⌕</span>
+          <AdminIcon name="search" />
           <input
             aria-label="Buscar en auditoría"
             maxLength={120}
@@ -350,7 +356,7 @@ export default function AuditLogClient({
 
       {error && (
         <div className="team-error" role="alert">
-          ⓘ {error}
+          <AdminIcon name="info" /> {error}
         </div>
       )}
 
@@ -412,7 +418,7 @@ export default function AuditLogClient({
           ))}
           {!data.entries.length && (
             <div className="audit-empty">
-              <span>≋</span>
+              <span><AdminIcon name="audit" /></span>
               <h3>No hay registros para estos filtros</h3>
               <p>Prueba con otra búsqueda o limpia los filtros.</p>
             </div>
@@ -421,7 +427,7 @@ export default function AuditLogClient({
       </section>
 
       <section className="panel audit-integrity-note">
-        <span>◇</span>
+        <span><AdminIcon name="audit" /></span>
         <div>
           <p className="eyebrow">INTEGRIDAD LOCAL</p>
           <h2>Registro independiente de la actividad visual</h2>
@@ -452,7 +458,7 @@ export default function AuditLogClient({
               aria-label="Cerrar detalle"
               onClick={() => setSelected(null)}
             >
-              ×
+              <AdminIcon name="close" />
             </button>
             <p className="eyebrow">DETALLE DE AUDITORÍA</p>
             <h2 id="audit-detail-title">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminIcon } from "@/app/components/admin-icon";
 
 type ScheduleConflict = {
   id: string;
@@ -224,21 +225,21 @@ export default function EventsList() {
           <h1>Eventos</h1>
           <p>Crea, programa y supervisa todas tus experiencias.</p>
         </div>
-        <Link href="/" className="primary-button link-button">＋ Crear evento</Link>
+        <Link href="/" className="primary-button link-button"><AdminIcon name="add" /> Crear evento</Link>
       </header>
 
       {notice && (
         <div className="events-notice" role="status">
-          <span>✓</span>
+          <span><AdminIcon name="check" /></span>
           <p>{notice.text}</p>
-          <Link href={`/events/${notice.slug}`}>Configurar evento →</Link>
-          <button aria-label="Cerrar aviso" onClick={() => setNotice(null)}>×</button>
+          <Link href={`/events/${notice.slug}`}>Configurar evento <AdminIcon name="arrow-right" /></Link>
+          <button aria-label="Cerrar aviso" onClick={() => setNotice(null)}><AdminIcon name="close" /></button>
         </div>
       )}
 
       <section className="panel filter-panel event-filter-panel">
         <label className="search-field">
-          <span>⌕</span>
+          <span><AdminIcon name="search" /></span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -261,15 +262,17 @@ export default function EventsList() {
         <div className="event-view-switch" aria-label="Vista de eventos">
           <button
             className={view === "catalog" ? "active" : ""}
+            aria-pressed={view === "catalog"}
             onClick={() => setView("catalog")}
           >
-            ☷ Lista
+            <AdminIcon name="list" /> Lista
           </button>
           <button
             className={view === "calendar" ? "active" : ""}
+            aria-pressed={view === "calendar"}
             onClick={() => setView("calendar")}
           >
-            ◫ Calendario
+            <AdminIcon name="calendar" /> Calendario
           </button>
         </div>
         <div className="result-count"><b>{filteredEvents.length}</b> eventos</div>
@@ -279,7 +282,7 @@ export default function EventsList() {
         <div className="module-empty">Cargando eventos…</div>
       ) : filteredEvents.length === 0 ? (
         <div className="module-empty">
-          <span>⌕</span>
+          <span><AdminIcon name="search" /></span>
           <h2>No encontramos eventos</h2>
           <p>Prueba con otro nombre o cambia el filtro seleccionado.</p>
         </div>
@@ -304,16 +307,16 @@ export default function EventsList() {
                 <div className="catalog-main">
                   <div className="catalog-badges">
                     <span className={`format-badge ${event.format}`}>{formatLabels[event.format]}</span>
-                    <span className={`status plain ${event.status}`}>● {statusLabels[event.status]}</span>
+                    <span className={`status plain ${event.status}`}><AdminIcon name={event.status === "live" ? "event-live" : event.status === "cancelled" ? "close" : event.status === "completed" ? "check" : "activity"} /> {statusLabels[event.status]}</span>
                     {event.conflicts.length > 0 && (
                       <span className="conflict-badge" title={event.conflicts.map((conflict) => conflict.title).join(", ")}>
-                        ⚠ {event.conflicts.length} conflicto{event.conflicts.length === 1 ? "" : "s"}
+                        <AdminIcon name="warning" /> {event.conflicts.length} conflicto{event.conflicts.length === 1 ? "" : "s"}
                       </span>
                     )}
                   </div>
                   <h2>{event.title}</h2>
                   <div className="catalog-meta">
-                    <span>◷ {new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" }).format(start)}</span>
+                    <span><AdminIcon name="clock" /> {new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" }).format(start)}</span>
                     <span>Duración {Math.round((end.getTime() - start.getTime()) / 60000)} min</span>
                     <span>Hasta {event.maxAttendees.toLocaleString("es-CO")} asistentes</span>
                   </div>
@@ -323,8 +326,8 @@ export default function EventsList() {
                   <b className={event.registrationOpen ? "open" : ""}>{event.registrationOpen ? "Abierto" : "Cerrado"}</b>
                 </div>
                 <div className="catalog-actions">
-                  <button onClick={() => openDuplicate(event)}>Duplicar</button>
-                  <Link href={`/events/${event.slug}`} className="detail-link">Gestionar <span>→</span></Link>
+                  <button onClick={() => openDuplicate(event)}><AdminIcon name="duplicate" /> Duplicar</button>
+                  <Link href={`/events/${event.slug}`} className="detail-link">Gestionar <AdminIcon name="arrow-right" /></Link>
                 </div>
               </article>
             );
@@ -350,7 +353,7 @@ export default function EventsList() {
                 }
                 aria-label="Mes anterior"
               >
-                ←
+                <AdminIcon name="back" />
               </button>
               <button
                 onClick={() =>
@@ -373,7 +376,7 @@ export default function EventsList() {
                 }
                 aria-label="Mes siguiente"
               >
-                →
+                <AdminIcon name="arrow-right" />
               </button>
             </div>
           </header>
@@ -413,7 +416,7 @@ export default function EventsList() {
                           }).format(new Date(event.startsAt))}
                         </small>
                         <span>{event.title}</span>
-                        {event.conflicts.length > 0 && <i>⚠</i>}
+                        {event.conflicts.length > 0 && <i><AdminIcon name="warning" /></i>}
                       </Link>
                     ))}
                   </div>
@@ -425,7 +428,7 @@ export default function EventsList() {
             <span><i className="live" /> En vivo</span>
             <span><i className="hybrid" /> Híbrido</span>
             <span><i className="simulated" /> Simulado</span>
-            <b>⚠ indica solapamiento de organizador o licencia Zoom</b>
+            <b><AdminIcon name="warning" /> indica solapamiento de organizador o licencia Zoom</b>
           </footer>
         </section>
       )}
@@ -433,8 +436,8 @@ export default function EventsList() {
       {duplicateSource && (
         <div className="modal-backdrop" role="presentation">
           <section className="modal duplicate-event-modal" role="dialog" aria-modal="true" aria-labelledby="duplicate-title">
-            <button className="modal-close" aria-label="Cerrar" onClick={() => setDuplicateSource(null)}>×</button>
-            <span className="modal-icon">⧉</span>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setDuplicateSource(null)}><AdminIcon name="close" /></button>
+            <span className="modal-icon"><AdminIcon name="duplicate" /></span>
             <p className="eyebrow">DUPLICAR EVENTO</p>
             <h2 id="duplicate-title">Crear desde “{duplicateSource.title}”</h2>
             <p>Se copiarán agenda, comunicaciones, encuestas, recursos y configuración técnica segura. Los datos de participantes no se duplican.</p>
