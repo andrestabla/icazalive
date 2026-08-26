@@ -9,6 +9,10 @@ type EventTemplateSummary = {
 };
 
 import Link from "next/link";
+import {
+  AdminIcon,
+  type AdminIconName,
+} from "@/app/components/admin-icon";
 import { ServiceLogo } from "@/app/components/service-logo";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -265,7 +269,7 @@ export default function Dashboard({
                 aria-expanded={notificationsOpen}
                 onClick={() => setNotificationsOpen((open) => !open)}
               >
-                ♢
+                <AdminIcon name="bell" />
                 {data.notificationCount > 0 && (
                   <span>
                     {data.notificationCount > 9
@@ -288,7 +292,7 @@ export default function Dashboard({
                       onClick={() => setNotificationsOpen(false)}
                       aria-label="Cerrar notificaciones"
                     >
-                      ×
+                      <AdminIcon name="close" />
                     </button>
                   </header>
                   <div>
@@ -300,22 +304,26 @@ export default function Dashboard({
                           onClick={() => setNotificationsOpen(false)}
                         >
                           <span className={notification.tone}>
-                            {notification.tone === "error"
-                              ? "×"
-                              : notification.tone === "warning"
-                                ? "!"
-                                : "i"}
+                            <AdminIcon
+                              name={
+                                notification.tone === "error"
+                                  ? "alert"
+                                  : notification.tone === "warning"
+                                    ? "warning"
+                                    : "info"
+                              }
+                            />
                           </span>
                           <p>
                             <b>{notification.title}</b>
                             <small>{notification.detail}</small>
                           </p>
-                          <i>→</i>
+                          <AdminIcon name="arrow-right" />
                         </Link>
                       ))
                     ) : (
                       <div className="notification-empty">
-                        <span>✓</span>
+                        <span><AdminIcon name="check" /></span>
                         <p>
                           <b>Todo bajo control</b>
                           <small>No hay alertas operativas pendientes.</small>
@@ -330,17 +338,17 @@ export default function Dashboard({
               )}
             </div>
             <button className="primary-button" onClick={openCreate}>
-              <b>＋</b> Crear evento
+              <AdminIcon name="add" /> Crear evento
             </button>
           </div>
         </header>
 
         {notice && (
           <div className="notice" role="status">
-            <span>ⓘ</span>
+            <span><AdminIcon name="info" /></span>
             {notice}
             <button onClick={() => setNotice("")} aria-label="Cerrar aviso">
-              ×
+              <AdminIcon name="close" />
             </button>
           </div>
         )}
@@ -348,7 +356,7 @@ export default function Dashboard({
         <section className="stat-grid" aria-label="Métricas principales">
           <article className="stat-card">
             <div className="stat-head">
-              <span className="stat-icon purple">◫</span>
+              <span className="stat-icon purple"><AdminIcon name="events" /></span>
               <small>Base local</small>
             </div>
             <strong>{data.metrics.events}</strong>
@@ -357,7 +365,7 @@ export default function Dashboard({
           </article>
           <article className="stat-card">
             <div className="stat-head">
-              <span className="stat-icon blue">♙</span>
+              <span className="stat-icon blue"><AdminIcon name="users" /></span>
               <small>Registros activos</small>
             </div>
             <strong>{data.metrics.registrations.toLocaleString("es-CO")}</strong>
@@ -366,7 +374,7 @@ export default function Dashboard({
           </article>
           <article className="stat-card">
             <div className="stat-head">
-              <span className="stat-icon green">◎</span>
+              <span className="stat-icon green"><AdminIcon name="attendance" /></span>
               <small>Confirmados</small>
             </div>
             <strong>
@@ -378,7 +386,7 @@ export default function Dashboard({
           </article>
           <article className="stat-card">
             <div className="stat-head">
-              <span className="stat-icon orange">⌁</span>
+              <span className="stat-icon orange"><AdminIcon name="activity" /></span>
               <small>Interacción</small>
             </div>
             <strong>
@@ -398,7 +406,7 @@ export default function Dashboard({
                 <p>Sesiones futuras ordenadas por fecha.</p>
               </div>
               <Link href="/events">
-                Ver todos <span>→</span>
+                Ver todos <AdminIcon name="arrow-right" />
               </Link>
             </div>
             <div className="event-list">
@@ -425,21 +433,22 @@ export default function Dashboard({
                         </p>
                       </div>
                       <div className="attendees">
-                        <span>♙</span>
+                        <span><AdminIcon name="users" /></span>
                         <div>
                           <b>{event.registrations.toLocaleString("es-CO")}</b>
                           <small>registrados</small>
                         </div>
                       </div>
-                      <span className={`status ${tone}`}>
-                        ● {statusLabels[event.status]}
+                      <span className={`status status-${event.status}`}>
+                        <i className="status-dot" />
+                        {statusLabels[event.status]}
                       </span>
                       <Link
                         className="more"
                         href={`/events/${event.slug}`}
                         aria-label={`Gestionar ${event.title}`}
                       >
-                        •••
+                        <AdminIcon name="more" />
                       </Link>
                     </article>
                   );
@@ -486,7 +495,7 @@ export default function Dashboard({
               Configurar integraciones
             </Link>
             <p className="safe-note">
-              ⌁ Las claves privadas permanecen en el servidor.
+              <AdminIcon name="privacy" /> Las claves privadas permanecen en el servidor.
             </p>
           </aside>
         </div>
@@ -502,7 +511,7 @@ export default function Dashboard({
                 onClick={() => setShowAllActivity((expanded) => !expanded)}
               >
                 {showAllActivity ? "Ver menos" : "Ver historial"}{" "}
-                <span>{showAllActivity ? "↑" : "→"}</span>
+                <AdminIcon name="arrow-right" />
               </button>
             )}
           </div>
@@ -549,9 +558,9 @@ export default function Dashboard({
               onClick={() => setShowCreate(false)}
               aria-label="Cerrar"
             >
-              ×
+              <AdminIcon name="close" />
             </button>
-            <span className="modal-icon">✦</span>
+            <span className="modal-icon"><AdminIcon name="events" /></span>
             <p className="eyebrow">NUEVO EVENTO</p>
             {!selectedFormat ? (
               <>
@@ -559,37 +568,37 @@ export default function Dashboard({
                 <p>Elige el formato del evento para comenzar.</p>
                 <div className="event-options">
                   {[
-                    [
-                      "●",
-                      "En vivo",
-                      "Zoom + interacción en tiempo real",
-                      "live",
-                    ],
-                    [
-                      "▷",
-                      "Simulado",
-                      "Video pregrabado con experiencia live",
-                      "simulated",
-                    ],
-                    [
-                      "◇",
-                      "Híbrido",
-                      "Audiencia presencial y remota",
-                      "hybrid",
-                    ],
-                  ].map(([icon, title, text, format]) => (
+                    {
+                      icon: "event-live" as AdminIconName,
+                      title: "En vivo",
+                      text: "Zoom + interacción en tiempo real",
+                      format: "live" as EventFormat,
+                    },
+                    {
+                      icon: "event-simulated" as AdminIconName,
+                      title: "Simulado",
+                      text: "Video pregrabado con experiencia live",
+                      format: "simulated" as EventFormat,
+                    },
+                    {
+                      icon: "event-hybrid" as AdminIconName,
+                      title: "Híbrido",
+                      text: "Audiencia presencial y remota",
+                      format: "hybrid" as EventFormat,
+                    },
+                  ].map(({ icon, title, text, format }) => (
                     <button
                       key={title}
                       onClick={() =>
-                        setSelectedFormat(format as EventFormat)
+                        setSelectedFormat(format)
                       }
                     >
-                      <span>{icon}</span>
+                      <span><AdminIcon name={icon} /></span>
                       <div>
                         <b>{title}</b>
                         <small>{text}</small>
                       </div>
-                      <i>→</i>
+                      <AdminIcon name="arrow-right" />
                     </button>
                   ))}
                 </div>
@@ -600,7 +609,7 @@ export default function Dashboard({
                   className="back-button"
                   onClick={() => setSelectedFormat(null)}
                 >
-                  ← Cambiar formato
+                  <AdminIcon name="back" /> Cambiar formato
                 </button>
                 <h2 id="create-title">Información principal</h2>
                 <p>
