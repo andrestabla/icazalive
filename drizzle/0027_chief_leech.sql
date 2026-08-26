@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "zoom_managed_by_icaza" boolean DEFAULT false NOT NULL;

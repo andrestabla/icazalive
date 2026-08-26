@@ -4,13 +4,15 @@ import { getDb } from "@/db";
 import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import {
   evaluateStreamingConfiguration,
+  getZoomSyncStatus,
   getCredentialAvailability,
   hasBlockingStreamingChecks,
   type StreamingMode,
 } from "@/lib/streaming";
-import { checkZoomConnection } from "@/lib/zoom";
+import { checkZoomConnection, updateZoomMeeting } from "@/lib/zoom";
 
 export const runtime = "nodejs";
 
@@ -53,17 +55,22 @@ function isHttpUrl(value: string | null) {
   }
 }
 
-export async function GET(_: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const auth = await requireStaff();
   if ("error" in auth) return auth.error;
 
   const { slug } = await context.params;
+  const sessionId = new URL(request.url).searchParams.get("sessionId");
   const db = getDb();
   const [record] = await db
     .select({ event: events, session: sessions })
     .from(events)
     .innerJoin(sessions, eq(sessions.eventId, events.id))
-    .where(eq(events.slug, slug))
+    .where(
+      sessionId
+        ? and(eq(events.slug, slug), eq(sessions.id, sessionId))
+        : eq(events.slug, slug),
+    )
     .orderBy(sessions.startsAt)
     .limit(1);
 
@@ -71,6 +78,12 @@ export async function GET(_: Request, context: RouteContext) {
     return NextResponse.json(
       { error: "Evento o sesión no encontrados." },
       { status: 404 },
+    );
+  }
+  if (!(await canManageEvent(auth.user, record.event.id))) {
+    return NextResponse.json(
+      { error: "No eres organizador de este evento." },
+      { status: 403 },
     );
   }
 
@@ -92,6 +105,7 @@ export async function GET(_: Request, context: RouteContext) {
       session: record.session,
       checks,
       credentials,
+      zoomSyncStatus: getZoomSyncStatus(record.session),
     },
   });
 }
@@ -103,11 +117,9 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const body = (await request.json()) as {
     sessionId?: string;
-    action?: "save" | "run_check";
+    action?: "save" | "run_check" | "sync_zoom";
     streamingMode?: StreamingMode;
     latencyMode?: "low" | "standard";
-    zoomMeetingId?: NullableText;
-    zoomJoinUrl?: NullableText;
     ivsChannelArn?: NullableText;
     playbackUrl?: NullableText;
     recordingEnabled?: boolean;
@@ -123,14 +135,17 @@ export async function PATCH(request: Request, context: RouteContext) {
     !body.sessionId ||
     (body.action !== undefined &&
       body.action !== "save" &&
-      body.action !== "run_check") ||
+      body.action !== "run_check" &&
+      body.action !== "sync_zoom") ||
     (body.streamingMode !== undefined &&
       !allowedModes.includes(body.streamingMode)) ||
     (body.latencyMode !== undefined &&
       body.latencyMode !== "low" &&
       body.latencyMode !== "standard") ||
     (body.recordingEnabled !== undefined &&
-      typeof body.recordingEnabled !== "boolean")
+      typeof body.recordingEnabled !== "boolean") ||
+    "zoomMeetingId" in body ||
+    "zoomJoinUrl" in body
   ) {
     return NextResponse.json(
       { error: "La configuración de transmisión no es válida." },
@@ -138,17 +153,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  let zoomMeetingId: NullableText | undefined;
-  let zoomJoinUrl: NullableText | undefined;
   let ivsChannelArn: NullableText | undefined;
   let playbackUrl: NullableText | undefined;
   try {
-    if (body.zoomMeetingId !== undefined) {
-      zoomMeetingId = cleanNullableText(body.zoomMeetingId, 80);
-    }
-    if (body.zoomJoinUrl !== undefined) {
-      zoomJoinUrl = cleanNullableText(body.zoomJoinUrl, 500);
-    }
     if (body.ivsChannelArn !== undefined) {
       ivsChannelArn = cleanNullableText(body.ivsChannelArn, 500);
     }
@@ -163,7 +170,6 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   if (
-    !isHttpUrl(zoomJoinUrl ?? null) ||
     !isHttpUrl(playbackUrl ?? null) ||
     (ivsChannelArn && !ivsChannelArn.startsWith("arn:aws:ivs:"))
   ) {
@@ -192,18 +198,20 @@ export async function PATCH(request: Request, context: RouteContext) {
       { status: 404 },
     );
   }
+  if (!(await canManageEvent(auth.user, record.event.id))) {
+    return NextResponse.json(
+      { error: "No eres organizador de este evento." },
+      { status: 403 },
+    );
+  }
 
   const mode = body.streamingMode ?? record.session.streamingMode;
   const merged = {
     mode,
     startsAt: record.session.startsAt,
     endsAt: record.session.endsAt,
-    zoomMeetingId:
-      zoomMeetingId !== undefined
-        ? zoomMeetingId
-        : record.session.zoomMeetingId,
-    zoomJoinUrl:
-      zoomJoinUrl !== undefined ? zoomJoinUrl : record.session.zoomJoinUrl,
+    zoomMeetingId: record.session.zoomMeetingId,
+    zoomJoinUrl: record.session.zoomJoinUrl,
     ivsChannelArn:
       ivsChannelArn !== undefined
         ? ivsChannelArn
@@ -212,6 +220,48 @@ export async function PATCH(request: Request, context: RouteContext) {
       playbackUrl !== undefined ? playbackUrl : record.session.playbackUrl,
     ...getCredentialAvailability((await checkZoomConnection()).ok),
   };
+  if (
+    body.action === "sync_zoom" &&
+    (!record.session.zoomMeetingId || !record.session.zoomManagedByIcaza)
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Primero crea una reunión de Zoom administrada para esta sesión.",
+      },
+      { status: 400 },
+    );
+  }
+
+  let zoomSyncedAt = record.session.zoomSyncedAt;
+  let zoomStartAt = record.session.zoomStartAt;
+  let zoomDurationMinutes = record.session.zoomDurationMinutes;
+  let zoomTimezone = record.session.zoomTimezone;
+  if (body.action === "sync_zoom" && record.session.zoomMeetingId) {
+    try {
+      const zoomUpdate = await updateZoomMeeting({
+        meetingId: record.session.zoomMeetingId,
+        topic: record.session.title,
+        startsAt: record.session.startsAt,
+        endsAt: record.session.endsAt,
+      });
+      zoomSyncedAt = new Date();
+      zoomStartAt = zoomUpdate.startAt;
+      zoomDurationMinutes = zoomUpdate.durationMinutes;
+      zoomTimezone = record.event.timezone;
+    } catch (error: unknown) {
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "No fue posible actualizar la reunión de Zoom.",
+        },
+        { status: 502 },
+      );
+    }
+  }
+
   const checks = evaluateStreamingConfiguration(merged);
   const hasBlockingChecks = hasBlockingStreamingChecks(checks);
   const streamingStatus = hasBlockingChecks
@@ -227,8 +277,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       streamingMode: mode,
       streamingStatus,
       latencyMode: body.latencyMode ?? record.session.latencyMode,
-      zoomMeetingId: merged.zoomMeetingId,
-      zoomJoinUrl: merged.zoomJoinUrl,
+      zoomStartAt,
+      zoomDurationMinutes,
+      zoomTimezone,
+      zoomSyncedAt,
       ivsChannelArn: merged.ivsChannelArn,
       playbackUrl: merged.playbackUrl,
       recordingEnabled:
@@ -266,6 +318,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       session: updated,
       checks,
       credentials: getCredentialAvailability((await checkZoomConnection()).ok),
+      zoomSyncStatus: getZoomSyncStatus(updated),
     },
   });
 }

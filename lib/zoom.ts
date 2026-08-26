@@ -9,15 +9,20 @@ type ZoomProfile = {
   timezone?: string;
 };
 
-type ZoomMeeting = {
-  id: number;
+export type ZoomMeeting = {
+  id: string;
   topic: string;
-  start_time?: string;
-  duration?: number;
-  timezone?: string;
-  join_url?: string;
-  start_url?: string;
-  agenda?: string;
+  joinUrl: string;
+  startAt: Date;
+  durationMinutes: number;
+  timezone: string | null;
+};
+
+export type ZoomMeetingUpdate = Pick<
+  ZoomMeeting,
+  "id" | "startAt" | "durationMinutes" | "timezone"
+> & {
+  joinUrl?: string;
 };
 
 export type ZoomConnectionCheck = {
@@ -26,7 +31,10 @@ export type ZoomConnectionCheck = {
   profile: ZoomProfile | null;
 };
 
-function zoomErrorMessage(payload: unknown) {
+function zoomErrorMessage(
+  payload: unknown,
+  fallback = "Zoom no pudo completar la operación.",
+) {
   if (
     payload &&
     typeof payload === "object" &&
@@ -35,56 +43,39 @@ function zoomErrorMessage(payload: unknown) {
   ) {
     return payload.message;
   }
-  return "Zoom no pudo validar la conexión.";
+  return fallback;
 }
 
-function formatZoomLocalDateTime(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "";
-  return `${value("year")}-${value("month")}-${value("day")}T${value("hour")}:${value("minute")}:${value("second")}`;
-}
-
-async function readZoomResponse(response: Response) {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return null;
+function parseMeeting(payload: unknown): ZoomMeeting {
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    !("id" in payload) ||
+    !("join_url" in payload) ||
+    !("start_time" in payload) ||
+    !("duration" in payload) ||
+    (typeof payload.id !== "string" && typeof payload.id !== "number") ||
+    typeof payload.join_url !== "string" ||
+    typeof payload.start_time !== "string" ||
+    typeof payload.duration !== "number"
+  ) {
+    throw new Error("Zoom devolvió una reunión incompleta.");
   }
-}
 
-function meetingPayload(
-  meeting: Pick<ZoomMeeting, "topic"> & {
-    startsAt: Date;
-    endsAt: Date;
-    timeZone: string;
-  },
-) {
+  const startAt = new Date(payload.start_time);
+  if (Number.isNaN(startAt.getTime())) {
+    throw new Error("Zoom devolvió un horario no válido.");
+  }
   return {
-    topic: meeting.topic,
-    type: 2,
-    start_time: formatZoomLocalDateTime(meeting.startsAt, meeting.timeZone),
-    duration: Math.min(
-      1440,
-      Math.max(
-        1,
-        Math.ceil(
-          (meeting.endsAt.getTime() - meeting.startsAt.getTime()) / 60000,
-        ),
-      ),
-    ),
-    timezone: meeting.timeZone,
+    id: String(payload.id),
+    topic: "topic" in payload && typeof payload.topic === "string" ? payload.topic : "",
+    joinUrl: payload.join_url,
+    startAt,
+    durationMinutes: payload.duration,
+    timezone:
+      "timezone" in payload && typeof payload.timezone === "string"
+        ? payload.timezone
+        : null,
   };
 }
 
@@ -121,34 +112,60 @@ export async function checkZoomConnection(): Promise<ZoomConnectionCheck> {
   }
 }
 
-export async function createZoomMeeting(
-  meeting: Pick<ZoomMeeting, "topic"> & {
-    startsAt: Date;
-    endsAt: Date;
-    timeZone: string;
-  },
-) {
+export async function createZoomMeeting({
+  topic,
+  startsAt,
+  endsAt,
+  timezone,
+  agenda,
+}: {
+  topic: string;
+  startsAt: Date;
+  endsAt: Date;
+  timezone: string;
+  agenda?: string;
+}) {
+  const durationMinutes = Math.round(
+    (endsAt.getTime() - startsAt.getTime()) / 60_000,
+  );
   const connectors = new ReplitConnectors();
   const response = await connectors.proxy("zoom", "/users/me/meetings", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(meetingPayload(meeting)),
+    body: JSON.stringify({
+      topic,
+      type: 2,
+      start_time: startsAt.toISOString(),
+      duration: durationMinutes,
+      timezone,
+      ...(agenda ? { agenda } : {}),
+    }),
   });
-  const payload = await readZoomResponse(response);
+  const payload = await response.json();
   if (!response.ok) {
-    throw new Error(zoomErrorMessage(payload));
+    throw new Error(
+      zoomErrorMessage(payload, "Zoom no pudo crear la reunión programada."),
+    );
   }
-  return payload as ZoomMeeting;
+  return parseMeeting(payload);
 }
 
-export async function updateZoomMeeting(
-  meetingId: string,
-  meeting: Pick<ZoomMeeting, "topic"> & {
-    startsAt: Date;
-    endsAt: Date;
-    timeZone: string;
-  },
-) {
+export async function updateZoomMeeting({
+  meetingId,
+  topic,
+  startsAt,
+  endsAt,
+  timezone,
+}: {
+  meetingId: string;
+  topic: string;
+  startsAt: Date;
+  endsAt: Date;
+  timezone?: string;
+}): Promise<ZoomMeetingUpdate> {
+  const durationMinutes = Math.round(
+    (endsAt.getTime() - startsAt.getTime()) / 60_000,
+  );
   const connectors = new ReplitConnectors();
   const response = await connectors.proxy(
     "zoom",
@@ -156,13 +173,24 @@ export async function updateZoomMeeting(
     {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(meetingPayload(meeting)),
+      body: JSON.stringify({
+        topic,
+        start_time: startsAt.toISOString(),
+        duration: durationMinutes,
+        ...(timezone ? { timezone } : {}),
+      }),
     },
   );
-  const payload = await readZoomResponse(response);
   if (!response.ok) {
-    throw new Error(zoomErrorMessage(payload));
+    const payload = await response.json();
+    throw new Error(zoomErrorMessage(payload, "Zoom no pudo actualizar la reunión."));
   }
+  return {
+    id: meetingId,
+    startAt: startsAt,
+    durationMinutes,
+    timezone: timezone ?? null,
+  };
 }
 
 export async function deleteZoomMeeting(meetingId: string) {
@@ -172,7 +200,7 @@ export async function deleteZoomMeeting(meetingId: string) {
     `/meetings/${encodeURIComponent(meetingId)}`,
     { method: "DELETE" },
   );
-  const payload = await readZoomResponse(response);
+  const payload = response.status === 204 ? null : await response.json();
   if (!response.ok && response.status !== 404) {
     throw new Error(zoomErrorMessage(payload));
   }

@@ -370,6 +370,13 @@ export const sessions = pgTable(
     latencyMode: streamingLatency("latency_mode").notNull().default("low"),
     zoomMeetingId: text("zoom_meeting_id"),
     zoomJoinUrl: text("zoom_join_url"),
+    zoomStartAt: timestamp("zoom_start_at", { withTimezone: true }),
+    zoomDurationMinutes: integer("zoom_duration_minutes"),
+    zoomTimezone: text("zoom_timezone"),
+    zoomSyncedAt: timestamp("zoom_synced_at", { withTimezone: true }),
+    zoomManagedByIcaza: boolean("zoom_managed_by_icaza")
+      .notNull()
+      .default(false),
     ivsChannelArn: text("ivs_channel_arn"),
     playbackUrl: text("playback_url"),
     recordingEnabled: boolean("recording_enabled").notNull().default(true),

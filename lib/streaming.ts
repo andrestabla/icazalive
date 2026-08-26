@@ -11,6 +11,8 @@ export type StreamingCheck = {
   detail: string;
 };
 
+export type ZoomSyncStatus = "not_created" | "synced" | "out_of_sync";
+
 type StreamingConfiguration = {
   mode: StreamingMode;
   startsAt: Date;
@@ -22,6 +24,27 @@ type StreamingConfiguration = {
   zoomCredentialsConfigured: boolean;
   awsCredentialsConfigured: boolean;
 };
+
+export function getZoomSyncStatus(configuration: {
+  zoomMeetingId: string | null;
+  zoomJoinUrl: string | null;
+  zoomStartAt: Date | null;
+  zoomDurationMinutes: number | null;
+  startsAt: Date;
+  endsAt: Date;
+}): ZoomSyncStatus {
+  if (!configuration.zoomMeetingId || !configuration.zoomJoinUrl) {
+    return "not_created";
+  }
+  const expectedDuration = Math.round(
+    (configuration.endsAt.getTime() - configuration.startsAt.getTime()) / 60_000,
+  );
+  return configuration.zoomStartAt &&
+    configuration.zoomStartAt.getTime() === configuration.startsAt.getTime() &&
+    configuration.zoomDurationMinutes === expectedDuration
+    ? "synced"
+    : "out_of_sync";
+}
 
 export function getCredentialAvailability(zoomConnectorReady = false) {
   return {

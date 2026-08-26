@@ -1,0 +1,2 @@
+- [Preview port alignment](preview-port-alignment.md) — Replit webview workflows must bind and map port 5000 together, or readiness can time out despite a healthy server.
+- [Managed Zoom provenance](managed-zoom-provenance.md) — only connector-created meetings may be updated or removed remotely; preserve legacy links as local-only.

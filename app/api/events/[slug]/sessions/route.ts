@@ -9,6 +9,7 @@ import {
   deleteZoomMeeting,
   updateZoomMeeting,
 } from "@/lib/zoom";
+import { canManageEvent } from "@/lib/event-permissions";
 
 export const runtime = "nodejs";
 
@@ -110,6 +111,12 @@ export async function GET(_: Request, context: RouteContext) {
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json(
+      { error: "No eres organizador de este evento." },
+      { status: 403 },
+    );
+  }
 
   const records = await getDb()
     .select()
@@ -129,7 +136,17 @@ export async function POST(request: Request, context: RouteContext) {
     title?: string;
     startsAt?: string;
     endsAt?: string;
+    createZoomMeeting?: boolean;
   };
+  if (
+    body.createZoomMeeting !== undefined &&
+    typeof body.createZoomMeeting !== "boolean"
+  ) {
+    return NextResponse.json(
+      { error: "La opción de Zoom no es válida." },
+      { status: 400 },
+    );
+  }
 
   let title: string;
   let schedule: { startsAt: Date; endsAt: Date };
@@ -150,6 +167,12 @@ export async function POST(request: Request, context: RouteContext) {
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json(
+      { error: "No eres organizador de este evento." },
+      { status: 403 },
+    );
+  }
   if (!scheduleFitsEvent(schedule, event)) {
     return NextResponse.json(
       { error: "La sesión debe comenzar y finalizar dentro del horario del evento." },
@@ -163,37 +186,51 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const streamingMode = event.format === "simulated" ? "simulated" : "zoom_to_ivs";
-  let zoomMeeting: Awaited<ReturnType<typeof createZoomMeeting>> | null = null;
-  if (usesZoom(streamingMode)) {
-    try {
-      zoomMeeting = await createZoomMeeting({
-        topic: `${event.title} · ${title}`,
-        startsAt: schedule.startsAt,
-        endsAt: schedule.endsAt,
-        timeZone: event.timezone,
-      });
-    } catch (error) {
-      return NextResponse.json(
-        {
-          error: `La sesión no se creó porque Zoom no pudo preparar la reunión: ${zoomSyncError(error)}`,
-        },
-        { status: 502 },
-      );
-    }
+  const streamingMode =
+    event.format === "simulated" ? "simulated" : "zoom_to_ivs";
+  const shouldCreateZoomMeeting =
+    body.createZoomMeeting ?? usesZoom(streamingMode);
+  if (shouldCreateZoomMeeting && event.format === "simulated") {
+    return NextResponse.json(
+      { error: "Los eventos simulados no necesitan una reunión de Zoom." },
+      { status: 400 },
+    );
   }
 
-  const [created] = await getDb()
+  const db = getDb();
+  const [createdRecord] = await db
     .insert(sessions)
-    .values({
-      eventId: event.id,
-      title,
-      ...schedule,
-      streamingMode,
-      zoomMeetingId: zoomMeeting?.id ? String(zoomMeeting.id) : null,
-      zoomJoinUrl: zoomMeeting?.join_url ?? null,
-    })
+    .values({ eventId: event.id, title, ...schedule, streamingMode })
     .returning();
+  let created = createdRecord;
+  let zoomWarning: string | undefined;
+  if (shouldCreateZoomMeeting) {
+    try {
+      const meeting = await createZoomMeeting({
+        topic: created.title,
+        startsAt: created.startsAt,
+        endsAt: created.endsAt,
+        timezone: event.timezone,
+        agenda: event.title,
+      });
+      [created] = await db
+        .update(sessions)
+        .set({
+          zoomMeetingId: meeting.id,
+          zoomJoinUrl: meeting.joinUrl,
+          zoomStartAt: meeting.startAt,
+          zoomDurationMinutes: meeting.durationMinutes,
+          zoomTimezone: meeting.timezone ?? event.timezone,
+          zoomSyncedAt: new Date(),
+          zoomManagedByIcaza: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(sessions.id, created.id))
+        .returning();
+    } catch (error) {
+      zoomWarning = zoomSyncError(error);
+    }
+  }
 
   await writeAuditLog({
     actor: auth.user,
@@ -206,10 +243,21 @@ export async function POST(request: Request, context: RouteContext) {
       startsAt: created.startsAt.toISOString(),
       endsAt: created.endsAt.toISOString(),
       zoomMeetingId: created.zoomMeetingId,
+      zoomWarning: zoomWarning ?? null,
     },
     request,
   });
-  return NextResponse.json({ data: created }, { status: 201 });
+  return NextResponse.json(
+    {
+      data: created,
+      ...(zoomWarning
+        ? {
+            warning: `La sesión se creó, pero la reunión de Zoom quedó pendiente: ${zoomWarning}`,
+          }
+        : {}),
+    },
+    { status: 201 },
+  );
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -222,7 +270,19 @@ export async function PATCH(request: Request, context: RouteContext) {
     title?: string;
     startsAt?: string;
     endsAt?: string;
+    createZoomMeeting?: boolean;
+    syncZoom?: boolean;
   };
+  if (
+    (body.createZoomMeeting !== undefined &&
+      typeof body.createZoomMeeting !== "boolean") ||
+    (body.syncZoom !== undefined && typeof body.syncZoom !== "boolean")
+  ) {
+    return NextResponse.json(
+      { error: "La opción de Zoom no es válida." },
+      { status: 400 },
+    );
+  }
   if (typeof body.id !== "string" || !body.id) {
     return NextResponse.json({ error: "Sesión no válida." }, { status: 400 });
   }
@@ -245,6 +305,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   const event = await findEvent(slug);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json(
+      { error: "No eres organizador de este evento." },
+      { status: 403 },
+    );
   }
   const [target] = await getDb()
     .select()
@@ -275,30 +341,38 @@ export async function PATCH(request: Request, context: RouteContext) {
   const scheduleChanged =
     target.startsAt.getTime() !== schedule.startsAt.getTime() ||
     target.endsAt.getTime() !== schedule.endsAt.getTime();
-  let zoomMeeting = target.zoomMeetingId
-    ? { id: target.zoomMeetingId, joinUrl: target.zoomJoinUrl }
-    : null;
-  if (usesZoom(target.streamingMode)) {
+  const shouldSyncZoom = body.syncZoom ?? usesZoom(target.streamingMode);
+  const shouldCreateZoomMeeting =
+    body.createZoomMeeting ??
+    (usesZoom(target.streamingMode) && !target.zoomMeetingId);
+  if (shouldCreateZoomMeeting && event.format === "simulated") {
+    return NextResponse.json(
+      { error: "Los eventos simulados no necesitan una reunión de Zoom." },
+      { status: 400 },
+    );
+  }
+  let zoomUpdate:
+    | Awaited<ReturnType<typeof createZoomMeeting>>
+    | Awaited<ReturnType<typeof updateZoomMeeting>>
+    | undefined;
+  if (shouldSyncZoom && target.zoomMeetingId) {
+    if (!target.zoomManagedByIcaza) {
+      return NextResponse.json(
+        {
+          error:
+            "Esta reunión no fue creada por Icaza Live y no se puede sincronizar.",
+        },
+        { status: 400 },
+      );
+    }
     try {
-      if (target.zoomMeetingId) {
-        await updateZoomMeeting(target.zoomMeetingId, {
-          topic: `${event.title} · ${title}`,
-          startsAt: schedule.startsAt,
-          endsAt: schedule.endsAt,
-          timeZone: event.timezone,
-        });
-      } else {
-        const createdMeeting = await createZoomMeeting({
-          topic: `${event.title} · ${title}`,
-          startsAt: schedule.startsAt,
-          endsAt: schedule.endsAt,
-          timeZone: event.timezone,
-        });
-        zoomMeeting = {
-          id: String(createdMeeting.id),
-          joinUrl: createdMeeting.join_url ?? null,
-        };
-      }
+      zoomUpdate = await updateZoomMeeting({
+        meetingId: target.zoomMeetingId,
+        topic: title,
+        startsAt: schedule.startsAt,
+        endsAt: schedule.endsAt,
+        timezone: event.timezone,
+      });
     } catch (error) {
       return NextResponse.json(
         {
@@ -307,7 +381,25 @@ export async function PATCH(request: Request, context: RouteContext) {
         { status: 502 },
       );
     }
+  } else if (shouldCreateZoomMeeting && !target.zoomMeetingId) {
+    try {
+      zoomUpdate = await createZoomMeeting({
+        topic: title,
+        startsAt: schedule.startsAt,
+        endsAt: schedule.endsAt,
+        timezone: event.timezone,
+        agenda: event.title,
+      });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: `La sesión no se actualizó porque Zoom no pudo crear la reunión: ${zoomSyncError(error)}`,
+        },
+        { status: 502 },
+      );
+    }
   }
+  const now = new Date();
   const [updated] = await getDb()
     .update(sessions)
     .set({
@@ -319,9 +411,18 @@ export async function PATCH(request: Request, context: RouteContext) {
             technicalCheckAt: null,
           }
         : {}),
-      zoomMeetingId: zoomMeeting?.id ?? null,
-      zoomJoinUrl: zoomMeeting?.joinUrl ?? null,
-      updatedAt: new Date(),
+      ...(zoomUpdate
+        ? {
+            zoomMeetingId: zoomUpdate.id,
+            zoomJoinUrl: zoomUpdate.joinUrl ?? target.zoomJoinUrl,
+            zoomStartAt: zoomUpdate.startAt,
+            zoomDurationMinutes: zoomUpdate.durationMinutes,
+            zoomTimezone: zoomUpdate.timezone ?? event.timezone,
+            zoomSyncedAt: now,
+            zoomManagedByIcaza: true,
+          }
+        : {}),
+      updatedAt: now,
     })
     .where(eq(sessions.id, target.id))
     .returning();
@@ -358,6 +459,12 @@ export async function DELETE(request: Request, context: RouteContext) {
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json(
+      { error: "No eres organizador de este evento." },
+      { status: 403 },
+    );
+  }
   const [target, total] = await Promise.all([
     getDb()
       .select({ id: sessions.id, title: sessions.title })
@@ -388,11 +495,15 @@ export async function DELETE(request: Request, context: RouteContext) {
     .select({
       id: sessions.id,
       zoomMeetingId: sessions.zoomMeetingId,
+      zoomManagedByIcaza: sessions.zoomManagedByIcaza,
     })
     .from(sessions)
     .where(eq(sessions.id, target[0].id))
     .limit(1);
-  if (sessionToDelete?.zoomMeetingId) {
+  if (
+    sessionToDelete?.zoomMeetingId &&
+    sessionToDelete.zoomManagedByIcaza
+  ) {
     try {
       await deleteZoomMeeting(sessionToDelete.zoomMeetingId);
     } catch (error) {

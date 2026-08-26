@@ -51,6 +51,10 @@ type SessionData = {
   latencyMode: "low" | "standard";
   zoomMeetingId: string | null;
   zoomJoinUrl: string | null;
+  zoomStartAt: string | null;
+  zoomDurationMinutes: number | null;
+  zoomTimezone: string | null;
+  zoomSyncedAt: string | null;
   ivsChannelArn: string | null;
   playbackUrl: string | null;
   recordingEnabled: boolean;
@@ -235,9 +239,29 @@ function normalizeSession(session: SessionData): SessionData {
     technicalCheckAt: session.technicalCheckAt
       ? new Date(session.technicalCheckAt).toISOString()
       : null,
+    zoomStartAt: session.zoomStartAt
+      ? new Date(session.zoomStartAt).toISOString()
+      : null,
+    zoomSyncedAt: session.zoomSyncedAt
+      ? new Date(session.zoomSyncedAt).toISOString()
+      : null,
     createdAt: new Date(session.createdAt).toISOString(),
     updatedAt: new Date(session.updatedAt).toISOString(),
   };
+}
+
+function getSessionZoomSyncStatus(session: SessionData) {
+  if (!session.zoomMeetingId || !session.zoomJoinUrl) return "not_created";
+  const expectedDuration = Math.round(
+    (new Date(session.endsAt).getTime() - new Date(session.startsAt).getTime()) /
+      60_000,
+  );
+  return session.zoomStartAt &&
+    new Date(session.zoomStartAt).getTime() ===
+      new Date(session.startsAt).getTime() &&
+    session.zoomDurationMinutes === expectedDuration
+    ? "synced"
+    : "out_of_sync";
 }
 
 function sortSessions(items: SessionData[]) {
@@ -372,8 +396,13 @@ export default function EventDetail({
     setActiveTab(tab);
   };
 
-  const refreshStreamingSession = async () => {
-    const response = await fetch(`/api/events/${event.slug}/streaming`);
+  const refreshStreamingSession = async (sessionId?: string) => {
+    const targetSessionId =
+      sessionId ?? streamingSession?.id ?? sessionItems[0]?.id;
+    if (!targetSessionId) return;
+    const response = await fetch(
+      `/api/events/${event.slug}/streaming?sessionId=${encodeURIComponent(targetSessionId)}`,
+    );
     const payload = (await response.json()) as {
       data?: {
         session: SessionData;
@@ -420,6 +449,9 @@ export default function EventDetail({
         title: form.get("title"),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt.toISOString(),
+        ...(editing
+          ? { syncZoom: form.get("syncZoom") === "on" }
+          : { createZoomMeeting: form.get("createZoomMeeting") === "on" }),
       }),
     });
     const payload = (await response.json()) as {
@@ -439,8 +471,12 @@ export default function EventDetail({
       setSessionEditor(null);
       setMessage(
         editing
-          ? "Sesión actualizada. Si cambió el horario, ejecuta nuevamente la revisión técnica."
-          : "Sesión añadida a la agenda.",
+          ? editing.zoomMeetingId && form.get("syncZoom") === "on"
+            ? "Sesión y reunión de Zoom actualizadas."
+            : "Sesión actualizada. Si cambió el horario, actualiza Zoom desde Transmisión."
+          : form.get("createZoomMeeting") === "on"
+            ? "Sesión y reunión de Zoom creadas."
+            : "Sesión añadida a la agenda.",
       );
       await refreshStreamingSession();
     } else {
@@ -512,7 +548,7 @@ export default function EventDetail({
   };
 
   const saveStreamingConfiguration = async (
-    action: "save" | "run_check",
+    action: "save" | "run_check" | "sync_zoom",
   ) => {
     if (!streamingSession) return;
     setStreamingSaving(true);
@@ -525,8 +561,6 @@ export default function EventDetail({
         action,
         streamingMode: streamingSession.streamingMode,
         latencyMode: streamingSession.latencyMode,
-        zoomMeetingId: streamingSession.zoomMeetingId,
-        zoomJoinUrl: streamingSession.zoomJoinUrl,
         ivsChannelArn: streamingSession.ivsChannelArn,
         playbackUrl: streamingSession.playbackUrl,
         recordingEnabled: streamingSession.recordingEnabled,
@@ -551,7 +585,9 @@ export default function EventDetail({
           ? payload.data.checks.some((check) => check.status === "fail")
             ? "La revisión encontró elementos pendientes."
             : "Configuración técnica validada localmente."
-          : "Configuración de transmisión guardada.",
+          : action === "sync_zoom"
+            ? "Horario y título de la reunión actualizados en Zoom."
+            : "Configuración de transmisión guardada.",
       );
     } else {
       setMessage(payload.error ?? "No fue posible guardar la transmisión.");
@@ -803,6 +839,24 @@ export default function EventDetail({
   const streamingProgress = technicalChecks.length
     ? Math.round((passedChecks / technicalChecks.length) * 100)
     : 0;
+  const zoomSyncStatus = streamingSession
+    ? getSessionZoomSyncStatus(streamingSession)
+    : "not_created";
+  const zoomSyncCopy =
+    zoomSyncStatus === "synced"
+      ? {
+          title: "Zoom sincronizado",
+          detail: "El horario de Zoom coincide con la agenda del evento.",
+        }
+      : zoomSyncStatus === "out_of_sync"
+        ? {
+            title: "Horario de Zoom pendiente",
+            detail: "La agenda cambió; actualiza la reunión antes de transmitir.",
+          }
+        : {
+            title: "Reunión de Zoom pendiente",
+            detail: "Crea una reunión desde el editor de esta sesión.",
+          };
   const pendingQuestions =
     interactionData?.questions.filter((question) => question.status === "pending")
       .length ?? 0;
@@ -982,6 +1036,15 @@ export default function EventDetail({
                           : session.streamingMode === "ivs_direct"
                             ? "Amazon IVS"
                             : "Zoom + IVS"}
+                      {session.streamingMode !== "simulated" && (
+                        <small className={`agenda-zoom-status ${getSessionZoomSyncStatus(session)}`}>
+                          {getSessionZoomSyncStatus(session) === "synced"
+                            ? "Zoom sincronizado"
+                            : getSessionZoomSyncStatus(session) === "out_of_sync"
+                              ? "Actualizar Zoom"
+                              : "Zoom pendiente"}
+                        </small>
+                      )}
                     </span>
                     <button
                       type="button"
@@ -1710,6 +1773,29 @@ export default function EventDetail({
                 }
               />
             )}
+            <label className="streaming-session-picker">
+              Sesión a configurar
+              <select
+                value={streamingSession.id}
+                onChange={(input) => {
+                  const selected = sessionItems.find(
+                    (item) => item.id === input.target.value,
+                  );
+                  if (!selected) return;
+                  setStreamingSession(selected);
+                  void refreshStreamingSession(selected.id);
+                }}
+              >
+                {sessionItems.map((session) => (
+                  <option key={session.id} value={session.id}>
+                    {session.title} · {formatStableTime(
+                      new Date(session.startsAt),
+                      event.timezone,
+                    )}
+                  </option>
+                ))}
+              </select>
+            </label>
             <section className="panel streaming-overview">
               <div>
                 <p className="eyebrow">ESTADO TÉCNICO</p>
@@ -1736,7 +1822,7 @@ export default function EventDetail({
             <div className="streaming-pipeline" aria-label="Flujo de transmisión">
               <article className={streamingSession.streamingMode === "ivs_direct" ? "muted" : ""}>
                 <ServiceLogo service="zoom" />
-                <div><small>FUENTE</small><b>{streamingSession.streamingMode === "ivs_direct" ? "Entrada directa" : "Zoom Meeting"}</b><p>{streamingCredentials.zoomCredentialsConfigured ? "Conexión segura disponible" : "Conexión pendiente"}</p></div>
+                <div><small>FUENTE</small><b>{streamingSession.streamingMode === "ivs_direct" ? "Entrada directa" : "Zoom Meeting"}</b><p>{streamingCredentials.zoomCredentialsConfigured ? "Credenciales disponibles" : "Credenciales pendientes"}</p></div>
               </article>
               <i>→</i>
               <article className={streamingSession.streamingMode === "zoom_only" ? "muted" : ""}>
@@ -1782,49 +1868,47 @@ export default function EventDetail({
                         <label>
                           ID de la reunión
                           <input
-                            maxLength={80}
-                            placeholder="123 456 7890"
                             value={streamingSession.zoomMeetingId ?? ""}
-                            onChange={(input) =>
-                              setStreamingSession({
-                                ...streamingSession,
-                                zoomMeetingId: input.target.value || null,
-                              })
-                            }
+                            readOnly
+                            placeholder="Se crea desde el editor de sesión"
                           />
                         </label>
                         <label>
                           Enlace de ingreso
                           <input
                             type="url"
-                            maxLength={500}
-                            placeholder="https://zoom.us/j/..."
+                            placeholder="Se crea desde el editor de sesión"
                             value={streamingSession.zoomJoinUrl ?? ""}
-                            onChange={(input) =>
-                              setStreamingSession({
-                                ...streamingSession,
-                                zoomJoinUrl: input.target.value || null,
-                              })
-                            }
+                            readOnly
                           />
                         </label>
                       </div>
-                      <p className="zoom-sync-note">
-                        {streamingSession.zoomJoinUrl ? (
-                          <>
-                            Esta reunión se sincroniza con Zoom.{" "}
-                            <a
-                              href={streamingSession.zoomJoinUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              Abrir enlace de participantes
-                            </a>
-                          </>
-                        ) : (
-                          "Guarda una sesión con Zoom activo para crear y sincronizar su reunión."
+                      <div className={`zoom-sync-card ${zoomSyncStatus}`}>
+                        <span>{zoomSyncStatus === "synced" ? "✓" : zoomSyncStatus === "out_of_sync" ? "!" : "◷"}</span>
+                        <div>
+                          <b>{zoomSyncCopy.title}</b>
+                          <small>{zoomSyncCopy.detail}</small>
+                          {streamingSession.zoomSyncedAt && (
+                            <small>
+                              Última sincronización: {formatStableDateTime(
+                                new Date(streamingSession.zoomSyncedAt),
+                                event.timezone,
+                                "short",
+                              )}
+                            </small>
+                          )}
+                        </div>
+                        {zoomSyncStatus === "out_of_sync" && (
+                          <button
+                            type="button"
+                            className="secondary-action"
+                            disabled={streamingSaving}
+                            onClick={() => void saveStreamingConfiguration("sync_zoom")}
+                          >
+                            {streamingSaving ? "Actualizando…" : "Actualizar Zoom"}
+                          </button>
                         )}
-                      </p>
+                      </div>
                     </fieldset>
                   )}
 
@@ -2052,6 +2136,31 @@ export default function EventDetail({
                 Zona horaria del evento: {event.timezone}. Los controles usan
                 la hora de este dispositivo.
               </p>
+              {event.format !== "simulated" && (
+                <label className="session-zoom-option">
+                  <input
+                    type="checkbox"
+                    name={
+                      sessionEditor !== "new" && sessionEditor.zoomMeetingId
+                        ? "syncZoom"
+                        : "createZoomMeeting"
+                    }
+                    defaultChecked
+                  />
+                  <span>
+                    <b>
+                      {sessionEditor !== "new" && sessionEditor.zoomMeetingId
+                        ? "Actualizar también la reunión de Zoom"
+                        : "Crear una reunión programada en Zoom"}
+                    </b>
+                    <small>
+                      {sessionEditor !== "new" && sessionEditor.zoomMeetingId
+                        ? "Se sincronizarán el título, la hora de inicio y la duración."
+                        : "Guardaremos solo el ID, enlace de participantes y horario; las credenciales permanecen en el conector seguro."}
+                    </small>
+                  </span>
+                </label>
+              )}
               {sessionError && (
                 <p className="form-error" role="alert">
                   {sessionError}

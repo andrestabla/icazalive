@@ -84,6 +84,8 @@ export default async function EventDetailPage({
         startsAt: session.startsAt.toISOString(),
         endsAt: session.endsAt.toISOString(),
         technicalCheckAt: session.technicalCheckAt?.toISOString() ?? null,
+        zoomStartAt: session.zoomStartAt?.toISOString() ?? null,
+        zoomSyncedAt: session.zoomSyncedAt?.toISOString() ?? null,
         createdAt: session.createdAt.toISOString(),
         updatedAt: session.updatedAt.toISOString(),
       }))}
