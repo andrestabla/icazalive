@@ -8,8 +8,14 @@ import {
   evaluateStreamingConfiguration,
   getCredentialAvailability,
   hasBlockingStreamingChecks,
+  type StreamingCheck,
   type StreamingMode,
 } from "@/lib/streaming";
+import {
+  createEventChannel,
+  getStreamState,
+  readIvsCredentials,
+} from "@/lib/aws-ivs";
 
 export const runtime = "nodejs";
 
@@ -101,7 +107,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const body = (await request.json()) as {
     sessionId?: string;
-    action?: "save" | "run_check";
+    action?: "save" | "run_check" | "provision";
     streamingMode?: StreamingMode;
     latencyMode?: "low" | "standard";
     zoomMeetingId?: NullableText;
@@ -121,7 +127,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     !body.sessionId ||
     (body.action !== undefined &&
       body.action !== "save" &&
-      body.action !== "run_check") ||
+      body.action !== "run_check" &&
+      body.action !== "provision") ||
     (body.streamingMode !== undefined &&
       !allowedModes.includes(body.streamingMode)) ||
     (body.latencyMode !== undefined &&
@@ -192,6 +199,50 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const mode = body.streamingMode ?? record.session.streamingMode;
+
+  // Aprovisionamiento: crea el canal de IVS para este evento y guarda su ARN
+  // y URL de reproducción. El stream key y el ingest se devuelven una sola
+  // vez en la respuesta y no se persisten en la base.
+  let provisioned: {
+    ingestEndpoint: string;
+    streamKey: string;
+  } | null = null;
+  if (body.action === "provision") {
+    if (mode !== "zoom_to_ivs" && mode !== "ivs_direct") {
+      return NextResponse.json(
+        { error: "Este modo de transmisión no utiliza Amazon IVS." },
+        { status: 400 },
+      );
+    }
+    const ivsCredentials = readIvsCredentials();
+    if (!ivsCredentials) {
+      return NextResponse.json(
+        {
+          error:
+            "Faltan AWS_REGION, AWS_ACCESS_KEY_ID o AWS_SECRET_ACCESS_KEY en el servidor.",
+        },
+        { status: 409 },
+      );
+    }
+    const creation = await createEventChannel(ivsCredentials, {
+      name: `icaza-${record.event.slug}`,
+      recordingConfigurationArn:
+        process.env.AWS_IVS_RECORDING_CONFIGURATION_ARN || undefined,
+    });
+    if (!creation.ok) {
+      return NextResponse.json(
+        { error: `No fue posible crear el canal. ${creation.error}` },
+        { status: 502 },
+      );
+    }
+    ivsChannelArn = creation.channel.channelArn;
+    playbackUrl = creation.channel.playbackUrl;
+    provisioned = {
+      ingestEndpoint: creation.channel.ingestEndpoint,
+      streamKey: creation.channel.streamKey,
+    };
+  }
+
   const merged = {
     mode,
     startsAt: record.session.startsAt,
@@ -210,7 +261,33 @@ export async function PATCH(request: Request, context: RouteContext) {
       playbackUrl !== undefined ? playbackUrl : record.session.playbackUrl,
     ...getCredentialAvailability(),
   };
-  const checks = evaluateStreamingConfiguration(merged);
+  const checks: StreamingCheck[] = evaluateStreamingConfiguration(merged);
+
+  // La revisión técnica también consulta si la señal está entrando al canal.
+  // Es informativa: un canal sin señal días antes del evento es lo esperado,
+  // así que nunca bloquea.
+  if (
+    body.action === "run_check" &&
+    (merged.mode === "zoom_to_ivs" || merged.mode === "ivs_direct") &&
+    merged.ivsChannelArn
+  ) {
+    const ivsCredentials = readIvsCredentials();
+    if (ivsCredentials) {
+      const signal = await getStreamState(ivsCredentials, merged.ivsChannelArn);
+      checks.push({
+        id: "signal",
+        label: "Señal en el canal",
+        status: signal.state === "unavailable" ? "warning" : "pass",
+        detail:
+          signal.state === "live"
+            ? `El canal está recibiendo señal (salud ${signal.health}, ${signal.viewerCount} espectadores).`
+            : signal.state === "offline"
+              ? "El canal existe pero aún no recibe señal. Inicia la transmisión desde Zoom para verla aquí."
+              : `No fue posible consultar el canal: ${signal.detail}`,
+      });
+    }
+  }
+
   const hasBlockingChecks = hasBlockingStreamingChecks(checks);
   const streamingStatus = hasBlockingChecks
     ? ("not_configured" as const)
@@ -242,13 +319,17 @@ export async function PATCH(request: Request, context: RouteContext) {
     action:
       body.action === "run_check"
         ? "streaming.technical_check"
-        : "streaming.updated",
+        : body.action === "provision"
+          ? "streaming.channel_provisioned"
+          : "streaming.updated",
     resourceType: "session",
     resourceId: updated.id,
     summary:
       body.action === "run_check"
         ? `Revisión técnica ejecutada para “${record.event.title}”.`
-        : `Transmisión de “${record.event.title}” actualizada.`,
+        : body.action === "provision"
+          ? `Canal de Amazon IVS creado para “${record.event.title}”.`
+          : `Transmisión de “${record.event.title}” actualizada.`,
     details: {
       eventId: record.event.id,
       mode: updated.streamingMode,
@@ -264,6 +345,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       session: updated,
       checks,
       credentials: getCredentialAvailability(),
+      // Solo tras aprovisionar: el stream key no se guarda y no volverá a
+      // mostrarse. Quien opera el evento lo copia a Zoom en ese momento.
+      provisioned,
     },
   });
 }

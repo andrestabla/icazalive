@@ -27,13 +27,11 @@ export function getIntegrationEnvironment() {
     awsAccessKey: Boolean(process.env.AWS_ACCESS_KEY_ID),
     awsSecretKey: Boolean(process.env.AWS_SECRET_ACCESS_KEY),
     s3BucketName: process.env.AWS_S3_BUCKET || null,
-    sesRegion: process.env.AWS_SES_REGION || process.env.AWS_REGION || null,
-    sesAccessKey: Boolean(
-      process.env.AWS_SES_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID,
-    ),
-    sesSecretKey: Boolean(
-      process.env.AWS_SES_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY,
-    ),
+    // El checklist refleja la misma regla que readSesConfig(): solo cuentan
+    // las variables específicas de SES, sin heredar las genéricas de AWS.
+    sesRegion: process.env.AWS_SES_REGION || null,
+    sesAccessKey: Boolean(process.env.AWS_SES_ACCESS_KEY_ID),
+    sesSecretKey: Boolean(process.env.AWS_SES_SECRET_ACCESS_KEY),
     emailFrom: process.env.EMAIL_FROM || null,
     emailReplyTo: process.env.EMAIL_REPLY_TO || null,
     sesConfigurationSet: process.env.AWS_SES_CONFIGURATION_SET || null,

@@ -6,6 +6,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { readSesConfig, verifySesAccess } from "@/lib/aws-ses";
+import { readIvsCredentials, verifyIvsAccess } from "@/lib/aws-ivs";
 import { activeProviderName, providerLabels } from "@/lib/email-provider";
 import {
   evaluateIntegration,
@@ -186,6 +187,25 @@ export async function PATCH(request: Request) {
     quota?: number;
     credentialsMissing?: boolean;
   } | null = null;
+  // Para Amazon IVS, "revisar" comprueba que las credenciales del servidor
+  // pueden listar canales, sin crear recursos.
+  if (body.provider === "amazon_ivs" && body.action === "check") {
+    const ivsCredentials = readIvsCredentials();
+    if (!ivsCredentials) {
+      providerCheck = {
+        ok: false,
+        credentialsMissing: true,
+        detail:
+          "Faltan variables de entorno de AWS. Define AWS_REGION, AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY para verificar la conexión.",
+      };
+    } else {
+      providerCheck = await verifyIvsAccess({
+        ...ivsCredentials,
+        region: region ?? ivsCredentials.region,
+      });
+    }
+  }
+
   if (body.provider === "email" && body.action === "check") {
     const sesConfig = readSesConfig();
     if (!sesConfig) {
@@ -204,13 +224,14 @@ export async function PATCH(request: Request) {
     }
   }
 
-  // "error" se reserva para credenciales presentes que SES rechaza.
+  // "error" se reserva para credenciales presentes que el proveedor rechaza.
+  const checkedProvider = body.provider === "email" || body.provider === "amazon_ivs";
   const status =
-    body.provider === "email" && providerCheck && !providerCheck.credentialsMissing
+    checkedProvider && providerCheck && !providerCheck.credentialsMissing
       ? providerCheck.ok
         ? ("connected" as const)
         : ("error" as const)
-      : existing?.status === "connected" && body.provider !== "email"
+      : existing?.status === "connected" && !checkedProvider
         ? ("connected" as const)
         : evaluation.ready
           ? ("configured" as const)

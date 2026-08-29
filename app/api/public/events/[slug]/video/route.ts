@@ -7,6 +7,7 @@ import { events } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import {
   recordedVideoAbsolutePath,
+  recordedVideoRemoteUrl,
   recordedVideoStats,
 } from "@/lib/media-storage";
 import {
@@ -53,6 +54,13 @@ export async function GET(request: Request, context: RouteContext) {
 
   const stats = await recordedVideoStats(event.recordedVideoPath);
   if (!stats) {
+    // El disco local no tiene el archivo (en un despliegue es efímero). Si S3
+    // está configurado, el navegador reproduce directamente desde el bucket
+    // con una URL firmada temporal; S3 atiende las peticiones de rango.
+    const remoteUrl = recordedVideoRemoteUrl(event.recordedVideoPath);
+    if (remoteUrl) {
+      return NextResponse.redirect(remoteUrl, 302);
+    }
     return NextResponse.json(
       { error: "El archivo de video no está disponible en este equipo." },
       { status: 404 },
