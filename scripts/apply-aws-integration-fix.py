@@ -50,17 +50,9 @@ import { readIvsCredentials, verifyIvsAccess } from "@/lib/aws-ivs";''',
         "app/api/events/[slug]/streaming/route.ts",
         [
             (
-                '''import {
-  evaluateStreamingConfiguration,
-  getCredentialAvailability,
-  hasBlockingStreamingChecks,
-  type StreamingMode,
+                '''  type StreamingMode,
 } from "@/lib/streaming";''',
-                '''import {
-  evaluateStreamingConfiguration,
-  getCredentialAvailability,
-  hasBlockingStreamingChecks,
-  type StreamingCheck,
+                '''  type StreamingCheck,
   type StreamingMode,
 } from "@/lib/streaming";
 import {
