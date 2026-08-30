@@ -969,3 +969,7 @@ button { font: inherit; }
 .sim-emitter-controls { display: flex; align-items: center; gap: 12px; }
 .sim-emitter-badge { font-size: 12px; font-weight: 650; color: #8a8695; }
 .sim-emitter-badge.live { color: #d1394f; }
+
+/* Tamaño base de los iconos SVG (AdminIcon): reutiliza el font-size que
+   cada contenedor ya define, igual que hacían los emojis originales. */
+.admin-icon { width: 1.15em; height: 1.15em; flex: none; vertical-align: middle; }
