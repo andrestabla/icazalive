@@ -27,6 +27,92 @@ export default function ContentLibrary() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
+
+  // Lee la duración del MP4 en el navegador antes de subirlo.
+  const readDuration = (file: File): Promise<number | null> =>
+    new Promise((resolve) => {
+      const el = document.createElement("video");
+      el.preload = "metadata";
+      el.onloadedmetadata = () => {
+        URL.revokeObjectURL(el.src);
+        resolve(Number.isFinite(el.duration) ? Math.round(el.duration) : null);
+      };
+      el.onerror = () => {
+        URL.revokeObjectURL(el.src);
+        resolve(null);
+      };
+      el.src = URL.createObjectURL(file);
+    });
+
+  // Sube el video directamente a S3 con una URL prefirmada y lo registra en la
+  // biblioteca, sin que el gestor toque la consola de AWS.
+  const uploadVideo = async (file: File) => {
+    if (!file.type.startsWith("video/") && !file.name.toLowerCase().endsWith(".mp4")) {
+      setStatus({ text: "Selecciona un archivo de video (MP4).", error: true });
+      return;
+    }
+    setUploading(true);
+    setUploadPct(0);
+    setStatus({ text: `Preparando la subida de ${file.name}…`, error: false });
+    try {
+      const prep = await fetch("/api/content-assets/upload-url", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || "video/mp4" }),
+      });
+      const prepData = (await prep.json()) as {
+        data?: { uploadUrl: string; key: string };
+        error?: string;
+      };
+      if (!prep.ok || !prepData.data) {
+        throw new Error(prepData.error ?? "No fue posible preparar la subida.");
+      }
+      const { uploadUrl, key } = prepData.data;
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl);
+        xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setUploadPct(Math.round((event.loaded / event.total) * 100));
+          }
+        };
+        xhr.onload = () =>
+          xhr.status >= 200 && xhr.status < 300
+            ? resolve()
+            : reject(new Error(`S3 respondió ${xhr.status}`));
+        xhr.onerror = () => reject(new Error("Fallo de red al subir a S3."));
+        xhr.send(file);
+      });
+
+      setStatus({ text: "Registrando el contenido…", error: false });
+      const duration = await readDuration(file);
+      const title = file.name.replace(/\.[^.]+$/, "");
+      const reg = await fetch("/api/content-assets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title, s3Key: key, durationSeconds: duration }),
+      });
+      if (!reg.ok) {
+        const regData = (await reg.json()) as { error?: string };
+        throw new Error(regData.error ?? "El video se subió pero no se pudo registrar.");
+      }
+      setStatus({ text: `“${title}” subido y disponible en la biblioteca.`, error: false });
+      setRefreshKey((v) => v + 1);
+    } catch (error) {
+      setStatus({
+        text: error instanceof Error ? error.message : "No fue posible subir el video.",
+        error: true,
+      });
+    } finally {
+      setUploading(false);
+      setUploadPct(0);
+    }
+  };
+
 
   useEffect(() => {
     let cancelled = false;
@@ -101,6 +187,32 @@ export default function ContentLibrary() {
           las credenciales para usar la biblioteca.
         </p>
       )}
+
+      <section className="content-section content-upload">
+        <h2>Subir un contenido</h2>
+        <p className="module-subtitle">
+          Carga un video MP4 directamente desde tu equipo. Se guarda en Amazon
+          S3 y queda disponible para asignarlo a eventos simulados.
+        </p>
+        <label className="content-upload-drop">
+          <input
+            type="file"
+            accept="video/mp4,video/*"
+            disabled={uploading || !s3Configured}
+            onChange={(input) => {
+              const file = input.target.files?.[0];
+              if (file) void uploadVideo(file);
+              input.target.value = "";
+            }}
+          />
+          <span>{uploading ? `Subiendo… ${uploadPct}%` : "Elegir video MP4"}</span>
+        </label>
+        {uploading && (
+          <div className="content-upload-bar">
+            <div style={{ width: `${uploadPct}%` }} />
+          </div>
+        )}
+      </section>
 
       <section className="content-section">
         <h2>Contenidos registrados</h2>

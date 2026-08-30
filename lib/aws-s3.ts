@@ -232,3 +232,21 @@ export function objectPlaybackUrl(
     expiresInSeconds,
   });
 }
+
+// URL prefirmada para SUBIR un objeto directamente a S3 desde el navegador
+// (PUT). Permite que el gestor cargue videos sin pasar por el servidor ni por
+// la consola de AWS. La clave se ubica bajo library/ para la biblioteca.
+export function presignUploadUrl(
+  config: { credentials: AwsCredentials; bucket: string },
+  key: string,
+  expiresInSeconds = 900,
+): string {
+  return presignUrl({
+    credentials: config.credentials,
+    service: "s3",
+    host: bucketHost(config.bucket, config.credentials.region),
+    method: "PUT",
+    path: objectPath(key),
+    expiresInSeconds,
+  });
+}

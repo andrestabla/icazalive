@@ -969,3 +969,11 @@ button { font: inherit; }
 .sim-emitter-controls { display: flex; align-items: center; gap: 12px; }
 .sim-emitter-badge { font-size: 12px; font-weight: 650; color: #8a8695; }
 .sim-emitter-badge.live { color: #d1394f; }
+
+/* Subida de contenido a la biblioteca */
+.content-upload-drop { display: flex; align-items: center; justify-content: center; min-height: 96px; margin-top: 12px; border: 1.5px dashed var(--line); border-radius: 12px; background: #fff; cursor: pointer; transition: border-color .15s, background .15s; }
+.content-upload-drop:hover { border-color: #9f8aeb; background: #f7f5fe; }
+.content-upload-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.content-upload-drop span { font-size: 13px; font-weight: 650; color: #6240d1; }
+.content-upload-bar { height: 8px; margin-top: 10px; border-radius: 6px; background: #eee9fb; overflow: hidden; }
+.content-upload-bar > div { height: 100%; background: #6946df; transition: width .2s ease; }
