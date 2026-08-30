@@ -972,4 +972,4 @@ button { font: inherit; }
 
 /* Tamaño base de los iconos SVG (AdminIcon): reutiliza el font-size que
    cada contenedor ya define, igual que hacían los emojis originales. */
-.admin-icon { width: 1.15em; height: 1.15em; flex: none; vertical-align: middle; }
+svg.admin-icon { width: 1.15em !important; height: 1.15em !important; flex: none; vertical-align: middle; }
