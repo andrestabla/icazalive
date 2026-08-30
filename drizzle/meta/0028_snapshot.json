@@ -1,6 +1,6 @@
 {
-  "id": "1753d884-8f18-454e-97e1-c48f58dbd5be",
-  "prevId": "d1edb06a-c251-4417-936b-f24723079421",
+  "id": "a7c8d043-d839-41f5-a652-7ec34346687e",
+  "prevId": "1753d884-8f18-454e-97e1-c48f58dbd5be",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -931,6 +931,121 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.content_assets": {
+      "name": "content_assets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "s3_key": {
+          "name": "s3_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_seconds": {
+          "name": "duration_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content_type": {
+          "name": "content_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'video/mp4'"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "content_assets_created_idx": {
+          "name": "content_assets_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "content_assets_created_by_users_id_fk": {
+          "name": "content_assets_created_by_users_id_fk",
+          "tableFrom": "content_assets",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "content_assets_s3_key_unique": {
+          "name": "content_assets_s3_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "s3_key"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -2612,6 +2727,26 @@
           "primaryKey": false,
           "notNull": false
         },
+        "content_asset_id": {
+          "name": "content_asset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "simulated_delivery": {
+          "name": "simulated_delivery",
+          "type": "simulated_delivery",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'direct'"
+        },
+        "hybrid_switch_offset_minutes": {
+          "name": "hybrid_switch_offset_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_by": {
           "name": "created_by",
           "type": "uuid",
@@ -3964,6 +4099,26 @@
           "primaryKey": false,
           "notNull": false
         },
+        "emitter_status": {
+          "name": "emitter_status",
+          "type": "emitter_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'idle'"
+        },
+        "emitter_task_arn": {
+          "name": "emitter_task_arn",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "emitter_started_at": {
+          "name": "emitter_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -4502,6 +4657,18 @@
         "restriction"
       ]
     },
+    "public.emitter_status": {
+      "name": "emitter_status",
+      "schema": "public",
+      "values": [
+        "idle",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "error"
+      ]
+    },
     "public.event_format": {
       "name": "event_format",
       "schema": "public",
@@ -4649,6 +4816,14 @@
         "attended",
         "absent",
         "cancelled"
+      ]
+    },
+    "public.simulated_delivery": {
+      "name": "simulated_delivery",
+      "schema": "public",
+      "values": [
+        "direct",
+        "streaming"
       ]
     },
     "public.streaming_latency": {

@@ -169,3 +169,66 @@ export async function deleteVideo(
     };
   }
 }
+
+export type S3Object = { key: string; size: number; lastModified: string };
+
+// Lista los objetos bajo un prefijo del bucket. Se usa para poblar la
+// biblioteca de contenidos con los videos ya presentes en S3.
+export async function listVideos(
+  config: { credentials: AwsCredentials; bucket: string },
+  prefix = "library/",
+): Promise<{ ok: true; objects: S3Object[] } | { ok: false; error: string }> {
+  const host = bucketHost(config.bucket, config.credentials.region);
+  const query = `list-type=2&prefix=${encodeURIComponent(prefix)}&max-keys=1000`;
+  const signed = signRequest({
+    credentials: config.credentials,
+    service: "s3",
+    host,
+    method: "GET",
+    path: "/",
+    query,
+    payloadHash: "UNSIGNED-PAYLOAD",
+  });
+  try {
+    const response = await fetch(signed.url, { headers: signed.headers });
+    if (!response.ok) {
+      const detail = await response.text();
+      return { ok: false, error: `S3 ${response.status}: ${detail.slice(0, 200)}` };
+    }
+    const xml = await response.text();
+    const objects: S3Object[] = [];
+    const contentsRegex = /<Contents>([\s\S]*?)<\/Contents>/g;
+    let match: RegExpExecArray | null;
+    while ((match = contentsRegex.exec(xml)) !== null) {
+      const block = match[1];
+      const key = /<Key>([\s\S]*?)<\/Key>/.exec(block)?.[1] ?? "";
+      const size = Number(/<Size>(\d+)<\/Size>/.exec(block)?.[1] ?? "0");
+      const lastModified =
+        /<LastModified>([\s\S]*?)<\/LastModified>/.exec(block)?.[1] ?? "";
+      // Se omiten las "carpetas" (claves que terminan en /).
+      if (key && !key.endsWith("/")) objects.push({ key, size, lastModified });
+    }
+    return { ok: true, objects };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Fallo de red con S3.",
+    };
+  }
+}
+
+// URL firmada para reproducir cualquier objeto de la biblioteca por su clave.
+export function objectPlaybackUrl(
+  config: { credentials: AwsCredentials; bucket: string },
+  key: string,
+  expiresInSeconds = 3600,
+): string {
+  return presignUrl({
+    credentials: config.credentials,
+    service: "s3",
+    host: bucketHost(config.bucket, config.credentials.region),
+    method: "GET",
+    path: objectPath(key),
+    expiresInSeconds,
+  });
+}
