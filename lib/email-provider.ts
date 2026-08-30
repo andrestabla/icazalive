@@ -17,6 +17,7 @@ export type OutgoingEmail = {
   to: string;
   subject: string;
   body: string;
+  html?: string;
   replyTo?: string;
 };
 
@@ -59,6 +60,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<EmailResult> {
           to: [email.to],
           subject: email.subject,
           text: email.body,
+          ...(email.html ? { html: email.html } : {}),
         }),
       });
       if (!response.ok) {

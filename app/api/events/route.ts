@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import type { EventTemplatePayload } from "@/app/api/event-templates/route";
 import { writeAuditLog } from "@/lib/audit";
+import { DEFAULT_COMMUNICATIONS } from "@/lib/default-communications";
 import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import {
@@ -184,6 +185,19 @@ export async function POST(request: Request) {
     if (template?.communications.length) {
       await transaction.insert(communicationMessages).values(
         template.communications.map((message) => ({
+          eventId: event.id,
+          type: message.type,
+          subject: message.subject,
+          body: message.body,
+          enabled: message.enabled,
+          offsetMinutes: message.offsetMinutes,
+        })),
+      );
+    } else {
+      // Sin plantilla elegida, el evento nace con la secuencia estándar de la
+      // plataforma para que registro y recordatorios funcionen desde el inicio.
+      await transaction.insert(communicationMessages).values(
+        DEFAULT_COMMUNICATIONS.map((message) => ({
           eventId: event.id,
           type: message.type,
           subject: message.subject,

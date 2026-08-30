@@ -7,6 +7,8 @@ import {
   sendEmail,
   type EmailProviderName,
 } from "@/lib/email-provider";
+import { renderBrandedEmail } from "@/lib/email-branding";
+import { getBrandSettings } from "@/lib/brand";
 
 const MAX_ATTEMPTS = 3;
 const BATCH_SIZE = 50;
@@ -50,11 +52,14 @@ export async function processDueDeliveries(
     provider: activeProviderName(),
   };
 
+  const brand = await getBrandSettings().catch(() => null);
+
   for (const delivery of due) {
     const result = await sendEmail({
       to: delivery.recipientEmail,
       subject: delivery.subject,
       body: delivery.body,
+      html: renderBrandedEmail({ bodyText: delivery.body, brand }),
     });
 
     if (result.ok) {

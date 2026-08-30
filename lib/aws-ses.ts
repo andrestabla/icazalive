@@ -58,7 +58,13 @@ export type SesSendResult =
 
 export async function sendWithSes(
   config: SesConfig,
-  email: { to: string; subject: string; body: string; replyTo?: string },
+  email: {
+    to: string;
+    subject: string;
+    body: string;
+    html?: string;
+    replyTo?: string;
+  },
 ): Promise<SesSendResult> {
   const service = "ses";
   const host = `email.${config.region}.amazonaws.com`;
@@ -74,7 +80,12 @@ export async function sendWithSes(
     Content: {
       Simple: {
         Subject: { Data: email.subject, Charset: "UTF-8" },
-        Body: { Text: { Data: email.body, Charset: "UTF-8" } },
+        Body: {
+          Text: { Data: email.body, Charset: "UTF-8" },
+          ...(email.html
+            ? { Html: { Data: email.html, Charset: "UTF-8" } }
+            : {}),
+        },
       },
     },
   });

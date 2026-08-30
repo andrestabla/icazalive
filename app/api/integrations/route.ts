@@ -7,6 +7,8 @@ import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { readSesConfig, verifySesAccess } from "@/lib/aws-ses";
 import { readIvsCredentials, verifyIvsAccess } from "@/lib/aws-ivs";
+import { renderBrandedEmail } from "@/lib/email-branding";
+import { getBrandSettings } from "@/lib/brand";
 import {
   activeProviderName,
   providerLabels,
@@ -209,10 +211,13 @@ export async function PATCH(request: Request) {
       );
     }
     const providerName = providerLabels[activeProviderName()];
+    const testBody = `Este es un correo de prueba enviado desde la configuración de correo saliente de Icaza Live (proveedor: ${providerName}). Si lo estás leyendo, el envío funciona correctamente.`;
+    const brand = await getBrandSettings().catch(() => null);
     const result = await sendEmail({
       to: recipient,
       subject: "Correo de prueba — Icaza Live",
-      body: `Este es un correo de prueba enviado desde la configuración de correo saliente de Icaza Live (proveedor: ${providerName}). Si lo estás leyendo, el envío funciona correctamente.`,
+      body: testBody,
+      html: renderBrandedEmail({ bodyText: testBody, brand }),
     });
     await writeAuditLog({
       actor: auth.user,

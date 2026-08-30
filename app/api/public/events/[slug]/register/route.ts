@@ -15,6 +15,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { renderParticipantCommunication } from "@/lib/communication-renderer";
+import { getPublicOrigin } from "@/lib/public-origin";
 import { getPublishedLegalDocuments } from "@/lib/privacy";
 import { createRegistrationAccessToken } from "@/lib/registration-access";
 import { validateRegistrationResponses } from "@/lib/registration-fields";
@@ -120,7 +121,7 @@ export async function POST(request: Request, context: RouteContext) {
     request.headers.get("x-real-ip") ||
     null;
   const userAgent = request.headers.get("user-agent")?.slice(0, 500) ?? null;
-  const origin = new URL(request.url).origin;
+  const origin = getPublicOrigin(request);
   const emailHash = createHash("sha256").update(email).digest("hex");
   const result = await db.transaction(async (transaction) => {
     const [summary] = await transaction

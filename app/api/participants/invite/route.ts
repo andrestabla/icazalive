@@ -1,4 +1,5 @@
 import { and, count, eq, ne } from "drizzle-orm";
+import { getPublicOrigin } from "@/lib/public-origin";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -131,7 +132,7 @@ export async function POST(request: Request) {
           ),
         )
     : [];
-  const origin = new URL(request.url).origin;
+  const origin = getPublicOrigin(request);
   const now = new Date();
 
   const result = await db.transaction(async (transaction) => {
