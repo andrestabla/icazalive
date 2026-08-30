@@ -52,15 +52,16 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "El evento no tiene video." }, { status: 404 });
   }
 
+  // Con S3 configurado, el bucket es la fuente de la verdad: el navegador
+  // reproduce con una URL firmada temporal y S3 atiende las peticiones de
+  // rango. El disco local (efímero en despliegues) queda solo para desarrollo.
+  const remoteUrl = recordedVideoRemoteUrl(event.recordedVideoPath);
+  if (remoteUrl) {
+    return NextResponse.redirect(remoteUrl, 302);
+  }
+
   const stats = await recordedVideoStats(event.recordedVideoPath);
   if (!stats) {
-    // El disco local no tiene el archivo (en un despliegue es efímero). Si S3
-    // está configurado, el navegador reproduce directamente desde el bucket
-    // con una URL firmada temporal; S3 atiende las peticiones de rango.
-    const remoteUrl = recordedVideoRemoteUrl(event.recordedVideoPath);
-    if (remoteUrl) {
-      return NextResponse.redirect(remoteUrl, 302);
-    }
     return NextResponse.json(
       { error: "El archivo de video no está disponible en este equipo." },
       { status: 404 },
