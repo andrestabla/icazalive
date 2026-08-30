@@ -46,3 +46,13 @@ next-env.d.ts
 
 # TypeScript build info
 tsconfig.tsbuildinfo
+
+# Artefactos de otras herramientas
+.openai/
+app/_sites-preview/
+app/chatgpt-auth.ts
+build/
+examples/
+tests/rendered-html.test.mjs
+vite.config.ts
+worker/
