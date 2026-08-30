@@ -7,6 +7,7 @@ import {
   events,
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
+import { DEFAULT_COMMUNICATIONS } from "@/lib/default-communications";
 import { requireApiUser } from "@/lib/auth";
 import { processDueDeliveries } from "@/lib/communication-worker";
 
@@ -66,6 +67,56 @@ export async function GET(_: Request, context: RouteContext) {
   ]);
 
   return NextResponse.json({ data: { messages, stats } });
+}
+
+// Precarga la secuencia estándar de la plataforma en un evento sin mensajes.
+export async function POST(request: Request, context: RouteContext) {
+  const { slug } = await context.params;
+  const auth = await getStaffUser();
+  if ("error" in auth) return auth.error;
+
+  const db = getDb();
+  const [event] = await db
+    .select()
+    .from(events)
+    .where(eq(events.slug, slug))
+    .limit(1);
+  if (!event) {
+    return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+
+  const existing = await db
+    .select({ id: communicationMessages.id })
+    .from(communicationMessages)
+    .where(eq(communicationMessages.eventId, event.id))
+    .limit(1);
+  if (existing.length) {
+    return NextResponse.json(
+      { error: "El evento ya tiene plantillas de comunicación." },
+      { status: 409 },
+    );
+  }
+
+  await db.insert(communicationMessages).values(
+    DEFAULT_COMMUNICATIONS.map((message) => ({
+      eventId: event.id,
+      type: message.type,
+      subject: message.subject,
+      body: message.body,
+      enabled: message.enabled,
+      offsetMinutes: message.offsetMinutes,
+    })),
+  );
+
+  await writeAuditLog({
+    actor: auth.user,
+    action: "communication.defaults_loaded",
+    resourceType: "event",
+    resourceId: event.id,
+    summary: `Plantillas estándar precargadas para “${event.title}”.`,
+    request,
+  });
+  return NextResponse.json({ data: { loaded: DEFAULT_COMMUNICATIONS.length } });
 }
 
 export async function PATCH(request: Request, context: RouteContext) {

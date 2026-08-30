@@ -1342,7 +1342,22 @@ export default function EventDetail({
                 <div className="tab-placeholder">
                   <span><AdminIcon name="mail" /></span>
                   <h2>Sin plantillas</h2>
-                  <p>Ejecuta los datos iniciales para crear la secuencia del evento.</p>
+                  <p>Precarga la secuencia estándar de la plataforma y edítala aquí.</p>
+                  <button
+                    className="primary-button"
+                    style={{ marginTop: 12 }}
+                    onClick={() => {
+                      void (async () => {
+                        const response = await fetch(
+                          `/api/events/${event.slug}/communications`,
+                          { method: "POST" },
+                        );
+                        if (response.ok) window.location.reload();
+                      })();
+                    }}
+                  >
+                    Precargar plantillas del sistema
+                  </button>
                 </div>
               )}
             </aside>
