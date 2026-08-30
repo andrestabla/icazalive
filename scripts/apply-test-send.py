@@ -51,7 +51,7 @@ EDITS = [
       body: `Este es un correo de prueba enviado desde la configuración de correo saliente de Icaza Live (proveedor: ${providerName}). Si lo estás leyendo, el envío funciona correctamente.`,
     });
     await writeAuditLog({
-      actor: user,
+      actor: auth.user,
       action: "integration.email_test_sent",
       resourceType: "integration",
       resourceId: "email",
