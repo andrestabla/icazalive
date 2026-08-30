@@ -8,6 +8,7 @@ import { canManageEvent } from "@/lib/event-permissions";
 import {
   deleteRecordedVideo,
   saveRecordedVideo,
+  statRemoteVideo,
   VideoValidationError,
 } from "@/lib/media-storage";
 
@@ -132,6 +133,85 @@ export async function PUT(request: Request, context: RouteContext) {
     }
     throw error;
   }
+}
+
+// Registra un video que el administrador cargó directamente en S3 con la
+// clave event-videos/<id del evento>.mp4, sin pasar el archivo por la app.
+export async function POST(request: Request, context: RouteContext) {
+  const { slug } = await context.params;
+  const resolved = await resolveManagedEvent(slug);
+  if ("error" in resolved) return resolved.error;
+  const { user, event } = resolved;
+
+  if (event.format !== "simulated") {
+    return NextResponse.json(
+      { error: "Solo los eventos simulados usan video pregrabado." },
+      { status: 409 },
+    );
+  }
+
+  const body = (await request.json().catch(() => ({}))) as {
+    source?: string;
+    name?: string;
+    durationSeconds?: number;
+  };
+  if (body.source !== "s3") {
+    return NextResponse.json(
+      { error: "Indica source: \"s3\" para importar desde el bucket." },
+      { status: 400 },
+    );
+  }
+
+  const remote = await statRemoteVideo(event.id);
+  if (!remote) {
+    return NextResponse.json(
+      {
+        error: `No se encontró event-videos/${event.id}.mp4 en el bucket configurado.`,
+      },
+      { status: 404 },
+    );
+  }
+
+  const durationSeconds =
+    typeof body.durationSeconds === "number" &&
+    Number.isFinite(body.durationSeconds) &&
+    body.durationSeconds > 0 &&
+    body.durationSeconds < 24 * 60 * 60
+      ? Math.round(body.durationSeconds)
+      : null;
+  const originalName = (body.name ?? "video.mp4").slice(0, 200);
+
+  const [updated] = await getDb()
+    .update(events)
+    .set({
+      recordedVideoPath: remote.filename,
+      recordedVideoName: originalName,
+      recordedVideoSize: remote.size,
+      recordedVideoDurationSeconds: durationSeconds,
+      recordedVideoUploadedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(events.id, event.id))
+    .returning();
+
+  await writeAuditLog({
+    actor: user,
+    action: "event.video.imported_from_s3",
+    resourceType: "event",
+    resourceId: event.id,
+    summary: `Video pregrabado importado desde S3 para “${event.title}”.`,
+    details: { name: originalName, size: remote.size, durationSeconds },
+    request,
+  });
+  return NextResponse.json({
+    data: {
+      hasVideo: true,
+      name: updated.recordedVideoName,
+      size: updated.recordedVideoSize,
+      durationSeconds: updated.recordedVideoDurationSeconds,
+      uploadedAt: updated.recordedVideoUploadedAt,
+    },
+  });
 }
 
 export async function DELETE(request: Request, context: RouteContext) {

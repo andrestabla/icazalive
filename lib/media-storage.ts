@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
-import { deleteVideo, putVideo, readS3Config, videoPlaybackUrl } from "@/lib/aws-s3";
+import { deleteVideo, putVideo, readS3Config, statVideo, videoPlaybackUrl } from "@/lib/aws-s3";
 
 // Los videos se guardan fuera del proyecto (y de OneDrive), junto a los datos
 // locales de PGlite, para no sincronizar binarios grandes.
@@ -140,6 +140,18 @@ export function recordedVideoRemoteUrl(filename: string): string | null {
   const s3 = readS3Config();
   if (!s3) return null;
   return videoPlaybackUrl(s3, remoteVideoKey(filename));
+}
+
+// Consulta si el video de un evento ya está cargado en el bucket, para poder
+// registrarlo sin volver a subirlo a través de la aplicación.
+export async function statRemoteVideo(
+  eventId: string,
+): Promise<{ filename: string; size: number } | null> {
+  const s3 = readS3Config();
+  if (!s3) return null;
+  const filename = recordedVideoFilename(eventId);
+  const result = await statVideo(s3, remoteVideoKey(filename));
+  return result.ok ? { filename, size: result.size } : null;
 }
 
 export async function deleteRecordedVideo(filename: string): Promise<void> {

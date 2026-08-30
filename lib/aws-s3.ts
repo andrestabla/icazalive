@@ -100,6 +100,42 @@ export function videoPlaybackUrl(
   });
 }
 
+// Comprueba que el objeto exista en el bucket y devuelve su tamaño. Permite
+// registrar un video que el administrador cargó directamente en S3.
+export async function statVideo(
+  config: { credentials: AwsCredentials; bucket: string },
+  key: string,
+): Promise<{ ok: true; size: number } | { ok: false; error: string }> {
+  const host = bucketHost(config.bucket, config.credentials.region);
+  const path = objectPath(key);
+  const signed = signRequest({
+    credentials: config.credentials,
+    service: "s3",
+    host,
+    method: "HEAD",
+    path,
+    payloadHash: "UNSIGNED-PAYLOAD",
+  });
+  try {
+    const response = await fetch(signed.url, { method: "HEAD", headers: signed.headers });
+    if (!response.ok) {
+      return {
+        ok: false,
+        error:
+          response.status === 404
+            ? "El objeto no existe en el bucket."
+            : `S3 ${response.status}`,
+      };
+    }
+    return { ok: true, size: Number(response.headers.get("content-length") ?? 0) };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Fallo de red con S3.",
+    };
+  }
+}
+
 export async function deleteVideo(
   config: { credentials: AwsCredentials; bucket: string },
   key: string,
