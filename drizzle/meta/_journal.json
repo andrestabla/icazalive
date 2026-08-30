@@ -183,6 +183,13 @@
       "when": 1785530741719,
       "tag": "0025_quick_joseph",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788058448193,
+      "tag": "0026_dazzling_nova",
+      "breakpoints": true
     }
   ]
 }

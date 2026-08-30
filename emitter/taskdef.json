@@ -1,0 +1,23 @@
+{
+  "family": "icaza-live-emisor",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::094275176968:role/icaza-live-emisor-exec",
+  "containerDefinitions": [
+    {
+      "name": "emisor",
+      "image": "094275176968.dkr.ecr.us-east-1.amazonaws.com/icaza-live-emisor:latest",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/icaza-live-emisor",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "emisor"
+        }
+      }
+    }
+  ]
+}

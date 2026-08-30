@@ -141,6 +141,24 @@ export const streamingLatency = pgEnum("streaming_latency", [
   "standard",
 ]);
 
+// Cómo se distribuye el contenido pregrabado (simulado):
+// - "direct": servido desde S3 con reloj compartido (barato, sin ABR).
+// - "streaming": S3 → emisor efímero → IVS (ABR, experiencia de vivo real).
+export const simulatedDelivery = pgEnum("simulated_delivery", [
+  "direct",
+  "streaming",
+]);
+
+// Estado del emisor efímero que empuja contenido de S3 hacia IVS.
+export const emitterStatus = pgEnum("emitter_status", [
+  "idle",
+  "starting",
+  "running",
+  "stopping",
+  "stopped",
+  "error",
+]);
+
 export const communicationType = pgEnum("communication_type", [
   "registration_confirmation",
   "reminder_24h",
@@ -307,6 +325,16 @@ export const events = pgTable("events", {
     withTimezone: true,
   }),
   postEventRedirectUrl: text("post_event_redirect_url"),
+  // Contenido simulado elegido de la biblioteca (clave S3), en vez del MP4
+  // subido por evento. Cuando está presente, manda sobre recorded_video_path.
+  contentAssetId: uuid("content_asset_id"),
+  // Modo de distribución del contenido simulado.
+  simulatedDelivery: simulatedDelivery("simulated_delivery")
+    .notNull()
+    .default("direct"),
+  // Evento híbrido: minuto (relativo al inicio) en que la señal en vivo de
+  // Zoom cede el paso al contenido simulado. Null = sin transición programada.
+  hybridSwitchOffsetMinutes: integer("hybrid_switch_offset_minutes"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),
@@ -374,6 +402,10 @@ export const sessions = pgTable(
     playbackUrl: text("playback_url"),
     recordingEnabled: boolean("recording_enabled").notNull().default(true),
     technicalCheckAt: timestamp("technical_check_at", { withTimezone: true }),
+    // Emisor efímero (S3 → IVS): estado y referencia a la tarea de ECS.
+    emitterStatus: emitterStatus("emitter_status").notNull().default("idle"),
+    emitterTaskArn: text("emitter_task_arn"),
+    emitterStartedAt: timestamp("emitter_started_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -1013,5 +1045,27 @@ export const brandSettings = pgTable("brand_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Biblioteca de contenidos: videos en S3 que el gestor puede asignar a un
+// evento simulado sin volver a subirlos. La clave S3 es la fuente de la verdad.
+export const contentAssets = pgTable(
+  "content_assets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    s3Key: text("s3_key").notNull().unique(),
+    sizeBytes: integer("size_bytes"),
+    durationSeconds: integer("duration_seconds"),
+    contentType: text("content_type").notNull().default("video/mp4"),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("content_assets_created_idx").on(table.createdAt)],
+);
+
+export type ContentAsset = typeof contentAssets.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
