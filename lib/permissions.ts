@@ -50,6 +50,15 @@ export const permissionCatalog = [
     ],
   },
   {
+    module: "content",
+    label: "Contenidos",
+    path: "/content",
+    permissions: [
+      { key: "content.view", label: "Ver la biblioteca de contenidos" },
+      { key: "content.manage", label: "Administrar contenidos y plantillas" },
+    ],
+  },
+  {
     module: "brand",
     label: "Marca",
     path: "/brand",
@@ -113,6 +122,7 @@ export const factoryRoleDefaults: Record<StaffRole, PermissionKey[]> = {
     "analytics.view",
     "integrations.view",
     "brand.view",
+    "content.view",
   ],
 };
 

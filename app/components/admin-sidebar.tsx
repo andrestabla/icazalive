@@ -7,6 +7,7 @@ export type SidebarSection =
   | "Eventos"
   | "Participantes"
   | "Analítica"
+  | "Contenidos"
   | "Integraciones"
   | "Marca"
   | "Equipo"
@@ -34,6 +35,7 @@ const settingsModules: {
   icon: string;
   permission: string;
 }[] = [
+  { label: "Contenidos", href: "/content", icon: "▤", permission: "content.view" },
   { label: "Integraciones", href: "/integrations", icon: "⌘", permission: "integrations.view" },
   { label: "Marca", href: "/brand", icon: "◇", permission: "brand.view" },
   { label: "Equipo", href: "/team", icon: "♧", permission: "team.view" },

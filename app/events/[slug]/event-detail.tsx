@@ -12,6 +12,7 @@ import EventAnalyticsPanel from "./event-analytics-panel";
 import FeedbackAdminPanel from "./feedback-admin-panel";
 import OrganizersPanel from "./organizers-panel";
 import RecordedVideoPanel from "./recorded-video-panel";
+import SimulatedContentPanel from "./simulated-content-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
 
 type EventData = {
@@ -1712,6 +1713,12 @@ export default function EventDetail({
                 onRedirectChange={(value) =>
                   void patchEvent({ postEventRedirectUrl: value })
                 }
+              />
+            )}
+            {(event.format === "simulated" || event.format === "hybrid") && (
+              <SimulatedContentPanel
+                eventSlug={event.slug}
+                isHybrid={event.format === "hybrid"}
               />
             )}
             <section className="panel streaming-overview">

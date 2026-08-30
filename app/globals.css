@@ -942,3 +942,30 @@ button { font: inherit; }
 .wizard-review-icon.email-review { background: #eee9ff; color: #6240d6; }
 .wizard-form-grid.email-form { grid-template-columns: 1fr; }
 .wizard-form-grid.email-form > label > small { color: #918d9b; font-size: 12px; font-weight: 450; line-height: 1.5; }
+
+/* Biblioteca de contenidos */
+.content-section { margin-top: 28px; }
+.content-section h2 { font-size: 16px; margin: 0 0 6px; }
+.content-empty { color: #8a8695; font-size: 13px; padding: 16px 0; }
+.content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; }
+.content-card { display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 14px; }
+.content-card.unregistered { border-style: dashed; }
+.content-card-body { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
+.content-card-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: #eee9fb; color: #6240d1; }
+.content-card-body b { display: block; font-size: 13px; }
+.content-card-body small { display: block; margin-top: 2px; color: #9995a1; font-size: 11px; }
+.content-card-body code { display: block; margin-top: 5px; color: #8a8695; font-size: 10px; word-break: break-all; }
+.content-remove { align-self: flex-end; border: 1px solid #efc9cf; border-radius: 8px; background: #fff3f5; color: #a24958; padding: 6px 12px; font-size: 12px; font-weight: 650; cursor: pointer; }
+.content-remove:hover { background: #fdeaee; }
+
+/* Panel de contenido simulado */
+.sim-delivery-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.sim-delivery-toggle button { text-align: left; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 12px; cursor: pointer; transition: border-color .15s, background .15s; }
+.sim-delivery-toggle button.active { border-color: #6946df; background: #f5f2ff; }
+.sim-delivery-toggle button:disabled { opacity: .6; cursor: not-allowed; }
+.sim-delivery-toggle b { display: block; font-size: 13px; color: var(--ink); }
+.sim-delivery-toggle small { display: block; margin-top: 3px; color: #8a8695; font-size: 11px; line-height: 1.4; }
+.sim-emitter { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-soft, #ecebf1); }
+.sim-emitter-controls { display: flex; align-items: center; gap: 12px; }
+.sim-emitter-badge { font-size: 12px; font-weight: 650; color: #8a8695; }
+.sim-emitter-badge.live { color: #d1394f; }
