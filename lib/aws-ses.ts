@@ -13,11 +13,12 @@ export type SesConfig = {
 };
 
 export function readSesConfig(): SesConfig | null {
-  const region = process.env.AWS_SES_REGION || process.env.AWS_REGION;
-  const accessKeyId =
-    process.env.AWS_SES_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey =
-    process.env.AWS_SES_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+  // Solo las variables específicas de SES activan el proveedor. Las genéricas
+  // de AWS pertenecen al usuario IAM de IVS/S3, que no puede enviar correo:
+  // heredarlas activaría SES con credenciales sin permiso ses:SendEmail.
+  const region = process.env.AWS_SES_REGION;
+  const accessKeyId = process.env.AWS_SES_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SES_SECRET_ACCESS_KEY;
   const fromAddress = process.env.EMAIL_FROM;
 
   if (!region || !accessKeyId || !secretAccessKey || !fromAddress) return null;

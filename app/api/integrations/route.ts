@@ -6,6 +6,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { readSesConfig, verifySesAccess } from "@/lib/aws-ses";
+import { readIvsCredentials, verifyIvsAccess } from "@/lib/aws-ivs";
 import { activeProviderName, providerLabels } from "@/lib/email-provider";
 import {
   evaluateIntegration,
@@ -199,6 +200,25 @@ export async function PATCH(request: Request) {
   const evaluation = evaluateIntegration(safeRecord, { zoomConnected });
   const now = new Date();
 
+  // Para Amazon IVS, "revisar" comprueba que las credenciales del servidor
+  // pueden listar canales, sin crear recursos.
+  if (body.provider === "amazon_ivs" && body.action === "check") {
+    const ivsCredentials = readIvsCredentials();
+    if (!ivsCredentials) {
+      providerCheck = {
+        ok: false,
+        credentialsMissing: true,
+        detail:
+          "Faltan variables de entorno de AWS. Define AWS_REGION, AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY para verificar la conexión.",
+      };
+    } else {
+      providerCheck = await verifyIvsAccess({
+        ...ivsCredentials,
+        region: region ?? ivsCredentials.region,
+      });
+    }
+  }
+
   // Para el correo, "revisar" hace una consulta real a SES con las
   // credenciales del servidor: confirma acceso y si la cuenta está en sandbox.
   if (body.provider === "email" && body.action === "check") {
@@ -221,7 +241,9 @@ export async function PATCH(request: Request) {
 
   // "error" se reserva para credenciales presentes que SES rechaza.
   const status =
-    (body.provider === "email" || body.provider === "zoom") &&
+    (body.provider === "email" ||
+      body.provider === "zoom" ||
+      body.provider === "amazon_ivs") &&
     providerCheck &&
     !providerCheck.credentialsMissing
       ? providerCheck.ok

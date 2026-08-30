@@ -5,7 +5,7 @@ export type StreamingMode =
   | "simulated";
 
 export type StreamingCheck = {
-  id: "schedule" | "source" | "distribution" | "credentials";
+  id: "schedule" | "source" | "distribution" | "credentials" | "signal";
   label: string;
   status: "pass" | "warning" | "fail";
   detail: string;

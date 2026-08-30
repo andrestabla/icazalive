@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import type { PublicBrand } from "@/lib/brand-config";
+import IvsPlayer from "./ivs-player";
 import SimulatedPlayer, { type SimulatedPlayback } from "./simulated-player";
 
 type RoomData = {
@@ -366,12 +367,7 @@ export default function RoomClient({
                 isParticipant={room.viewer.kind === "participant"}
               />
             ) : isLive && room.session.playbackUrl ? (
-              <div className="room-video-ready">
-                <span>▶</span>
-                <h2>La señal está disponible</h2>
-                <p>El reproductor utilizará la URL configurada en Amazon IVS.</p>
-                <a href={room.session.playbackUrl} target="_blank" rel="noreferrer">Abrir señal de reproducción ↗</a>
-              </div>
+              <IvsPlayer playbackUrl={room.session.playbackUrl} />
             ) : isLive && room.session.zoomJoinUrl ? (
               <div className="room-video-ready">
                 <span>◉</span>
