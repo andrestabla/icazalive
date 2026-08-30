@@ -7,7 +7,11 @@ import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { readSesConfig, verifySesAccess } from "@/lib/aws-ses";
 import { readIvsCredentials, verifyIvsAccess } from "@/lib/aws-ivs";
-import { activeProviderName, providerLabels } from "@/lib/email-provider";
+import {
+  activeProviderName,
+  providerLabels,
+  sendEmail,
+} from "@/lib/email-provider";
 import {
   evaluateIntegration,
   type ManagedIntegrationProvider,
@@ -79,7 +83,8 @@ export async function PATCH(request: Request) {
 
   const body = (await request.json()) as {
     provider?: ManagedIntegrationProvider;
-    action?: "save" | "check";
+    action?: "save" | "check" | "test_send";
+    testRecipient?: string;
     accountLabel?: string | null;
     externalAccountId?: string | null;
     region?: string | null;
@@ -89,7 +94,8 @@ export async function PATCH(request: Request) {
     !providers.includes(body.provider) ||
     (body.action !== undefined &&
       body.action !== "save" &&
-      body.action !== "check")
+      body.action !== "check" &&
+      body.action !== "test_send")
   ) {
     return NextResponse.json(
       { error: "La integración seleccionada no es válida." },
@@ -187,6 +193,50 @@ export async function PATCH(request: Request) {
     quota?: number;
     credentialsMissing?: boolean;
   } | null = null;
+  // Correo de prueba: envía un mensaje real mediante el proveedor activo
+  // (Amazon SES cuando está configurado) sin tocar la configuración guardada.
+  if (body.provider === "email" && body.action === "test_send") {
+    const recipient =
+      typeof body.testRecipient === "string" ? body.testRecipient.trim() : "";
+    if (
+      !recipient ||
+      recipient.length > 320 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)
+    ) {
+      return NextResponse.json(
+        { error: "Indica un destinatario válido para el correo de prueba." },
+        { status: 400 },
+      );
+    }
+    const providerName = providerLabels[activeProviderName()];
+    const result = await sendEmail({
+      to: recipient,
+      subject: "Correo de prueba — Icaza Live",
+      body: `Este es un correo de prueba enviado desde la configuración de correo saliente de Icaza Live (proveedor: ${providerName}). Si lo estás leyendo, el envío funciona correctamente.`,
+    });
+    await writeAuditLog({
+      actor: user,
+      action: "integration.email_test_sent",
+      resourceType: "integration",
+      resourceId: "email",
+      summary: result.ok
+        ? `Correo de prueba enviado a ${recipient}.`
+        : `Falló el correo de prueba a ${recipient}.`,
+      details: { recipient, provider: providerName, ok: result.ok },
+      request,
+    });
+    return NextResponse.json({
+      data: {
+        testSend: result.ok
+          ? {
+              ok: true,
+              detail: `Correo de prueba enviado a ${recipient} mediante ${providerName}. Revisa la bandeja de entrada (y la carpeta de spam).`,
+            }
+          : { ok: false, detail: `El proveedor rechazó el envío: ${result.error}` },
+      },
+    });
+  }
+
   // Para Amazon IVS, "revisar" comprueba que las credenciales del servidor
   // pueden listar canales, sin crear recursos.
   if (body.provider === "amazon_ivs" && body.action === "check") {

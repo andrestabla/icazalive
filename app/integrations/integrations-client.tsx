@@ -262,6 +262,47 @@ export default function IntegrationsClient({
     credentialsMissing?: boolean;
   } | null>(null);
   const [identityDraft, setIdentityDraft] = useState(initialIdentity.settings);
+  const [testEmailTo, setTestEmailTo] = useState("");
+  const [testEmailSending, setTestEmailSending] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{
+    ok: boolean;
+    detail: string;
+  } | null>(null);
+
+  const sendTestEmail = async () => {
+    setTestEmailSending(true);
+    setTestEmailResult(null);
+    try {
+      const response = await fetch("/api/integrations", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          provider: "email",
+          action: "test_send",
+          testRecipient: testEmailTo,
+        }),
+      });
+      const payload = (await response.json()) as {
+        data?: { testSend?: { ok: boolean; detail: string } };
+        error?: string;
+      };
+      if (!response.ok || !payload.data?.testSend) {
+        setTestEmailResult({
+          ok: false,
+          detail: payload.error ?? "No fue posible enviar el correo de prueba.",
+        });
+      } else {
+        setTestEmailResult(payload.data.testSend);
+      }
+    } catch {
+      setTestEmailResult({
+        ok: false,
+        detail: "No fue posible contactar al servidor.",
+      });
+    } finally {
+      setTestEmailSending(false);
+    }
+  };
 
   const itemFor = (provider: ManagedIntegrationProvider) =>
     items.find((item) => item.connection.provider === provider)!;
@@ -1517,6 +1558,43 @@ export default function IntegrationsClient({
                         : ""}
                     </p>
                   )}
+                  <div className="wizard-field" style={{ marginTop: 18 }}>
+                    <label htmlFor="test-email-to">
+                      Enviar correo de prueba
+                    </label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        id="test-email-to"
+                        type="email"
+                        placeholder="destinatario@empresa.com"
+                        value={testEmailTo}
+                        onChange={(event) => setTestEmailTo(event.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        className="primary-button"
+                        disabled={testEmailSending || !testEmailTo.trim()}
+                        onClick={() => void sendTestEmail()}
+                      >
+                        {testEmailSending ? "Enviando…" : "Enviar prueba"}
+                      </button>
+                    </div>
+                    <small>
+                      Envía un mensaje real con el proveedor activo. En modo
+                      prueba (sandbox), el destinatario debe estar verificado en
+                      SES.
+                    </small>
+                    {testEmailResult && (
+                      <p
+                        className={`wizard-note ${testEmailResult.ok ? "ok" : "warning"}`}
+                        role="status"
+                      >
+                        {testEmailResult.ok ? "✓ " : "⚠ "}
+                        {testEmailResult.detail}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
