@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import SmtpEmailPanel from "./smtp-email-panel";
+import GoogleSsoPanel from "./google-sso-panel";
 import { useState } from "react";
 import type {
   IdentityProtocol,
@@ -548,6 +549,7 @@ export default function IntegrationsClient({
       )}
 
       <SmtpEmailPanel />
+      <GoogleSsoPanel />
 
       <div className="integration-summary">
         <article>
