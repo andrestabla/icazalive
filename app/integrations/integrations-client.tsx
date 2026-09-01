@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SmtpEmailPanel from "./smtp-email-panel";
 import { useState } from "react";
 import {
   ServiceLogo,
@@ -550,6 +551,8 @@ export default function IntegrationsClient({
           {message}
         </div>
       )}
+
+      <SmtpEmailPanel />
 
       <div className="integration-summary">
         <article>

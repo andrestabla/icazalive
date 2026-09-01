@@ -1062,5 +1062,27 @@ export const contentAssets = pgTable(
 );
 
 export type ContentAsset = typeof contentAssets.$inferSelect;
+export const outboundEmailSettings = pgTable("outbound_email_settings", {
+  id: text("id").primaryKey().default("default"),
+  provider: text("provider").notNull().default("smtp"),
+  enabled: boolean("enabled").notNull().default(false),
+  fromName: text("from_name"),
+  fromEmail: text("from_email"),
+  replyTo: text("reply_to"),
+  smtpHost: text("smtp_host"),
+  smtpPort: integer("smtp_port"),
+  smtpSecure: boolean("smtp_secure").notNull().default(false),
+  smtpUsername: text("smtp_username"),
+  smtpPasswordEncrypted: text("smtp_password_encrypted"),
+  region: text("region"),
+  configurationSet: text("configuration_set"),
+  lastTestedAt: timestamp("last_tested_at", { withTimezone: true }),
+  lastTestOk: boolean("last_test_ok"),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type OutboundEmailSettings = typeof outboundEmailSettings.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
