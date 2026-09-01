@@ -1,4 +1,6 @@
 import { readSesConfig, sendWithSes } from "@/lib/aws-ses";
+import { resolveActiveSmtp } from "@/lib/email-settings";
+import { sendWithSmtp } from "@/lib/smtp-sender";
 
 // Interfaz de proveedor de correo saliente. El orden de preferencia es:
 // 1. Amazon SES si están definidas sus variables de entorno.
@@ -7,7 +9,7 @@ import { readSesConfig, sendWithSes } from "@/lib/aws-ses";
 //    cuerpo renderizado, sin salir del equipo.
 // Las credenciales viven solo en variables de entorno; nunca en la base.
 
-export type EmailProviderName = "ses" | "resend" | "local";
+export type EmailProviderName = "smtp" | "ses" | "resend" | "local";
 
 export type EmailResult =
   | { ok: true; providerId: string }
@@ -28,12 +30,26 @@ export function activeProviderName(): EmailProviderName {
 }
 
 export const providerLabels: Record<EmailProviderName, string> = {
+  smtp: "SMTP",
   ses: "Amazon SES",
   resend: "Resend",
   local: "Buzón local de vista previa",
 };
 
 export async function sendEmail(email: OutgoingEmail): Promise<EmailResult> {
+  // La configuración SMTP guardada desde la UI (si está habilitada) tiene
+  // prioridad sobre las variables de entorno.
+  const smtp = await resolveActiveSmtp().catch(() => null);
+  if (smtp) {
+    const result = await sendWithSmtp(smtp, {
+      ...email,
+      replyTo: email.replyTo ?? smtp.replyTo ?? undefined,
+    });
+    return result.ok
+      ? { ok: true, providerId: result.messageId }
+      : { ok: false, error: result.error, retryable: result.retryable };
+  }
+
   const provider = activeProviderName();
 
   if (provider === "ses") {
