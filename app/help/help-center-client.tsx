@@ -221,9 +221,9 @@ function Brand({
 }) {
   return (
     <div className="help-brand">
-      {brand.logoUrl ? (
+      {(brand.logoLightUrl ?? brand.logoUrl) ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={brand.logoUrl} alt="" width={34} height={34} />
+        <img src={brand.logoLightUrl ?? brand.logoUrl ?? ""} alt="" width={34} height={34} />
       ) : (
         <span
           style={{

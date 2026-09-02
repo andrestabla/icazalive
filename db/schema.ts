@@ -1029,6 +1029,11 @@ export const brandSettings = pgTable("brand_settings", {
   organizationName: text("organization_name").notNull().default("Icaza Live"),
   markText: text("mark_text").notNull().default("I"),
   logoUrl: text("logo_url"),
+  // Recursos subidos a S3 bajo brand/ (clave del objeto).
+  logoLightKey: text("logo_light_key"),
+  logoDarkKey: text("logo_dark_key"),
+  faviconKey: text("favicon_key"),
+  loaderKey: text("loader_key"),
   primaryColor: text("primary_color").notNull().default("#24194F"),
   accentColor: text("accent_color").notNull().default("#6946E8"),
   backgroundColor: text("background_color").notNull().default("#FBFAFC"),

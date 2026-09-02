@@ -35,10 +35,15 @@ export async function GET() {
   const s3 = readS3Config();
   let unregistered: { s3Key: string; sizeBytes: number }[] = [];
   if (s3) {
-    const listing = await listVideos(s3, "library/");
-    if (listing.ok) {
+    // content/ es el directorio actual; library/ conserva subidas anteriores.
+    const listings = await Promise.all([
+      listVideos(s3, "content/"),
+      listVideos(s3, "library/"),
+    ]);
+    const objects = listings.flatMap((listing) => (listing.ok ? listing.objects : []));
+    if (objects.length > 0) {
       const known = new Set(registered.map((asset) => asset.s3Key));
-      unregistered = listing.objects
+      unregistered = objects
         .filter((object) => !known.has(object.key))
         .map((object) => ({ s3Key: object.key, sizeBytes: object.size }));
     }

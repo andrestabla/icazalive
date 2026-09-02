@@ -49,6 +49,15 @@ function cleanLogoUrl(value: unknown) {
   return url.toString();
 }
 
+// Clave de un recurso subido desde Marca: solo objetos bajo brand/.
+function cleanAssetKey(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string" || !/^brand\/[A-Za-z0-9._-]{1,160}$/.test(value)) {
+    throw new Error("invalid");
+  }
+  return value;
+}
+
 export async function GET() {
   const auth = await requireStaff();
   if ("error" in auth) return auth.error;
@@ -62,7 +71,10 @@ export async function PATCH(request: Request) {
   if ("error" in auth) return auth.error;
 
   const body = (await request.json()) as Partial<typeof DEFAULT_BRAND>;
-  let values: typeof DEFAULT_BRAND;
+  let values: Omit<
+    typeof DEFAULT_BRAND,
+    "logoLightUrl" | "logoDarkUrl" | "faviconUrl" | "loaderUrl"
+  >;
   try {
     const markText = cleanText(body.markText, 1, 3).toUpperCase();
     if (!/^[\p{L}\p{N}]{1,3}$/u.test(markText)) throw new Error("invalid");
@@ -70,6 +82,10 @@ export async function PATCH(request: Request) {
       organizationName: cleanText(body.organizationName, 2, 80),
       markText,
       logoUrl: cleanLogoUrl(body.logoUrl),
+      logoLightKey: cleanAssetKey(body.logoLightKey),
+      logoDarkKey: cleanAssetKey(body.logoDarkKey),
+      faviconKey: cleanAssetKey(body.faviconKey),
+      loaderKey: cleanAssetKey(body.loaderKey),
       primaryColor: cleanColor(body.primaryColor),
       accentColor: cleanColor(body.accentColor),
       backgroundColor: cleanColor(body.backgroundColor),
@@ -116,9 +132,11 @@ export async function PATCH(request: Request) {
       organizationName: record.organizationName,
       primaryColor: record.primaryColor,
       accentColor: record.accentColor,
-      logoConfigured: Boolean(record.logoUrl),
+      logoConfigured: Boolean(record.logoUrl || record.logoLightKey || record.logoDarkKey),
+      faviconConfigured: Boolean(record.faviconKey),
+      loaderConfigured: Boolean(record.loaderKey),
     },
     request,
   });
-  return NextResponse.json({ data: record });
+  return NextResponse.json({ data: await getBrandSettings() });
 }

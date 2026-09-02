@@ -1034,3 +1034,43 @@ button { font: inherit; }
 .registration-google-linked { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; padding: 10px 12px; border: 1px solid #d9e8f7; border-radius: 10px; background: #f3f8fe; color: #2f3a4a; font-size: 13px; }
 .registration-google-linked p { flex: 1; margin: 0; }
 .registration-google-linked button { border: 0; background: none; color: #4a5bd6; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+
+/* Marca: logotipos, favicon y loader subidos a S3 */
+.brand-section-hint { margin: -4px 0 12px; color: #817b8d; font-size: 12px; line-height: 1.5; }
+.brand-section-hint code { font-size: 11px; background: #f3f0fa; padding: 1px 5px; border-radius: 4px; }
+.brand-assets-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+@media (max-width: 720px) { .brand-assets-grid { grid-template-columns: 1fr; } }
+.brand-asset { display: flex; gap: 12px; padding: 10px; border: 1px solid #e6e2ee; border-radius: 12px; background: #fff; }
+.brand-asset-preview { position: relative; flex: 0 0 96px; height: 96px; display: grid; place-items: center; border-radius: 10px; overflow: hidden; border: 1px solid #e6e2ee; }
+.brand-asset-preview.light { background: repeating-conic-gradient(#f4f2f8 0 25%, #ffffff 0 50%) 0 0 / 16px 16px; }
+.brand-asset-preview.dark { background: linear-gradient(145deg, var(--brand-primary, #24194F), var(--brand-accent, #6946E8)); border-color: transparent; }
+.brand-asset-preview img, .brand-asset-preview video { max-width: 80px; max-height: 80px; object-fit: contain; }
+.brand-asset-preview > span { color: #9a95a6; font-size: 11px; }
+.brand-asset-preview.dark > span { color: #ffffffb0; }
+.brand-asset-preview > i { position: absolute; left: 0; bottom: 0; height: 4px; background: #6946e8; transition: width .2s; }
+.brand-asset-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.brand-asset-body b { font-size: 13px; }
+.brand-asset-body small { color: #817b8d; font-size: 11px; line-height: 1.45; }
+.brand-asset-body em { color: #a24958; font-size: 11px; font-style: normal; }
+.brand-asset-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; }
+.brand-asset-actions .secondary-action { padding: 6px 10px; font-size: 12px; }
+.brand-asset-remove { border: 0; background: none; color: #a24958; font-size: 12px; font-weight: 600; cursor: pointer; }
+.brand-logo { width: 32px; height: 32px; border-radius: 9px; object-fit: contain; }
+.brand-preview-form .public-brand { font-size: 14px; color: var(--brand-primary); margin-bottom: 12px; }
+.brand-preview-form .public-brand .brand-mark { background: var(--brand-primary); color: #fff; }
+.brand-preview-form .public-brand-logo, .brand-preview-form .brand-mark { width: 26px; height: 26px; border-radius: 7px; }
+.brand-preview-tab { display: flex; align-items: center; gap: 7px; margin: -6px 0 14px; padding: 6px 10px; border-radius: 8px 8px 0 0; background: #ecebf1; color: #4a4657; font-size: 11px; }
+.brand-preview-tab i { width: 12px; height: 12px; border-radius: 3px; background: var(--brand-accent); }
+.brand-preview-tab img { width: 14px; height: 14px; object-fit: contain; }
+
+/* Loader con marca */
+.brand-loader-screen { min-height: 60vh; display: grid; place-items: center; }
+.brand-loader { display: grid; justify-items: center; gap: 12px; color: #6f6b7a; font-size: 13px; }
+.brand-loader p { margin: 0; }
+.brand-loader-figure { position: relative; display: block; }
+.brand-loader-ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid #e4e0ee; border-top-color: #6946e8; animation: brand-spin .9s linear infinite; }
+.brand-loader-image { position: absolute; inset: 0; background: var(--brand-loader-url, none) center / contain no-repeat; }
+body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
+@keyframes brand-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .brand-loader-ring { animation-duration: 2s; } }

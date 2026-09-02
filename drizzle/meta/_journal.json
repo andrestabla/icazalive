@@ -218,6 +218,13 @@
       "when": 1788364928861,
       "tag": "0030_dashing_guardsmen",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1788366700961,
+      "tag": "0031_sloppy_payback",
+      "breakpoints": true
     }
   ]
 }

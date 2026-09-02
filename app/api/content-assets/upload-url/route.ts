@@ -46,7 +46,8 @@ export async function POST(request: Request) {
   // Clave única para evitar colisiones, conservando el nombre legible.
   const safe = filename.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 120);
   const stamp = Date.now().toString(36);
-  const key = `library/${stamp}-${safe}`;
+  // Los contenidos viven bajo content/ (directorio del módulo Contenidos).
+  const key = `content/${stamp}-${safe}`;
 
   const uploadUrl = presignUploadUrl(s3, key, 900);
 
