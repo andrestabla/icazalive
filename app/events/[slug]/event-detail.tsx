@@ -11,6 +11,7 @@ import {
 import EventAnalyticsPanel from "./event-analytics-panel";
 import FeedbackAdminPanel from "./feedback-admin-panel";
 import OrganizersPanel from "./organizers-panel";
+import EventDateEditor from "./event-date-editor";
 import RecordedVideoPanel from "./recorded-video-panel";
 import SimulatedContentPanel from "./simulated-content-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
@@ -876,6 +877,7 @@ export default function EventDetail({
           </div>
           <h1>{event.title}</h1>
           <p>◷ {formatStableDateTime(start, event.timezone)} · {Math.round((end.getTime() - start.getTime()) / 60000)} min</p>
+          <EventDateEditor slug={event.slug} status={event.status} startsAt={event.startsAt} endsAt={event.endsAt} />
         </div>
         <div className="detail-actions">
           <label className="status-control">

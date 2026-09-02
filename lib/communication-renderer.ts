@@ -62,19 +62,22 @@ export function renderParticipantCommunication({
     .replaceAll("{{manage_link}}", urls.manageUrl)
     .replaceAll("{{calendar_link}}", urls.calendarUrl);
 
-  if (
-    includeManagementFooter &&
-    !template.includes("{{manage_link}}") &&
-    !rendered.includes(urls.manageUrl)
-  ) {
-    rendered += `\n\nCompleta o actualiza tu inscripción: ${urls.manageUrl}`;
-  }
+  // Etiqueta unificada del botón de acceso (también en plantillas antiguas).
+  rendered = rendered.replace(/Enlace de acceso:\s*/g, "Entrar al evento: ");
+
   if (
     includeManagementFooter &&
     !template.includes("{{calendar_link}}") &&
     !rendered.includes(urls.calendarUrl)
   ) {
-    rendered += `\nAñadir al calendario: ${urls.calendarUrl}`;
+    rendered += `\n\nAgendar en mi calendario: ${urls.calendarUrl}`;
+  }
+  if (
+    includeManagementFooter &&
+    !template.includes("{{manage_link}}") &&
+    !rendered.includes(urls.manageUrl)
+  ) {
+    rendered += `\nActualizar mi inscripción: ${urls.manageUrl}`;
   }
   return { body: rendered, ...urls };
 }

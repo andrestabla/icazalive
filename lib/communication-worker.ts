@@ -77,15 +77,16 @@ export async function processDueDeliveries(
   const brand = await getBrandSettings().catch(() => null);
 
   for (const delivery of due) {
-    // Reclamo atómico: solo quien logra actualizar la fila la procesa.
-    const claimedAt = new Date();
+    // Reclamo atómico: solo quien logra incrementar "attempts" procesa la fila.
+    // (Se compara un entero y no updated_at: la base guarda microsegundos y
+    // JavaScript milisegundos, y esa comparación nunca coincidía.)
     const claimed = await db
       .update(communicationDeliveries)
-      .set({ updatedAt: claimedAt })
+      .set({ attempts: delivery.attempts + 1, updatedAt: new Date() })
       .where(
         and(
           eq(communicationDeliveries.id, delivery.id),
-          eq(communicationDeliveries.updatedAt, delivery.updatedAt),
+          eq(communicationDeliveries.attempts, delivery.attempts),
           inArray(communicationDeliveries.status, ["queued", "scheduled"]),
         ),
       )
@@ -121,7 +122,6 @@ export async function processDueDeliveries(
           status: "sent",
           sentAt: new Date(),
           providerId: result.providerId,
-          attempts: delivery.attempts + 1,
           error: null,
           updatedAt: new Date(),
         })

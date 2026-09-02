@@ -1090,3 +1090,15 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 .participant-history-row small { color: #817b8d; font-size: 11px; }
 .participant-history-row select { padding: 6px 8px; border: 1px solid #dfdce5; border-radius: 8px; font-size: 12px; background: #fff; }
 @media (max-width: 640px) { .participant-history-row { grid-template-columns: 1fr; } }
+
+
+/* Cambio de fecha del evento (borrador / preparación) */
+.event-date-edit-toggle { margin-top: 6px; border: 1px solid #dfdce5; background: #fff; color: #4a3bb8; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+.event-date-edit-toggle:hover { background: #f6f3fd; }
+.event-date-editor { display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; align-items: end; margin-top: 8px; padding: 12px; border: 1px solid #e6e2ee; border-radius: 12px; background: #fbfafd; max-width: 560px; }
+.event-date-editor label { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: #4a4657; }
+.event-date-editor label small { font-weight: 500; color: #817b8d; }
+.event-date-editor input, .event-date-editor select { padding: 7px 9px; border: 1px solid #dfdce5; border-radius: 8px; font-size: 13px; background: #fff; }
+.event-date-editor-actions { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; }
+.event-date-editor > small { grid-column: 1 / -1; color: #817b8d; font-size: 11px; }
+.event-date-editor .form-error { grid-column: 1 / -1; margin: 0; }

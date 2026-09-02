@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -93,6 +93,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const body = (await request.json()) as {
     status?: string;
+    startsAt?: string;
+    endsAt?: string;
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
     postRegistrationUrl?: string | null;
@@ -201,9 +203,29 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
   }
 
+  // Nueva fecha y hora: solo mientras el evento está en borrador o en preparación.
+  let newStartsAt: Date | null = null;
+  let newEndsAt: Date | null = null;
+  if (body.startsAt !== undefined || body.endsAt !== undefined) {
+    newStartsAt = body.startsAt ? new Date(body.startsAt) : null;
+    newEndsAt = body.endsAt ? new Date(body.endsAt) : null;
+    if (
+      !newStartsAt ||
+      !newEndsAt ||
+      Number.isNaN(newStartsAt.getTime()) ||
+      Number.isNaN(newEndsAt.getTime()) ||
+      newEndsAt <= newStartsAt
+    ) {
+      return NextResponse.json(
+        { error: "La fecha y hora del evento no son válidas." },
+        { status: 400 },
+      );
+    }
+  }
+
   const db = getDb();
   const [current] = await db
-    .select({ id: events.id, status: events.status })
+    .select({ id: events.id, status: events.status, startsAt: events.startsAt, endsAt: events.endsAt })
     .from(events)
     .where(eq(events.slug, slug))
     .limit(1);
@@ -228,8 +250,16 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const currentStatus = current.status as EventStatus;
+  if (newStartsAt && newEndsAt && currentStatus !== "draft" && currentStatus !== "preparing") {
+    return NextResponse.json(
+      { error: "La fecha solo puede cambiarse mientras el evento está en borrador o en preparación." },
+      { status: 409 },
+    );
+  }
   const changes: {
     status?: (typeof allowedStatuses)[number];
+    startsAt?: Date;
+    endsAt?: Date;
     registrationOpen?: boolean;
     selfServiceCutoffMinutes?: number;
     postRegistrationUrl?: string | null;
@@ -242,6 +272,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
+  if (newStartsAt && newEndsAt) {
+    changes.startsAt = newStartsAt;
+    changes.endsAt = newEndsAt;
+  }
   if (body.selfServiceCutoffMinutes !== undefined) {
     changes.selfServiceCutoffMinutes = body.selfServiceCutoffMinutes;
   }
@@ -305,6 +339,16 @@ export async function PATCH(request: Request, context: RouteContext) {
     .set(changes)
     .where(eq(events.id, current.id))
     .returning();
+
+  // Al mover la fecha, las sesiones y los recordatorios pendientes se
+  // desplazan el mismo intervalo para que sigan alineados con el evento.
+  if (newStartsAt && newEndsAt) {
+    const deltaMs = newStartsAt.getTime() - current.startsAt.getTime();
+    if (deltaMs !== 0) {
+      await db.execute(sql`UPDATE sessions SET starts_at = starts_at + ${`${deltaMs} milliseconds`}::interval, ends_at = ends_at + ${`${deltaMs} milliseconds`}::interval WHERE event_id = ${current.id}`);
+      await db.execute(sql`UPDATE communication_deliveries SET scheduled_for = scheduled_for + ${`${deltaMs} milliseconds`}::interval, updated_at = now() WHERE event_id = ${current.id} AND status = 'scheduled' AND type <> 'registration_confirmation'`);
+    }
+  }
 
   await writeAuditLog({
     actor: currentUser,

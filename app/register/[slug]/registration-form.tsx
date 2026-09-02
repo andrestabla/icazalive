@@ -178,7 +178,6 @@ export default function RegistrationForm({
               <div className="registration-success-actions">
                 {accessUrl && <Link className="login-submit registration-room-link" href={accessUrl}>Entrar a la sala del evento <span>→</span></Link>}
                 {manageUrl && <Link className="registration-manage-link" href={manageUrl}>Gestionar mi inscripción</Link>}
-                {calendarUrl && <a className="registration-manage-link" href={calendarUrl}>Añadir al calendario (.ics)</a>}
                 {event.postRegistrationUrl && (
                   <a
                     className="registration-manage-link"
