@@ -309,8 +309,8 @@ index 6c8e28c..5ee484d 100644
  
 diff --git a/app/team/team-manager.tsx b/app/team/team-manager.tsx
 index 0457943..1fba78f 100644
---- a/tmp/team-manager.old.tsx
-+++ b/tmp/team-manager.new.tsx
+--- a/app/team/team-manager.tsx
++++ b/app/team/team-manager.tsx
 @@ -5,6 +5,7 @@ import { useState } from "react";
  import { PLATFORM_TIMEZONE } from "@/lib/timezone";
  
