@@ -1017,3 +1017,11 @@ button { font: inherit; }
 .login-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: #9995a1; font-size: 11px; }
 .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: #e6e2ea; }
 .login-sso-error { margin-bottom: 14px; padding: 10px 12px; border: 1px solid #efc9cf; border-radius: 8px; background: #fff3f5; color: #a24958; font-size: 13px; }
+
+/* Tarjetas SMTP/Google y modal de configuración */
+.service-logo.smtp { background: #eef6f4; color: #1a7565; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+.service-logo.google { background: #fff; border: 1px solid #e4e1e9; color: #4285f4; font-weight: 800; font-family: Arial, sans-serif; }
+.setup-wizard-card i.connected { color: #1a7565; }
+.setup-wizard-card i.pending { color: #8a8695; }
+.config-modal { max-width: 860px; }
+.config-modal .panel { box-shadow: none; border: 0; padding: 0; margin: 0; }

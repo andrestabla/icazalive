@@ -8,7 +8,7 @@ type Settings = {
   hasSecret: boolean;
   allowedDomain: string | null;
   autoProvision: boolean;
-  provisionRole: "administrator" | "organizer";
+  provisionRole: "participant" | "administrator" | "organizer";
   redirectUri: string;
 };
 
@@ -18,7 +18,7 @@ const EMPTY: Settings = {
   hasSecret: false,
   allowedDomain: "",
   autoProvision: false,
-  provisionRole: "organizer",
+  provisionRole: "participant",
   redirectUri: "",
 };
 
@@ -128,6 +128,7 @@ export default function GoogleSsoPanel() {
         <label>
           Rol al crear cuenta nueva
           <select value={s.provisionRole} onChange={(e) => field("provisionRole", e.target.value)}>
+            <option value="participant">Asistente (al evento)</option>
             <option value="organizer">Organizador</option>
             <option value="administrator">Administrador</option>
           </select>
@@ -141,8 +142,8 @@ export default function GoogleSsoPanel() {
       <p className="smtp-note">
         En Google Cloud: crea un <b>OAuth 2.0 Client ID</b> de tipo <b>Aplicación web</b>,
         configura la pantalla de consentimiento y agrega la URI de redirección de arriba.
-        Solo entra personal (administradores y organizadores); los participantes usan su
-        enlace personal, no SSO.
+        Por defecto, quien entra con Google por primera vez queda como asistente al
+        evento; el personal (organizadores y administradores) se asigna desde Equipo.
       </p>
 
       <div className="smtp-actions">

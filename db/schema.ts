@@ -1104,7 +1104,7 @@ export const googleSsoSettings = pgTable("google_sso_settings", {
   clientSecretEncrypted: text("client_secret_encrypted"),
   allowedDomain: text("allowed_domain"),
   autoProvision: boolean("auto_provision").notNull().default(false),
-  provisionRole: userRole("provision_role").notNull().default("organizer"),
+  provisionRole: userRole("provision_role").notNull().default("participant"),
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
