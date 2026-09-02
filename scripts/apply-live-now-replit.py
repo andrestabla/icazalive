@@ -23,9 +23,14 @@ t = s.replace('  "reminder_1h",\n  "post_event",\n]);', '  "reminder_1h",\n  "li
 if t != s: open(p, "w", encoding="utf-8").write(t); print("enum ampliado db/schema.ts")
 
 p = "app/events/[slug]/event-detail.tsx"; s = open(p, encoding="utf-8").read()
+# En Replit los iconos están tipados (AdminIconName): se reutiliza el de la confirmación.
+m = re.search(r'registration_confirmation: \{[^}]*?icon: "([^"]+)"', s)
+icon = m.group(1) if (m and "AdminIconName" in s) else "●"
 if "live_now:" not in s:
     t = re.sub(r'(\n\s*post_event: \{\n\s*title: "Seguimiento posterior",)',
-               r'\n  live_now: {\n    title: "Ya estamos en vivo",\n    timing: "Al pasar el evento a En vivo",\n    icon: "●",\n  },\1', s, count=1)
-    if t != s: open(p, "w", encoding="utf-8").write(t); print("etiqueta live_now en event-detail")
-    else: print("FALLO: no se insertó la etiqueta live_now"); raise SystemExit(1)
+               lambda mm: '\n  live_now: {\n    title: "Ya estamos en vivo",\n    timing: "Al pasar el evento a En vivo",\n    icon: "' + icon + '",\n  },' + mm.group(1), s, count=1)
+else:
+    t = re.sub(r'(live_now: \{[^}]*?icon: )"●"', lambda mm: mm.group(1) + '"' + icon + '"', s, count=1)
+if t != s: open(p, "w", encoding="utf-8").write(t); print("etiqueta live_now en event-detail")
+if "live_now:" not in open(p, encoding="utf-8").read(): print("FALLO: no se insertó la etiqueta live_now"); raise SystemExit(1)
 print("LISTO")
