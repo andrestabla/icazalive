@@ -48,13 +48,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     hybridSwitchOffsetMinutes?: number | null;
   };
 
-  if (
-    body.simulatedDelivery !== undefined &&
-    body.simulatedDelivery !== "direct" &&
-    body.simulatedDelivery !== "streaming"
-  ) {
-    return NextResponse.json({ error: "Modo de simulación no válido." }, { status: 400 });
-  }
+  // La entrega del contenido simulado es siempre vía Amazon IVS (streaming).
+  body.simulatedDelivery = "streaming";
 
   let contentAssetId: string | null | undefined;
   if (body.contentAssetId !== undefined) {
@@ -98,9 +93,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     .update(events)
     .set({
       ...(contentAssetId !== undefined ? { contentAssetId } : {}),
-      ...(body.simulatedDelivery !== undefined
-        ? { simulatedDelivery: body.simulatedDelivery }
-        : {}),
+      simulatedDelivery: "streaming" as const,
       ...(hybridOffset !== undefined
         ? { hybridSwitchOffsetMinutes: hybridOffset }
         : {}),

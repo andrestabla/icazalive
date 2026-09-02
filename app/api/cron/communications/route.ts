@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { processDueDeliveries } from "@/lib/communication-worker";
+import { runSimulatedAutomation } from "@/lib/simulated-emitter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,8 +28,9 @@ async function handle(request: Request) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
   const summary = await processDueDeliveries();
+  const simulated = await runSimulatedAutomation().catch(() => ({ started: 0, stopped: 0 }));
   return NextResponse.json(
-    { data: { ...summary, at: new Date().toISOString() } },
+    { data: { ...summary, simulated, at: new Date().toISOString() } },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

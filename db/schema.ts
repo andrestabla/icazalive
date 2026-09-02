@@ -324,7 +324,7 @@ export const events = pgTable("events", {
   contentAssetId: uuid("content_asset_id"),
   simulatedDelivery: simulatedDelivery("simulated_delivery")
     .notNull()
-    .default("direct"),
+    .default("streaming"),
   hybridSwitchOffsetMinutes: integer("hybrid_switch_offset_minutes"),
   createdBy: uuid("created_by")
     .notNull()

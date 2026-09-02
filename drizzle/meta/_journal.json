@@ -232,6 +232,13 @@
       "when": 1788366961670,
       "tag": "0033_familiar_mindworm",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788386308454,
+      "tag": "0034_simple_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }
