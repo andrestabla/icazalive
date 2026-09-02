@@ -256,11 +256,6 @@ export default function RegistrationManager({
                 <Link href={`/room/${eventShell.slug}?access=${encodedToken}`}>
                   Entrar a la sala <span>→</span>
                 </Link>
-                <a
-                  href={`/api/public/events/${eventShell.slug}/calendar?access=${encodedToken}`}
-                >
-                  Descargar calendario <span>↓</span>
-                </a>
               </>
             )}
           </div>
@@ -315,7 +310,7 @@ export default function RegistrationManager({
               <p className="eyebrow">DATOS DEL ASISTENTE</p>
               <h2>Gestiona tu inscripción</h2>
               <p className="registration-intro">
-                Actualiza tus datos o descarga la invitación del calendario.
+                Actualiza tus datos de inscripción.
               </p>
               {data.event.selfServiceClosed ? (
                 <div className="login-error">
