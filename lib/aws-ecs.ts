@@ -145,7 +145,7 @@ export async function stopEmitter(
   const result = await call(config, "StopTask", {
     cluster: config.cluster,
     task: taskArn,
-    reason: "Fin del segmento simulado en Icaza Live.",
+    reason: "Fin del segmento simulado en Icaza Jammoul Live.",
   });
   return result.ok ? { ok: true } : { ok: false, error: result.error };
 }

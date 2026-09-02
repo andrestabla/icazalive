@@ -56,7 +56,7 @@ export default function HelpWidget({
             <span>?</span>
             <div>
               <b>{labels.title}</b>
-              <small>Icaza Live</small>
+              <small>Icaza Jammoul Live</small>
             </div>
             <button aria-label={labels.close} onClick={() => setOpen(false)}>
               ×

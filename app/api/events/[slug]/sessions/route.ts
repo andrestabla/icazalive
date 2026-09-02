@@ -360,7 +360,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json(
         {
           error:
-            "Esta reunión no fue creada por Icaza Live y no se puede sincronizar.",
+            "Esta reunión no fue creada por Icaza Jammoul Live y no se puede sincronizar.",
         },
         { status: 400 },
       );

@@ -10,7 +10,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Sin acceso — Icaza Live" };
+export const metadata = { title: "Sin acceso — Icaza Jammoul Live" };
 
 export default async function NoAccessPage({
   searchParams,

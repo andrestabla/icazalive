@@ -1,5 +1,5 @@
 export const DEFAULT_BRAND = {
-  organizationName: "Icaza Live",
+  organizationName: "Icaza Jammoul Live",
   markText: "I",
   logoUrl: null as string | null,
   // Claves S3 (brand/...) y URLs servidas por la app para cada recurso.

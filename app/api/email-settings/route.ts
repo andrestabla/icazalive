@@ -139,10 +139,10 @@ export async function PUT(request: Request) {
       );
     }
     const brand = await getBrandSettings().catch(() => null);
-    const testBody = "Correo de prueba enviado desde la configuración SMTP de Icaza Live. Si lo estás leyendo, el envío por SMTP funciona correctamente.";
+    const testBody = "Correo de prueba enviado desde la configuración SMTP de Icaza Jammoul Live. Si lo estás leyendo, el envío por SMTP funciona correctamente.";
     const result = await sendWithSmtp(smtp, {
       to: recipient,
-      subject: "Prueba de correo SMTP — Icaza Live",
+      subject: "Prueba de correo SMTP — Icaza Jammoul Live",
       body: testBody,
       html: renderBrandedEmail({ bodyText: testBody, brand }),
     });

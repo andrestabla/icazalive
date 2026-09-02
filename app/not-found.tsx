@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Página no encontrada — Icaza Live" };
+export const metadata = { title: "Página no encontrada — Icaza Jammoul Live" };
 
 export default function NotFound() {
   return (

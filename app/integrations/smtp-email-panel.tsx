@@ -135,7 +135,7 @@ export default function SmtpEmailPanel() {
       <div className="smtp-grid">
         <label>
           Nombre del remitente
-          <input value={s.fromName ?? ""} onChange={(e) => field("fromName", e.target.value)} placeholder="Icaza Live" />
+          <input value={s.fromName ?? ""} onChange={(e) => field("fromName", e.target.value)} placeholder="Icaza Jammoul Live" />
         </label>
         <label>
           Correo del remitente

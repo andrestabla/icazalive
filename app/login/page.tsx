@@ -3,7 +3,7 @@ import { getCurrentUser, safeReturnPath } from "@/lib/auth";
 import LoginForm from "./login-form";
 
 export const metadata = {
-  title: "Iniciar sesión — Icaza Live",
+  title: "Iniciar sesión — Icaza Jammoul Live",
 };
 export const dynamic = "force-dynamic";
 

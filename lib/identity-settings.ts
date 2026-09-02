@@ -30,7 +30,7 @@ export function getIdentityEnvironment() {
     oidcSecret: Boolean(process.env.SSO_CLIENT_SECRET),
     samlCertificate: Boolean(process.env.SSO_SAML_CERTIFICATE),
     authEncryptionKey: Boolean(process.env.AUTH_ENCRYPTION_KEY),
-    mfaIssuer: process.env.MFA_ISSUER ?? "Icaza Live",
+    mfaIssuer: process.env.MFA_ISSUER ?? "Icaza Jammoul Live",
     webauthnRpId: process.env.WEBAUTHN_RP_ID ?? null,
     webauthnOrigin: process.env.WEBAUTHN_ORIGIN ?? null,
     emailFrom: process.env.EMAIL_FROM ?? null,

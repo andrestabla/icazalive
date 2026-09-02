@@ -953,7 +953,7 @@ export default function IntegrationsClient({
                   <div className="wizard-pipeline">
                     <ServiceLogo service="zoom" />
                     <i>OAuth 2.0</i>
-                    <span className="wizard-app-node">Icaza Live</span>
+                    <span className="wizard-app-node">Icaza Jammoul Live</span>
                     <i>reunión</i>
               <span className="flow-audience"><AdminIcon name="users" /></span>
                   </div>
@@ -1371,7 +1371,7 @@ export default function IntegrationsClient({
               {wizard === "email" && wizardStep === 0 && (
                 <div className="wizard-intro">
                   <p>
-                    Icaza Live envía confirmaciones de registro, recordatorios
+                    Icaza Jammoul Live envía confirmaciones de registro, recordatorios
                     e invitaciones. Amazon SES entrega esos correos con la
                     reputación y las métricas de AWS.
                   </p>

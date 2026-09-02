@@ -154,7 +154,7 @@ export default function LoginForm({
               </label>
             )}
             {error && <div className="login-error" role="alert">ⓘ {error}</div>}
-            <button className="login-submit" disabled={loading}>{loading ? "Validando…" : "Ingresar a Icaza Live"}<span>→</span></button>
+            <button className="login-submit" disabled={loading}>{loading ? "Validando…" : "Ingresar a Icaza Jammoul Live"}<span>→</span></button>
           </form>
 
           {showLocalCredentials && (

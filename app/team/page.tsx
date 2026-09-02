@@ -7,7 +7,7 @@ import TeamManager from "./team-manager";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Equipo — Icaza Live",
+  title: "Equipo — Icaza Jammoul Live",
 };
 
 export default async function TeamPage() {

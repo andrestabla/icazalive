@@ -1,7 +1,7 @@
 import EventsList from "./events-list";
 
 export const metadata = {
-  title: "Eventos — Icaza Live",
+  title: "Eventos — Icaza Jammoul Live",
 };
 
 export default function EventsPage() {

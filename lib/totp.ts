@@ -81,7 +81,7 @@ export function verifyTotp(secretBase32: string, code: string): boolean {
 }
 
 export function otpauthUrl(email: string, secretBase32: string): string {
-  const issuer = encodeURIComponent(process.env.MFA_ISSUER ?? "Icaza Live");
+  const issuer = encodeURIComponent(process.env.MFA_ISSUER ?? "Icaza Jammoul Live");
   return `otpauth://totp/${issuer}:${encodeURIComponent(email)}?secret=${secretBase32}&issuer=${issuer}&period=${PERIOD_SECONDS}&digits=${DIGITS}`;
 }
 
