@@ -138,7 +138,7 @@ export default function SmtpEmailPanel() {
         </label>
         <label>
           Correo del remitente
-          <input type="email" value={s.fromEmail ?? ""} onChange={(e) => field("fromEmail", e.target.value)} placeholder="eventos@tudominio.com" />
+          <input type="email" value={s.fromEmail ?? ""} onChange={(e) => field("fromEmail", e.target.value)} placeholder="eventos@tudominio.com" autoComplete="off" />
         </label>
         <label>
           Servidor SMTP (Host)
@@ -150,11 +150,11 @@ export default function SmtpEmailPanel() {
         </label>
         <label>
           Usuario SMTP
-          <input value={s.smtpUsername ?? ""} onChange={(e) => field("smtpUsername", e.target.value)} placeholder="Usuario SMTP del proveedor" />
+          <input value={s.smtpUsername ?? ""} onChange={(e) => field("smtpUsername", e.target.value)} placeholder="Usuario SMTP del proveedor" name="icaza-smtp-user" autoComplete="off" />
         </label>
         <label>
           Contraseña SMTP
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={s.hasPassword ? "•••••••• (guardada)" : "Contraseña SMTP"} />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={s.hasPassword ? "•••••••• (guardada)" : "Contraseña SMTP"} name="icaza-smtp-pass" autoComplete="new-password" />
         </label>
         <label>
           Reply-To (opcional)

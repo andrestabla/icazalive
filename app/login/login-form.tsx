@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function LoginForm({
   returnTo,
@@ -13,6 +13,37 @@ export default function LoginForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mfaRequired, setMfaRequired] = useState(false);
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+  const [ssoError, setSsoError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/sso/status", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload: { data?: { enabled: boolean } } | null) => {
+        if (!cancelled && payload?.data?.enabled) setSsoEnabled(true);
+      })
+      .catch(() => undefined);
+    const code = new URLSearchParams(window.location.search).get("sso_error");
+    if (code) {
+      const messages: Record<string, string> = {
+        no_account: "Tu cuenta de Google no esta registrada en el equipo. Pide acceso a un administrador.",
+        no_staff: "Esa cuenta no tiene permisos de personal.",
+        domain: "Tu dominio de correo no esta autorizado para este acceso.",
+        inactive: "La cuenta esta desactivada.",
+        unverified: "Tu correo de Google no esta verificado.",
+        disabled: "El inicio con Google no esta habilitado.",
+        cancelled: "Se cancelo el inicio de sesion con Google.",
+        state: "La sesion de inicio expiro. Intenta de nuevo.",
+        exchange: "No fue posible validar la respuesta de Google.",
+        config: "El SSO no esta configurado correctamente.",
+      };
+      setSsoError(messages[code] ?? "No fue posible iniciar sesion con Google.");
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -80,6 +111,18 @@ export default function LoginForm({
           <h2>Inicia sesión</h2>
           <p className="login-intro">Ingresa con tu cuenta administrativa para continuar.</p>
 
+          {ssoError && (
+            <div className="login-sso-error" role="alert">{ssoError}</div>
+          )}
+          {ssoEnabled && (
+            <>
+              <a className="login-google" href="/api/auth/sso/google/start">
+                <span className="login-google-mark">G</span>
+                Continuar con Google
+              </a>
+              <div className="login-divider"><span>o con tu correo</span></div>
+            </>
+          )}
           <form className="login-form" onSubmit={submit}>
             <label>
               Correo electrónico

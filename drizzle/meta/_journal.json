@@ -204,6 +204,13 @@
       "when": 1788302513335,
       "tag": "0029_married_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1788309217220,
+      "tag": "0030_graceful_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

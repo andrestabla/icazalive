@@ -1084,5 +1084,19 @@ export const outboundEmailSettings = pgTable("outbound_email_settings", {
 });
 
 export type OutboundEmailSettings = typeof outboundEmailSettings.$inferSelect;
+export const googleSsoSettings = pgTable("google_sso_settings", {
+  id: text("id").primaryKey().default("default"),
+  enabled: boolean("enabled").notNull().default(false),
+  clientId: text("client_id"),
+  clientSecretEncrypted: text("client_secret_encrypted"),
+  allowedDomain: text("allowed_domain"),
+  autoProvision: boolean("auto_provision").notNull().default(false),
+  provisionRole: userRole("provision_role").notNull().default("organizer"),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type GoogleSsoSettings = typeof googleSsoSettings.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
