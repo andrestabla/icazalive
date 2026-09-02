@@ -213,7 +213,7 @@ export async function POST(request: Request) {
           process.env.SUPPORT_EMAIL ?? "soporte@icazalive.local",
         serviceHours:
           process.env.SUPPORT_HOURS ??
-          "Lunes a viernes · 08:00–18:00 (America/Bogota)",
+          "Lunes a viernes · 08:00–18:00 (hora de Miami)",
       },
     },
     { status: 201 },

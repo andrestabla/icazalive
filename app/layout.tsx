@@ -17,7 +17,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     process.env.SUPPORT_EMAIL ?? "soporte@icazalive.local";
   const supportHours =
     process.env.SUPPORT_HOURS ??
-    "Lunes a viernes · 08:00–18:00 (America/Bogota)";
+    "Lunes a viernes · 08:00–18:00 (hora de Miami)";
 
   return (
     <html lang="es">

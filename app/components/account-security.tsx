@@ -11,6 +11,7 @@ type PasswordStatus = {
 };
 
 const TIMEZONE_CHOICES = [
+  "America/New_York",
   "America/Bogota",
   "America/Mexico_City",
   "America/Lima",
@@ -19,7 +20,6 @@ const TIMEZONE_CHOICES = [
   "America/Santiago",
   "America/Argentina/Buenos_Aires",
   "America/Sao_Paulo",
-  "America/New_York",
   "America/Chicago",
   "America/Los_Angeles",
   "Europe/Madrid",

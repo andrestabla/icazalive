@@ -174,7 +174,7 @@ export default function RegistrationForm({
               <p className="eyebrow">REGISTRO COMPLETADO</p>
               <h2>¡Tu lugar está reservado!</h2>
               <p>Registramos correctamente tus datos para <b>{event.title}</b>.</p>
-              <div><small>Próximo paso</small><p>Tu confirmación quedó registrada en la cola local. Conserva tu enlace individual para ingresar al lobby y participar durante el evento.</p></div>
+              <div><small>Próximo paso</small><p>Te enviamos un correo de confirmación con tu enlace personal de acceso y te recordaremos antes de que comience. Conserva ese enlace para entrar a la sala.</p></div>
               <div className="registration-success-actions">
                 {accessUrl && <Link className="login-submit registration-room-link" href={accessUrl}>Entrar a la sala del evento <span>→</span></Link>}
                 {manageUrl && <Link className="registration-manage-link" href={manageUrl}>Gestionar mi inscripción</Link>}

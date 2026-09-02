@@ -303,7 +303,7 @@ export const events = pgTable("events", {
   description: text("description"),
   format: eventFormat("format").notNull(),
   status: eventStatus("status").notNull().default("draft"),
-  timezone: text("timezone").notNull().default("America/Bogota"),
+  timezone: text("timezone").notNull().default("America/New_York"),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
   maxAttendees: integer("max_attendees").notNull().default(5000),

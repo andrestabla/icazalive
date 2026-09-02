@@ -14,6 +14,7 @@ import { useState } from "react";
 import AdminSidebar from "@/app/components/admin-sidebar";
 import type { AuthenticatedUser } from "@/lib/auth";
 import type { DashboardSummary } from "@/lib/dashboard";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type EventFormat = "live" | "simulated" | "hybrid";
 type ScheduleConflict = {
@@ -57,7 +58,7 @@ function datePart(
   return (
     new Intl.DateTimeFormat("es-CO", {
       ...options,
-      timeZone: "America/Bogota",
+      timeZone: PLATFORM_TIMEZONE,
     })
       .formatToParts(new Date(value))
       .find((part) => part.type === type)
@@ -675,7 +676,7 @@ export default function Dashboard({
                             {new Intl.DateTimeFormat("es-CO", {
                               dateStyle: "medium",
                               timeStyle: "short",
-                              timeZone: "America/Bogota",
+                              timeZone: PLATFORM_TIMEZONE,
                             }).format(new Date(conflict.startsAt))}
                           </small>
                         </p>

@@ -5,6 +5,7 @@ import { useState, type CSSProperties, type FormEvent } from "react";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import type { AuthenticatedUser } from "@/lib/auth";
 import type { PublicBrand } from "@/lib/brand-config";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type LegalDocument = {
   id: string;
@@ -56,7 +57,7 @@ function DocumentContent({ document }: { document: LegalDocument }) {
         {document.publishedAt
           ? new Intl.DateTimeFormat("es-CO", {
               dateStyle: "long",
-              timeZone: "America/Bogota",
+              timeZone: PLATFORM_TIMEZONE,
             }).format(new Date(document.publishedAt))
           : "localmente"}
       </footer>
@@ -196,7 +197,7 @@ export default function PrivacyCenterClient({
               <b>
                 {new Intl.DateTimeFormat("es-CO", {
                   dateStyle: "long",
-                  timeZone: "America/Bogota",
+                  timeZone: PLATFORM_TIMEZONE,
                 }).format(new Date(created.dueAt))}
               </b>.
             </p>

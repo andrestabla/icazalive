@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type EventOption = {
   id: string;
@@ -119,7 +120,7 @@ function formatEventDate(value: string) {
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "America/Bogota",
+    timeZone: PLATFORM_TIMEZONE,
   }).format(new Date(value));
 }
 

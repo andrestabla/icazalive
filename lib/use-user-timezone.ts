@@ -1,18 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
-export const FALLBACK_TIMEZONE = "America/Bogota";
+export const FALLBACK_TIMEZONE = PLATFORM_TIMEZONE;
 
 let cachedPreference: string | null | undefined;
 let pending: Promise<string | null> | null = null;
 
+// La plataforma opera en una sola zona horaria (Miami); la preferencia
+// personal del usuario, si la guardó, sigue teniendo prioridad.
+// La plataforma opera en una sola zona horaria (Miami); la preferencia
+// personal del usuario, si la guardó, sigue teniendo prioridad.
+// La plataforma opera en una sola zona horaria (Miami); la preferencia
+// personal del usuario, si la guardó, sigue teniendo prioridad.
 function browserTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIMEZONE;
-  } catch {
-    return FALLBACK_TIMEZONE;
-  }
+  return PLATFORM_TIMEZONE;
 }
 
 async function loadPreference(): Promise<string | null> {
