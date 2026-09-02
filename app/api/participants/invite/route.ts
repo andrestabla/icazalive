@@ -1,6 +1,7 @@
 import { and, count, eq, ne } from "drizzle-orm";
 import { getPublicOrigin } from "@/lib/public-origin";
-import { NextResponse } from "next/server";
+import { isStaleDelivery, triggerDeliveries } from "@/lib/communication-worker";
+import { NextResponse, after } from "next/server";
 import { getDb } from "@/db";
 import {
   communicationDeliveries,
@@ -251,7 +252,9 @@ export async function POST(request: Request) {
         const deliveryStatus =
           message.type === "registration_confirmation" ||
           scheduledFor.getTime() <= now.getTime()
-            ? ("queued" as const)
+            ? isStaleDelivery(message.type, scheduledFor, now)
+              ? ("cancelled" as const)
+              : ("queued" as const)
             : ("scheduled" as const);
         const renderingInput = {
           participantName: participantInput.name,
@@ -324,6 +327,8 @@ export async function POST(request: Request) {
 
   const created = result.filter((item) => item.created).length;
   const updated = result.length - created;
+  after(() => triggerDeliveries(event.id));
+
   await writeAuditLog({
     actor: currentUser,
     action: "participant.invitation.batch.created",

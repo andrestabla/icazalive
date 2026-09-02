@@ -218,6 +218,13 @@
       "when": 1788351270535,
       "tag": "0031_jittery_shockwave",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1788365202858,
+      "tag": "0032_sparkling_lila_cheney",
+      "breakpoints": true
     }
   ]
 }

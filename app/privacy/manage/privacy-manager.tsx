@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AdminIcon } from "@/app/components/admin-icon";
 import { useMemo, useState, type FormEvent } from "react";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type LegalDocument = {
   id: string;
@@ -73,7 +74,7 @@ const statusLabels = {
 function stableDate(value: string) {
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "medium",
-    timeZone: "America/Bogota",
+    timeZone: PLATFORM_TIMEZONE,
   }).format(new Date(value));
 }
 

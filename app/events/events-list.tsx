@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminIcon } from "@/app/components/admin-icon";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type ScheduleConflict = {
   id: string;
@@ -53,7 +54,7 @@ function eventDateKey(value: string) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    timeZone: "America/Bogota",
+    timeZone: PLATFORM_TIMEZONE,
   }).formatToParts(new Date(value));
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((item) => item.type === type)?.value ?? "";
@@ -214,8 +215,7 @@ export default function EventsList() {
 
   const monthLabel = new Intl.DateTimeFormat("es-CO", {
     month: "long",
-    year: "numeric",
-  }).format(monthCursor);
+    year: "numeric", timeZone: PLATFORM_TIMEZONE }).format(monthCursor);
 
   return (
     <>
@@ -293,11 +293,11 @@ export default function EventsList() {
             const end = new Date(event.endsAt);
             const day = new Intl.DateTimeFormat("es-CO", {
               day: "2-digit",
-              timeZone: "America/Bogota",
+              timeZone: PLATFORM_TIMEZONE,
             }).format(start);
             const month = new Intl.DateTimeFormat("es-CO", {
               month: "short",
-              timeZone: "America/Bogota",
+              timeZone: PLATFORM_TIMEZONE,
             }).format(start).replace(".", "").toUpperCase();
 
             return (
@@ -316,7 +316,7 @@ export default function EventsList() {
                   </div>
                   <h2>{event.title}</h2>
                   <div className="catalog-meta">
-                    <span><AdminIcon name="clock" /> {new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" }).format(start)}</span>
+                    <span><AdminIcon name="clock" /> {new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit", timeZone: PLATFORM_TIMEZONE }).format(start)}</span>
                     <span>Duración {Math.round((end.getTime() - start.getTime()) / 60000)} min</span>
                     <span>Hasta {event.maxAttendees.toLocaleString("es-CO")} asistentes</span>
                   </div>
@@ -412,7 +412,7 @@ export default function EventsList() {
                           {new Intl.DateTimeFormat("es-CO", {
                             hour: "numeric",
                             minute: "2-digit",
-                            timeZone: "America/Bogota",
+                            timeZone: PLATFORM_TIMEZONE,
                           }).format(new Date(event.startsAt))}
                         </small>
                         <span>{event.title}</span>
@@ -472,7 +472,7 @@ export default function EventsList() {
                   {duplicateConflicts.map((conflict) => (
                     <p key={conflict.id}>
                       <span>{conflict.title}</span>
-                      <small>{conflictLabel(conflict)} · {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Bogota" }).format(new Date(conflict.startsAt))}</small>
+                      <small>{conflictLabel(conflict)} · {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short", timeZone: PLATFORM_TIMEZONE }).format(new Date(conflict.startsAt))}</small>
                     </p>
                   ))}
                 </div>

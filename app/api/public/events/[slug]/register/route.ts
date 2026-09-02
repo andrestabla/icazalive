@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, asc, count, eq, ne } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getDb } from "@/db";
 import {
   communicationDeliveries,
@@ -16,6 +16,7 @@ import {
 import { writeAuditLog } from "@/lib/audit";
 import { renderParticipantCommunication } from "@/lib/communication-renderer";
 import { getPublicOrigin } from "@/lib/public-origin";
+import { isStaleDelivery, triggerDeliveries } from "@/lib/communication-worker";
 import { getPublishedLegalDocuments } from "@/lib/privacy";
 import { createRegistrationAccessToken } from "@/lib/registration-access";
 import { validateRegistrationResponses } from "@/lib/registration-fields";
@@ -249,7 +250,9 @@ export async function POST(request: Request, context: RouteContext) {
       const status =
         message.type === "registration_confirmation" ||
         scheduledFor.getTime() <= now.getTime()
-          ? ("queued" as const)
+          ? isStaleDelivery(message.type, scheduledFor, now)
+            ? ("cancelled" as const)
+            : ("queued" as const)
           : ("scheduled" as const);
       const renderingInput = {
         participantName: name,
@@ -266,6 +269,8 @@ export async function POST(request: Request, context: RouteContext) {
       }).body;
       const renderedBody = renderParticipantCommunication({
         template: message.body,
+        includeManagementFooter:
+          message.type === "registration_confirmation",
         ...renderingInput,
       }).body;
 
@@ -314,6 +319,9 @@ export async function POST(request: Request, context: RouteContext) {
       { status: 409 },
     );
   }
+
+  // La confirmación sale en cuanto se responde al asistente.
+  after(() => triggerDeliveries(event.id));
 
   await writeAuditLog({
     actorEmail: email,

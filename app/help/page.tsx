@@ -35,7 +35,7 @@ export default async function HelpPage({
       salesEmail={process.env.SALES_EMAIL ?? "ventas@icazalive.local"}
       supportHours={
         process.env.SUPPORT_HOURS ??
-        "Lunes a viernes · 08:00–18:00 (America/Bogota)"
+        "Lunes a viernes · 08:00–18:00 (hora de Miami)"
       }
     />
   );

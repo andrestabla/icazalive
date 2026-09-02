@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { AdminIcon } from "@/app/components/admin-icon";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type StaffRole = "administrator" | "organizer";
 
@@ -32,7 +33,7 @@ function formatStableDate(value: string) {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-    timeZone: "America/Bogota",
+    timeZone: PLATFORM_TIMEZONE,
   }).formatToParts(new Date(value));
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((item) => item.type === type)?.value.replace(/\s+/g, " ") ?? "";

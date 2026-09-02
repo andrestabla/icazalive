@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AdminIcon } from "@/app/components/admin-icon";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type VideoInfo = {
   hasVideo: boolean;
@@ -140,7 +141,7 @@ export default function RecordedVideoPanel({
               <small>
                 {formatSize(info.size)} · {formatDuration(info.durationSeconds)}
                 {info.uploadedAt
-                  ? ` · cargado ${new Date(info.uploadedAt).toLocaleDateString("es-CO")}`
+                  ? ` · cargado ${new Date(info.uploadedAt).toLocaleDateString("es-CO", { timeZone: PLATFORM_TIMEZONE })}`
                   : ""}
               </small>
             </div>

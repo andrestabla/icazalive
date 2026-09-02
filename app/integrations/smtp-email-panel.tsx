@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type Settings = {
   provider: string;
@@ -195,7 +196,7 @@ export default function SmtpEmailPanel() {
       )}
       {s.lastTestedAt && (
         <p className="smtp-lasttest">
-          Última prueba: {new Date(s.lastTestedAt).toLocaleString("es-CO")} ·{" "}
+          Última prueba: {new Date(s.lastTestedAt).toLocaleString("es-CO", { timeZone: PLATFORM_TIMEZONE })} ·{" "}
           {s.lastTestOk ? "exitosa" : "fallida"}
         </p>
       )}

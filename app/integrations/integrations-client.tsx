@@ -17,6 +17,7 @@ import type {
   IntegrationRequirement,
   ManagedIntegrationProvider,
 } from "@/lib/integrations";
+import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type ConnectionStatus =
   | "disconnected"
@@ -191,7 +192,7 @@ function formatStableDateTime(value: string) {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-    timeZone: "America/Bogota",
+    timeZone: PLATFORM_TIMEZONE,
   }).formatToParts(new Date(value));
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts
