@@ -75,7 +75,12 @@ if "logoLightKey" not in s:
 css_src = open(os.path.join(SRC, "app/globals.css"), encoding="utf-8").read()
 block = css_src[css_src.index("/* Marca: logotipos, favicon y loader subidos a S3 */"):]
 p = "app/globals.css"; s = open(p, encoding="utf-8").read()
-if ".brand-assets-grid" not in s:
+marker = "/* Marca: logotipos, favicon y loader subidos a S3 */"
+if marker in s:
+    # El bloque es el último del archivo: se reemplaza completo con la versión nueva.
+    s = s[:s.index(marker)] + block
+    open(p, "w", encoding="utf-8").write(s); print("actualizado bloque CSS de marca")
+else:
     open(p, "a", encoding="utf-8").write("\n\n" + block); print("anexado globals.css")
 
 if problems:

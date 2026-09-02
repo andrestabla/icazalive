@@ -1041,7 +1041,7 @@ button { font: inherit; }
 .brand-section-hint code { font-size: 11px; background: #f3f0fa; padding: 1px 5px; border-radius: 4px; }
 .brand-assets-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
 @media (max-width: 720px) { .brand-assets-grid { grid-template-columns: 1fr; } }
-.brand-asset { display: flex; gap: 12px; padding: 10px; border: 1px solid #e6e2ee; border-radius: 12px; background: #fff; }
+.brand-asset { display: flex; gap: 12px; padding: 10px; border: 1px solid #e6e2ee; border-radius: 12px; background: #fff; min-width: 0; }
 .brand-asset-preview { position: relative; flex: 0 0 96px; height: 96px; display: grid; place-items: center; border-radius: 10px; overflow: hidden; border: 1px solid #e6e2ee; }
 .brand-asset-preview.light { background: repeating-conic-gradient(#f4f2f8 0 25%, #ffffff 0 50%) 0 0 / 16px 16px; }
 .brand-asset-preview.dark { background: linear-gradient(145deg, var(--brand-primary, #24194F), var(--brand-accent, #6946E8)); border-color: transparent; }
@@ -1053,9 +1053,9 @@ button { font: inherit; }
 .brand-asset-body b { font-size: 13px; }
 .brand-asset-body small { color: #817b8d; font-size: 11px; line-height: 1.45; }
 .brand-asset-body em { color: #a24958; font-size: 11px; font-style: normal; }
-.brand-asset-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; }
+.brand-asset-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: auto; padding-top: 6px; }
 .brand-asset-actions .secondary-action { padding: 6px 10px; font-size: 12px; }
-.brand-asset-remove { border: 0; background: none; color: #a24958; font-size: 12px; font-weight: 600; cursor: pointer; }
+.brand-asset-remove { border: 0; background: none; color: #a24958; font-size: 12px; font-weight: 600; cursor: pointer; padding: 6px 2px; white-space: nowrap; }
 .brand-logo { width: 32px; height: 32px; border-radius: 9px; object-fit: contain; }
 .brand-preview-form .public-brand { font-size: 14px; color: var(--brand-primary); margin-bottom: 12px; }
 .brand-preview-form .public-brand .brand-mark { background: var(--brand-primary); color: #fff; }
