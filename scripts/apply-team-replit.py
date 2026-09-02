@@ -28,21 +28,25 @@ for rel in NEW_FILES + list(EXPECTED_OLD):
     if current == md5(src):
         print("al día", rel); continue
     if rel in PATCHED and current is not None and current != EXPECTED_OLD[rel]:
-        marker = "groupByEmail" if "participants" in rel else "AssignableRole"
-        if marker in open(rel, encoding="utf-8").read():
-            print("ya parcheado", rel); continue
-        r = subprocess.run(["patch", "-p1", "--forward", "--fuzz=3", "--no-backup-if-mismatch", rel,
-                            "-i", os.path.join(SRC, "scripts/patches/team-ui.patch")], capture_output=True, text=True)
-        print(r.stdout.strip())
-        if r.returncode != 0 or os.path.exists(rel + ".rej"):
-            problems.append(f"parche con rechazos en {rel}: revisa {rel}.rej")
-        else:
-            print("parcheado", rel)
-        continue
+        continue  # se parchea abajo, en una sola pasada
     if rel in EXPECTED_OLD and rel not in MERGED and current is not None and current != EXPECTED_OLD[rel]:
         problems.append(f"DIVERGIÓ en Replit (no se sobrescribe): {rel}"); continue
     os.makedirs(os.path.dirname(rel) or ".", exist_ok=True)
     shutil.copyfile(src, rel); print("copiado", rel)
+
+# Parche único (multi-archivo) sobre las versiones de Replit de los archivos
+# que el agente modificó; idempotente por marcador.
+markers = {"app/participants/participants-list.tsx": "groupByEmail", "app/team/team-manager.tsx": "AssignableRole"}
+pending = [rel for rel, mark in markers.items() if os.path.exists(rel) and mark not in open(rel, encoding="utf-8").read()]
+if pending:
+    r = subprocess.run(["patch", "-p1", "--forward", "--fuzz=3", "--no-backup-if-mismatch",
+                        "-i", os.path.join(SRC, "scripts/patches/team-ui.patch")], capture_output=True, text=True)
+    print(r.stdout.strip())
+    rejects = [rel for rel in markers if os.path.exists(rel + ".rej")]
+    if r.returncode != 0 or rejects:
+        problems.append("parche con rechazos: " + ", ".join(rejects or ["ver salida"]))
+    else:
+        print("parcheados", ", ".join(pending))
 
 css_src = open(os.path.join(SRC, "app/globals.css"), encoding="utf-8").read()
 marker = "/* Participantes agrupados por correo e historial */"
