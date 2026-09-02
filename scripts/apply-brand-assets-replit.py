@@ -31,6 +31,7 @@ NEW_FILES = [
     "app/api/files/[...key]/route.ts",
     "app/components/brand-loader.tsx",
     "app/loading.tsx",
+    "app/components/sidebar-brand.tsx",
 ]
 
 # Archivos cuya versión de Replit ya fue integrada en la nueva (se sobrescriben).

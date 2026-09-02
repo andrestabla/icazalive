@@ -1,8 +1,7 @@
 import Link from "next/link";
 import AccountSecurity from "@/app/components/account-security";
 import type { AuthenticatedUser } from "@/lib/auth";
-import { getBrandSettings } from "@/lib/brand";
-import { brandLogoFor } from "@/app/components/public-brand";
+import SidebarBrand from "@/app/components/sidebar-brand";
 
 export type SidebarSection =
   | "Resumen"
@@ -46,7 +45,7 @@ const settingsModules: {
   { label: "Privacidad", href: "/privacy/manage", icon: "§", permission: "privacy.view" },
 ];
 
-export default async function AdminSidebar({
+export default function AdminSidebar({
   user,
   granted,
   active,
@@ -75,19 +74,10 @@ export default async function AdminSidebar({
     allowed.has(item.permission),
   );
 
-  const brand = await getBrandSettings().catch(() => null);
-  const sidebarLogo = brand ? brandLogoFor(brand, "light") : null;
-
   return (
     <aside className="sidebar">
       <Link href="/" className="brand brand-link">
-        {sidebarLogo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img className="brand-logo" src={sidebarLogo} alt="" width={32} height={32} />
-        ) : (
-          <div className="brand-mark">{brand?.markText ?? "I"}</div>
-        )}
-        <span>{brand?.organizationName ?? "Icaza Live"}</span>
+        <SidebarBrand />
       </Link>
       <nav aria-label="Navegación principal">
         {visibleWorkspace.length > 0 && (
