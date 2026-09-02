@@ -61,7 +61,19 @@ export async function GET(request: Request) {
     clientSecret: secret,
     redirectUri: ssoRedirectUri(request),
   });
-  if (!result.ok) return fail(request, intent, "exchange");
+  if (!result.ok) {
+    // Motivo real (invalid_grant = código ya usado o vencido, redirect_uri, etc.).
+    console.error("[sso] intercambio con Google falló:", result.error);
+    await writeAuditLog({
+      action: "auth.sso.exchange_failed",
+      resourceType: "sso",
+      outcome: "failure",
+      summary: `Google rechazó el intercambio del código: ${result.error.slice(0, 200)}`,
+      details: { intent: intent.kind },
+      request,
+    });
+    return fail(request, intent, "exchange");
+  }
 
   const { email, emailVerified, name, hostedDomain } = result.identity;
   if (!emailVerified) return fail(request, intent, "unverified");
