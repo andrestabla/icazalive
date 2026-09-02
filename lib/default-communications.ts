@@ -24,6 +24,13 @@ export const DEFAULT_COMMUNICATIONS = [
     offsetMinutes: -60,
   },
   {
+    type: "live_now" as const,
+    subject: "¡Ya estamos en vivo! {{event_title}}",
+    body: "Hola {{participant_name}},\n\n{{event_title}} acaba de comenzar. Entra ahora y únete a la transmisión.\n\nEntrar al evento: {{access_link}}\n\nEquipo Icaza Jammoul Live",
+    enabled: true,
+    offsetMinutes: 0,
+  },
+  {
     type: "post_event" as const,
     subject: "Gracias por acompañarnos en {{event_title}}",
     body: "Hola {{participant_name}},\n\nGracias por participar en {{event_title}}. Muy pronto compartiremos los recursos y la grabación.\n\nEquipo Icaza Jammoul Live",

@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, inArray, ne, sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getDb } from "@/db";
 import {
   eventChatMessages,
@@ -17,6 +17,7 @@ import {
   users,
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
+import { notifyEventLive } from "@/lib/live-notifications";
 import { getCurrentUser } from "@/lib/auth";
 import {
   cleanInteractionText,
@@ -128,6 +129,9 @@ export async function GET(request: Request, context: RouteContext) {
         .set({ status: automatedStatus, updatedAt: new Date() })
         .where(eq(events.id, record.event.id));
       record.event.status = automatedStatus;
+      if (automatedStatus === "live") {
+        after(() => notifyEventLive(record.event.id));
+      }
       await writeAuditLog({
         action: `event.simulated.${automatedStatus === "live" ? "started" : "ended"}`,
         resourceType: "event",

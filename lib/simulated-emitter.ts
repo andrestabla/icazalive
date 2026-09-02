@@ -6,6 +6,7 @@ import type { AuthenticatedUser } from "@/lib/auth";
 import { createEventChannel, readIvsCredentials } from "@/lib/aws-ivs";
 import { describeEmitter, readEcsConfig, startEmitter, stopEmitter } from "@/lib/aws-ecs";
 import { objectPlaybackUrl, readS3Config } from "@/lib/aws-s3";
+import { notifyEventLive } from "@/lib/live-notifications";
 
 // Emisor S3 → IVS para contenido simulado. El contenido vive en la biblioteca
 // (Contenidos) y siempre se entrega vía Amazon IVS: la misma experiencia y la
@@ -161,6 +162,7 @@ export async function runSimulatedAutomation(): Promise<{ started: number; stopp
         summary.started += 1;
         if (event.status !== "live") {
           await db.update(events).set({ status: "live", updatedAt: new Date() }).where(eq(events.id, event.id));
+          await notifyEventLive(event.id).catch((error) => console.error("[live_now]", error));
         }
       } else {
         await db.update(sessions).set({ emitterStatus: "error", updatedAt: new Date() }).where(eq(sessions.id, session.id));

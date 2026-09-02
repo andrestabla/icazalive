@@ -1,5 +1,5 @@
 import { and, count, eq, sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getDb } from "@/db";
 import {
   events,
@@ -11,6 +11,8 @@ import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { canManageEvent } from "@/lib/event-permissions";
+import { notifyEventLive } from "@/lib/live-notifications";
+import { getPublicOrigin } from "@/lib/public-origin";
 import {
   canTransition,
   eventStatusLabels,
@@ -339,6 +341,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     .set(changes)
     .where(eq(events.id, current.id))
     .returning();
+
+  // Al pasar a EN VIVO se avisa a los inscritos ("Ya estamos en vivo").
+  if (changes.status === "live" && currentStatus !== "live") {
+    const origin = getPublicOrigin(request);
+    after(() => notifyEventLive(current.id, origin));
+  }
 
   // Al mover la fecha, las sesiones y los recordatorios pendientes se
   // desplazan el mismo intervalo para que sigan alineados con el evento.

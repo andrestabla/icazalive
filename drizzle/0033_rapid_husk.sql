@@ -1,0 +1,1 @@
+ALTER TYPE "public"."communication_type" ADD VALUE 'live_now' BEFORE 'post_event';

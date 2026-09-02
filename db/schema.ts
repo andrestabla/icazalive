@@ -163,6 +163,7 @@ export const communicationType = pgEnum("communication_type", [
   "registration_confirmation",
   "reminder_24h",
   "reminder_1h",
+  "live_now",
   "post_event",
 ]);
 
