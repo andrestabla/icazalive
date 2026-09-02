@@ -12,7 +12,6 @@ import EventAnalyticsPanel from "./event-analytics-panel";
 import FeedbackAdminPanel from "./feedback-admin-panel";
 import OrganizersPanel from "./organizers-panel";
 import EventDateEditor from "./event-date-editor";
-import RecordedVideoPanel from "./recorded-video-panel";
 import SimulatedContentPanel from "./simulated-content-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
 import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
@@ -1706,20 +1705,12 @@ export default function EventDetail({
       ) : activeTab === "Transmisión" ? (
         streamingSession ? (
           <div className="streaming-section">
-            {event.format === "simulated" && (
-              <RecordedVideoPanel
-                eventSlug={event.slug}
-                postEventRedirectUrl={event.postEventRedirectUrl}
-                saving={saving}
-                onRedirectChange={(value) =>
-                  void patchEvent({ postEventRedirectUrl: value })
-                }
-              />
-            )}
             {(event.format === "simulated" || event.format === "hybrid") && (
               <SimulatedContentPanel
                 eventSlug={event.slug}
                 isHybrid={event.format === "hybrid"}
+                postEventRedirectUrl={event.postEventRedirectUrl}
+                onRedirectChange={(value) => void patchEvent({ postEventRedirectUrl: value })}
               />
             )}
             <section className="panel streaming-overview">

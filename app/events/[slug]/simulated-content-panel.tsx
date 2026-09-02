@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type Asset = { id: string; title: string; s3Key: string; durationSeconds: number | null };
@@ -10,14 +11,25 @@ type ContentConfig = {
 };
 type EmitterState = { status: string; ecsConfigured: boolean; startedAt: string | null };
 
-// Panel de contenido simulado: elige el video de la biblioteca, el modo de
-// distribución (S3 directo o S3→IVS) y, en modo streaming, controla el emisor.
+function formatDuration(seconds: number | null) {
+  if (!seconds) return "";
+  const minutes = Math.round(seconds / 60);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
+}
+
+// Panel de contenido simulado: el video se elige de la biblioteca (Contenidos)
+// y se entrega siempre vía Amazon IVS. La emisión arranca sola a la hora del
+// evento; los controles manuales sirven para pruebas o contingencias.
 export default function SimulatedContentPanel({
   eventSlug,
   isHybrid,
+  postEventRedirectUrl = null,
+  onRedirectChange,
 }: {
   eventSlug: string;
   isHybrid: boolean;
+  postEventRedirectUrl?: string | null;
+  onRedirectChange?: (value: string | null) => void;
 }) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [config, setConfig] = useState<ContentConfig | null>(null);
@@ -45,7 +57,7 @@ export default function SimulatedContentPanel({
       if (c) {
         setConfig({
           contentAssetId: c.contentAssetId ?? null,
-          simulatedDelivery: (c.simulatedDelivery as "direct" | "streaming") ?? "direct",
+          simulatedDelivery: "streaming",
           hybridSwitchOffsetMinutes: c.hybridSwitchOffsetMinutes ?? null,
         });
       }
@@ -84,7 +96,7 @@ export default function SimulatedContentPanel({
     const payload = (await response.json()) as { data?: { status: string }; error?: string };
     if (response.ok) {
       setStatus({
-        text: action === "start" ? "Emisión iniciada. La señal aparecerá en la sala en segundos." : "Emisión detenida.",
+        text: action === "start" ? "Emisión iniciada. La señal aparece en la sala en segundos." : "Emisión detenida.",
         error: false,
       });
       setRefreshKey((v) => v + 1);
@@ -94,21 +106,25 @@ export default function SimulatedContentPanel({
     setBusy(false);
   };
 
-  const delivery = config?.simulatedDelivery ?? "direct";
   const running = emitter?.status === "running";
+  const selected = assets.find((asset) => asset.id === config?.contentAssetId) ?? null;
 
   return (
     <section className="panel recorded-video-panel">
       <div className="panel-heading">
         <div>
           <p className="eyebrow">CONTENIDO SIMULADO</p>
-          <h2>Fuente y distribución</h2>
+          <h2>Contenido y emisión</h2>
           <p>
-            Elige el contenido de la biblioteca y cómo se entrega: desde S3
-            (económico) o vía Amazon IVS con bitrate adaptativo para audiencias
-            grandes.
+            El video se elige de la biblioteca y se emite por Amazon IVS con
+            calidad adaptativa: la audiencia lo vive como una transmisión en vivo.
+            La emisión arranca sola a la hora del evento
+            {isHybrid ? " (o en el minuto de transición)" : ""} y termina al final.
           </p>
         </div>
+        <Link href="/content" className="secondary-action link-button">
+          Gestionar biblioteca
+        </Link>
       </div>
 
       <div className="recorded-video-body">
@@ -117,40 +133,34 @@ export default function SimulatedContentPanel({
           <div>
             <select
               value={config?.contentAssetId ?? ""}
-              disabled={busy}
+              disabled={busy || running}
               onChange={(e) => void saveConfig({ contentAssetId: e.target.value || null })}
             >
-              <option value="">— Usar el video subido a este evento —</option>
+              <option value="">Selecciona un contenido…</option>
               {assets.map((asset) => (
                 <option key={asset.id} value={asset.id}>
-                  {asset.title}
+                  {asset.title}{asset.durationSeconds ? ` · ${formatDuration(asset.durationSeconds)}` : ""}
                 </option>
               ))}
             </select>
           </div>
           <small>
-            Si no eliges de la biblioteca, se usa el MP4 subido en el panel de
-            arriba.
+            {assets.length === 0 ? (
+              <>La biblioteca está vacía. Sube y procesa el video en <Link href="/content">Contenidos</Link> y vuelve aquí para seleccionarlo.</>
+            ) : selected ? (
+              <>Seleccionado: <b>{selected.title}</b>{selected.durationSeconds ? ` (${formatDuration(selected.durationSeconds)})` : ""}. Los videos se cargan y procesan en Contenidos; aquí solo se asignan.</>
+            ) : (
+              <>Los videos se cargan y procesan en Contenidos; aquí solo se asignan al evento.</>
+            )}
           </small>
         </label>
 
-        <div className="sim-delivery-toggle">
-          <button
-            className={delivery === "direct" ? "active" : ""}
-            disabled={busy || running}
-            onClick={() => void saveConfig({ simulatedDelivery: "direct" })}
-          >
-            <b>Simulado directo</b>
-            <small>Desde S3 con reloj compartido. Económico.</small>
-          </button>
-          <button
-            className={delivery === "streaming" ? "active" : ""}
-            disabled={busy || running}
-            onClick={() => void saveConfig({ simulatedDelivery: "streaming" })}
-          >
-            <b>Simulado en streaming</b>
-            <small>S3 → IVS con calidad adaptativa. Para audiencias grandes.</small>
-          </button>
+        <div className="sim-delivery-fixed">
+          <span className="service-logo ivs">IVS</span>
+          <div>
+            <b>Entrega por Amazon IVS</b>
+            <small>Streaming con bitrate adaptativo y baja latencia, igual que un evento en vivo.</small>
+          </div>
         </div>
 
         {isHybrid && (
@@ -165,52 +175,57 @@ export default function SimulatedContentPanel({
                 disabled={busy}
                 onBlur={(e) => {
                   const value = e.target.value.trim();
-                  void saveConfig({
-                    hybridSwitchOffsetMinutes: value ? Number(value) : null,
-                  });
+                  void saveConfig({ hybridSwitchOffsetMinutes: value ? Number(value) : null });
                 }}
               />
             </div>
-            <small>
-              Minutos desde el inicio del evento. Vacío = sin transición
-              automática.
-            </small>
+            <small>Minutos desde el inicio del evento. Vacío = el contenido arranca con el evento.</small>
           </label>
         )}
 
-        {delivery === "streaming" && (
-          <div className="sim-emitter">
-            {!emitter?.ecsConfigured ? (
-              <p className="recorded-video-status error">
-                El emisor S3→IVS no está configurado en el servidor
-                (AWS_ECS_*). Guarda las variables para habilitarlo.
-              </p>
-            ) : (
-              <div className="sim-emitter-controls">
-                <span className={`sim-emitter-badge ${running ? "live" : ""}`}>
-                  {running ? "● EMITIENDO" : "○ Detenido"}
-                </span>
-                {running ? (
-                  <button
-                    className="content-remove"
-                    disabled={busy}
-                    onClick={() => void emitterAction("stop")}
-                  >
-                    Detener emisión
-                  </button>
-                ) : (
-                  <button
-                    className="primary-button"
-                    disabled={busy}
-                    onClick={() => void emitterAction("start")}
-                  >
-                    Iniciar emisión simulada
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+        {onRedirectChange && (
+          <label className="post-registration-field">
+            Redirección al terminar el evento (opcional)
+            <div>
+              <input
+                type="url"
+                placeholder="https://tusitio.com/siguiente-paso"
+                defaultValue={postEventRedirectUrl ?? ""}
+                disabled={busy}
+                onBlur={(e) => onRedirectChange(e.target.value.trim() || null)}
+              />
+            </div>
+            <small>Al finalizar el contenido, la sala ofrece esta URL a los asistentes.</small>
+          </label>
         )}
+
+        <div className="sim-emitter">
+          {!emitter?.ecsConfigured ? (
+            <p className="recorded-video-status error">
+              El emisor S3→IVS no está configurado en el servidor (AWS_ECS_*).
+            </p>
+          ) : (
+            <div className="sim-emitter-controls">
+              <span className={`sim-emitter-badge ${running ? "live" : ""}`}>
+                {running ? "● EMITIENDO" : "○ En espera · arranca a la hora del evento"}
+              </span>
+              {running ? (
+                <button className="content-remove" disabled={busy} onClick={() => void emitterAction("stop")}>
+                  Detener emisión
+                </button>
+              ) : (
+                <button
+                  className="secondary-action"
+                  disabled={busy || !config?.contentAssetId}
+                  onClick={() => void emitterAction("start")}
+                  title="Solo para pruebas o contingencias: la emisión arranca sola a la hora del evento"
+                >
+                  Iniciar ahora (prueba)
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {status && (
           <p className={`recorded-video-status ${status.error ? "error" : ""}`} role="status">

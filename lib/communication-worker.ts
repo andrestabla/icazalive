@@ -9,6 +9,7 @@ import {
 } from "@/lib/email-provider";
 import { renderBrandedEmail } from "@/lib/email-branding";
 import { getBrandSettings } from "@/lib/brand";
+import { runSimulatedAutomation } from "@/lib/simulated-emitter";
 
 const MAX_ATTEMPTS = 3;
 const BATCH_SIZE = 50;
@@ -205,6 +206,7 @@ export function startCommunicationScheduler(): void {
     schedulerRunning = true;
     try {
       await processDueDeliveries();
+      await runSimulatedAutomation();
     } catch (error) {
       console.error("[communications] planificador:", error);
     } finally {

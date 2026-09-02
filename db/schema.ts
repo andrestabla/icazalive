@@ -331,7 +331,7 @@ export const events = pgTable("events", {
   // Modo de distribución del contenido simulado.
   simulatedDelivery: simulatedDelivery("simulated_delivery")
     .notNull()
-    .default("direct"),
+    .default("streaming"),
   // Evento híbrido: minuto (relativo al inicio) en que la señal en vivo de
   // Zoom cede el paso al contenido simulado. Null = sin transición programada.
   hybridSwitchOffsetMinutes: integer("hybrid_switch_offset_minutes"),

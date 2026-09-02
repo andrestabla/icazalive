@@ -1102,3 +1102,10 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 .event-date-editor-actions { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; }
 .event-date-editor > small { grid-column: 1 / -1; color: #817b8d; font-size: 11px; }
 .event-date-editor .form-error { grid-column: 1 / -1; margin: 0; }
+
+
+/* Contenido simulado: entrega fija por IVS */
+.sim-delivery-fixed { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #e6e2ee; border-radius: 10px; background: #fbfafd; margin: 4px 0 10px; }
+.sim-delivery-fixed .service-logo.ivs { background: #fff3e6; color: #c25b00; font-size: 10px; font-weight: 800; }
+.sim-delivery-fixed b { display: block; font-size: 13px; }
+.sim-delivery-fixed small { color: #817b8d; font-size: 11px; }
