@@ -53,7 +53,15 @@ export async function startEventEmitter(
   const session = await mainSession(event.id);
   if (!session) return { ok: false, code: 409, error: "El evento no tiene sesión principal." };
   if (session.emitterStatus === "running" && session.emitterTaskArn) {
-    return { ok: true, status: "running", playbackUrl: session.playbackUrl };
+    // Confirmar con ECS: si la tarea anterior ya murió, se relanza.
+    const described = await describeEmitter(ecs, session.emitterTaskArn);
+    if (described.ok && (described.state === "running" || described.state === "pending")) {
+      return { ok: true, status: "running", playbackUrl: session.playbackUrl };
+    }
+    await getDb()
+      .update(sessions)
+      .set({ emitterStatus: "stopped", updatedAt: new Date() })
+      .where(eq(sessions.id, session.id));
   }
   const sourceUrl = await librarySourceUrl(event);
   if (!sourceUrl) {
@@ -153,6 +161,20 @@ export async function runSimulatedAutomation(): Promise<{ started: number; stopp
         : event.startsAt;
     const endsAt = event.endsAt;
     const running = session.emitterStatus === "running";
+
+    // Emisor ya corriendo dentro de la ventana (p. ej. arrancado a mano antes
+    // de la hora): solo falta poner el evento en vivo y avisar.
+    if (now >= switchAt && now < endsAt && running && event.status !== "live") {
+      await db.update(events).set({ status: "live", updatedAt: new Date() }).where(eq(events.id, event.id));
+      await notifyEventLive(event.id).catch((error) => console.error("[live_now]", error));
+      await writeAuditLog({
+        action: "event.simulated.started",
+        resourceType: "event",
+        resourceId: event.id,
+        summary: `“${event.title}” pasó a en vivo con la emisión ya activa.`,
+      });
+      continue;
+    }
 
     if (now >= switchAt && now < endsAt && !running && session.emitterStatus !== "error") {
       // Evita relanzar si la tarea anterior ya terminó (video más corto que el evento).
