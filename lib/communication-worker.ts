@@ -1,6 +1,6 @@
 import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { communicationDeliveries } from "@/db/schema";
+import { communicationDeliveries, events } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import {
   activeProviderName,
@@ -94,6 +94,24 @@ export async function processDueDeliveries(
       .returning({ id: communicationDeliveries.id });
     if (claimed.length === 0) continue;
     summary.processed += 1;
+
+    // "Ya estamos en vivo" solo sale si el evento está realmente en vivo; si
+    // llegó su hora de respaldo (fin del evento) sin haber empezado, se cancela.
+    if (delivery.type === "live_now") {
+      const [eventRow] = await db
+        .select({ status: events.status })
+        .from(events)
+        .where(eq(events.id, delivery.eventId))
+        .limit(1);
+      if (eventRow?.status !== "live") {
+        summary.skipped += 1;
+        await db
+          .update(communicationDeliveries)
+          .set({ status: "cancelled", error: "El evento no pasó a en vivo.", updatedAt: new Date() })
+          .where(eq(communicationDeliveries.id, delivery.id));
+        continue;
+      }
+    }
 
     if (isStaleDelivery(delivery.type, delivery.scheduledFor, now)) {
       summary.skipped += 1;

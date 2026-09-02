@@ -69,7 +69,7 @@ type SessionData = {
 type CommunicationMessage = {
   id: string;
   eventId: string;
-  type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "post_event";
+  type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event";
   subject: string;
   body: string;
   enabled: boolean;
@@ -189,6 +189,11 @@ const communicationLabels: Record<
     title: "Recordatorio de 1 hora",
     timing: "1 hora antes del evento",
     icon: "clock",
+  },
+  live_now: {
+    title: "Ya estamos en vivo",
+    timing: "Al pasar el evento a En vivo",
+    icon: "check",
   },
   post_event: {
     title: "Seguimiento posterior",

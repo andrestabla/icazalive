@@ -247,11 +247,14 @@ export async function POST(request: Request) {
       for (const message of messages) {
         const scheduledFor =
           message.type === "registration_confirmation"
-            ? now
-            : new Date(event.startsAt.getTime() + message.offsetMinutes * 60_000);
+          ? now
+            : message.type === "live_now"
+              ? event.endsAt // se libera al pasar a EN VIVO; si no, el worker la cancela
+              : new Date(event.startsAt.getTime() + message.offsetMinutes * 60_000);
         const deliveryStatus =
-          message.type === "registration_confirmation" ||
-          scheduledFor.getTime() <= now.getTime()
+          message.type !== "live_now" &&
+          (message.type === "registration_confirmation" ||
+          scheduledFor.getTime() <= now.getTime())
             ? isStaleDelivery(message.type, scheduledFor, now)
               ? ("cancelled" as const)
               : ("queued" as const)

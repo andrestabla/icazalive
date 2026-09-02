@@ -10,6 +10,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { DEFAULT_COMMUNICATIONS } from "@/lib/default-communications";
 import { requireApiUser } from "@/lib/auth";
 import { processDueDeliveries } from "@/lib/communication-worker";
+import { ensureLiveNowMessage } from "@/lib/live-notifications";
 
 export const runtime = "nodejs";
 
@@ -49,6 +50,7 @@ export async function GET(_: Request, context: RouteContext) {
   // Planificador perezoso: al consultar la pestaña se procesan las entregas
   // vencidas, de modo que confirmaciones y recordatorios avanzan sin cron.
   await processDueDeliveries(event.id);
+  await ensureLiveNowMessage(event.id);
 
   const [messages, stats] = await Promise.all([
     db

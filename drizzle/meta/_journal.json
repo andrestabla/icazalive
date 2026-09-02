@@ -239,6 +239,13 @@
       "when": 1788386308454,
       "tag": "0034_simple_grey_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1788387469158,
+      "tag": "0035_real_xavin",
+      "breakpoints": true
     }
   ]
 }
