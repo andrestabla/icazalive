@@ -1,0 +1,1 @@
+ALTER TABLE "google_sso_settings" ALTER COLUMN "provision_role" SET DEFAULT 'participant';

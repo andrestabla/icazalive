@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import SmtpEmailPanel from "./smtp-email-panel";
-import GoogleSsoPanel from "./google-sso-panel";
+import ExtraIntegrationCards from "./config-cards";
 import { useState } from "react";
 import {
   ServiceLogo,
@@ -553,8 +552,6 @@ export default function IntegrationsClient({
         </div>
       )}
 
-      <SmtpEmailPanel />
-      <GoogleSsoPanel />
 
       <div className="integration-summary">
         <article>
@@ -738,28 +735,7 @@ export default function IntegrationsClient({
               </button>
             </footer>
           </article>
-        </div>
-      </section>
-
-      <section className="integration-architecture">
-        <div>
-          <p className="eyebrow">ARQUITECTURA PREPARADA</p>
-          <h2>De la identidad a la transmisión, sin exponer secretos</h2>
-          <p>
-            SSO protege al equipo, Zoom produce la señal, Amazon IVS la
-            distribuye y S3 conserva las grabaciones. Las claves permanecen en
-            variables seguras.
-          </p>
-        </div>
-        <div className="integration-flow">
-          <span className="identity-logo compact">ID</span>
-          <i>→</i>
-          <ServiceLogo service="zoom" />
-          <i>→</i>
-          <ServiceLogo service="amazon_ivs" />
-          <i>→</i>
-           <span className="flow-audience"><AdminIcon name="users" /></span>
-          <small>＋ S3</small>
+          <ExtraIntegrationCards />
         </div>
       </section>
 
@@ -919,20 +895,6 @@ export default function IntegrationsClient({
         >
           Revisar política
         </button>
-      </section>
-
-      <section className="panel replit-handoff">
-        <span>R</span>
-        <div>
-          <p className="eyebrow">PREPARADO PARA REPLIT</p>
-          <h2>La configuración viaja; los secretos no</h2>
-          <p>
-            Al migrar, crea las mismas variables en Secrets de Replit y conecta
-            PostgreSQL mediante DATABASE_URL. Los eventos y metadatos
-            permanecerán portables.
-          </p>
-        </div>
-        <code>ZOOM_* · AWS_* · SSO_* · MFA_* · DATABASE_URL</code>
       </section>
 
       {wizard && (

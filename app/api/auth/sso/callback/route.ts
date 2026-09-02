@@ -79,7 +79,6 @@ export async function GET(request: Request) {
   }
 
   if (!account.active) return fail(request, "inactive");
-  if (account.role === "participant") return fail(request, "no_staff");
 
   const session = await createSession(account.id);
   await setSessionCookie(session.token, session.expiresAt);
@@ -97,5 +96,7 @@ export async function GET(request: Request) {
     request,
   });
 
-  return NextResponse.redirect(new URL("/", request.url));
+  // El personal entra al panel; los asistentes van al Centro de ayuda.
+  const destination = account.role === "participant" ? "/help" : "/";
+  return NextResponse.redirect(new URL(destination, request.url));
 }

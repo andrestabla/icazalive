@@ -24,7 +24,7 @@ function safeView(row: Awaited<ReturnType<typeof readGoogleSso>>, redirectUri: s
     hasSecret: Boolean(row?.clientSecretEncrypted),
     allowedDomain: row?.allowedDomain ?? null,
     autoProvision: row?.autoProvision ?? false,
-    provisionRole: row?.provisionRole ?? "organizer",
+    provisionRole: row?.provisionRole ?? "participant",
     redirectUri,
   };
 }
@@ -44,7 +44,7 @@ export async function PUT(request: Request) {
     clientSecret?: string | null;
     allowedDomain?: string | null;
     autoProvision?: boolean;
-    provisionRole?: "administrator" | "organizer";
+    provisionRole?: "participant" | "administrator" | "organizer";
   };
   const clean = (v: unknown, max = 400) =>
     typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null;
@@ -62,9 +62,11 @@ export async function PUT(request: Request) {
       body.allowedDomain !== undefined ? clean(body.allowedDomain, 120) : existing?.allowedDomain ?? null,
     autoProvision: body.autoProvision ?? existing?.autoProvision ?? false,
     provisionRole:
-      body.provisionRole === "administrator" || body.provisionRole === "organizer"
+      body.provisionRole === "administrator" ||
+      body.provisionRole === "organizer" ||
+      body.provisionRole === "participant"
         ? body.provisionRole
-        : existing?.provisionRole ?? "organizer",
+        : existing?.provisionRole ?? "participant",
     updatedBy: auth.user.id,
     updatedAt: new Date(),
   } as const;
