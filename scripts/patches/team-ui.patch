@@ -1,0 +1,447 @@
+diff --git a/app/participants/participants-list.tsx b/app/participants/participants-list.tsx
+index 6c8e28c..5ee484d 100644
+--- a/app/participants/participants-list.tsx
++++ b/app/participants/participants-list.tsx
+@@ -61,6 +61,49 @@ function csvCell(value: string | number | boolean | null) {
+ 
+ const PAGE_SIZE = 25;
+ 
++// Vista agrupada: una fila por persona (el correo es su identificador) con el
++// historial de todos los eventos en los que se ha inscrito.
++type ParticipantGroup = {
++  email: string;
++  name: string;
++  company: string | null;
++  jobTitle: string | null;
++  phone: string | null;
++  records: ParticipantRecord[];
++  lastRegisteredAt: string;
++};
++
++function groupByEmail(records: ParticipantRecord[]): ParticipantGroup[] {
++  const groups = new Map<string, ParticipantGroup>();
++  for (const record of records) {
++    const key = record.email.toLowerCase();
++    const group = groups.get(key);
++    if (!group) {
++      groups.set(key, {
++        email: record.email,
++        name: record.name,
++        company: record.company,
++        jobTitle: record.jobTitle,
++        phone: record.phone,
++        records: [record],
++        lastRegisteredAt: record.registeredAt,
++      });
++      continue;
++    }
++    group.records.push(record);
++    if (record.registeredAt > group.lastRegisteredAt) {
++      group.lastRegisteredAt = record.registeredAt;
++      group.name = record.name;
++    }
++    group.company ??= record.company;
++    group.jobTitle ??= record.jobTitle;
++    group.phone ??= record.phone;
++  }
++  return Array.from(groups.values()).sort((a, b) =>
++    b.lastRegisteredAt.localeCompare(a.lastRegisteredAt),
++  );
++}
++
+ type ExportColumn = {
+   key: string;
+   label: string;
+@@ -109,6 +152,7 @@ export default function ParticipantsList() {
+   const [page, setPage] = useState(1);
+   const [loading, setLoading] = useState(true);
+   const [selected, setSelected] = useState<ParticipantRecord | null>(null);
++  const [historyEmail, setHistoryEmail] = useState<string | null>(null);
+   const [saving, setSaving] = useState(false);
+   const [message, setMessage] = useState("");
+   const [error, setError] = useState("");
+@@ -165,12 +209,27 @@ export default function ParticipantsList() {
+     });
+   }, [records, search, eventFilter, statusFilter]);
+ 
+-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
++  // Sin filtros de evento ni estado, la tabla muestra personas (no registros).
++  const grouped = eventFilter === "all" && statusFilter === "all";
++  const groups = useMemo(() => groupByEmail(filtered), [filtered]);
++  const uniqueParticipants = useMemo(
++    () => new Set(records.map((record) => record.email.toLowerCase())).size,
++    [records],
++  );
++  const listLength = grouped ? groups.length : filtered.length;
++  const pageCount = Math.max(1, Math.ceil(listLength / PAGE_SIZE));
+   const currentPage = Math.min(page, pageCount);
+   const paginated = filtered.slice(
+     (currentPage - 1) * PAGE_SIZE,
+     currentPage * PAGE_SIZE,
+   );
++  const paginatedGroups = groups.slice(
++    (currentPage - 1) * PAGE_SIZE,
++    currentPage * PAGE_SIZE,
++  );
++  const historyGroup = historyEmail
++    ? groupByEmail(records).find((group) => group.email.toLowerCase() === historyEmail)
++    : null;
+ 
+   const runExport = (format: "csv" | "xlsx") => {
+     if (!filtered.length) return;
+@@ -249,7 +308,7 @@ export default function ParticipantsList() {
+       setRecords((items) =>
+         items.map((item) => (item.id === updated.id ? updated : item)),
+       );
+-      setSelected(updated);
++      setSelected((current) => (current ? updated : current));
+       setMessage(`Estado de ${record.name} actualizado.`);
+     } else {
+       setError(payload.error ?? "No fue posible actualizar el estado.");
+@@ -294,8 +353,8 @@ export default function ParticipantsList() {
+         <article>
+           <span className="stat-icon blue">♙</span>
+           <div>
+-            <strong>{records.length}</strong>
+-            <p>Registros totales</p>
++            <strong>{uniqueParticipants}</strong>
++            <p>Participantes · {records.length} registro{records.length === 1 ? "" : "s"}</p>
+           </div>
+         </article>
+         <article>
+@@ -366,17 +425,59 @@ export default function ParticipantsList() {
+         <div className="participant-table-head">
+           <span>PARTICIPANTE</span>
+           <span>EMPRESA / CARGO</span>
+-          <span>EVENTO</span>
+-          <span>REGISTRO</span>
+-          <span>ESTADO</span>
++          <span>{grouped ? "EVENTOS" : "EVENTO"}</span>
++          <span>{grouped ? "ÚLTIMO REGISTRO" : "REGISTRO"}</span>
++          <span>{grouped ? "ESTADOS" : "ESTADO"}</span>
+           <span>ACCIÓN</span>
+         </div>
+         {loading ? (
+           <div className="table-empty">Cargando participantes…</div>
+-        ) : filtered.length === 0 ? (
++        ) : listLength === 0 ? (
+           <div className="table-empty">
+             No hay participantes para los filtros seleccionados.
+           </div>
++        ) : grouped ? (
++          paginatedGroups.map((group) => (
++            <div className="participant-row" key={group.email}>
++              <div className="participant-person">
++                <span>
++                  {group.name
++                    .split(/\s+/)
++                    .slice(0, 2)
++                    .map((part) => part[0])
++                    .join("")
++                    .toUpperCase()}
++                </span>
++                <p>
++                  <b>{group.name}</b>
++                  <small>{group.email}</small>
++                </p>
++              </div>
++              <div>
++                <b>{group.company ?? "—"}</b>
++                <small>{group.jobTitle ?? "Sin cargo"}</small>
++              </div>
++              <div className="participant-events-cell">
++                <b>{group.records.length} evento{group.records.length === 1 ? "" : "s"}</b>
++                <small>{group.records.slice(0, 2).map((record) => record.eventTitle).join(" · ")}{group.records.length > 2 ? " …" : ""}</small>
++              </div>
++              <time>{formatDate(group.lastRegisteredAt, userTimezone)}</time>
++              <span className="participant-status-summary">
++                {Array.from(new Set(group.records.map((record) => record.status))).map((status) => (
++                  <i className={`participant-status ${status}`} key={status}>● {statusLabels[status]}</i>
++                ))}
++              </span>
++              <button
++                className="participant-manage"
++                onClick={() => {
++                  setError("");
++                  setHistoryEmail(group.email.toLowerCase());
++                }}
++              >
++                Ver historial
++              </button>
++            </div>
++          ))
+         ) : (
+           paginated.map((record) => (
+             <div className="participant-row" key={record.id}>
+@@ -417,7 +518,7 @@ export default function ParticipantsList() {
+             </div>
+           ))
+         )}
+-        {!loading && filtered.length > PAGE_SIZE && (
++        {!loading && listLength > PAGE_SIZE && (
+           <footer className="participants-pagination">
+             <button
+               disabled={currentPage <= 1}
+@@ -426,8 +527,8 @@ export default function ParticipantsList() {
+               ← Anterior
+             </button>
+             <span>
+-              Página <b>{currentPage}</b> de {pageCount} · {filtered.length}{" "}
+-              registros
++              Página <b>{currentPage}</b> de {pageCount} · {listLength}{" "}
++              {grouped ? "participantes" : "registros"}
+             </span>
+             <button
+               disabled={currentPage >= pageCount}
+@@ -439,6 +540,104 @@ export default function ParticipantsList() {
+         )}
+       </section>
+ 
++      {historyGroup && (
++        <div
++          className="modal-backdrop"
++          onMouseDown={() => {
++            if (!saving) setHistoryEmail(null);
++          }}
++        >
++          <section
++            className="modal participant-modal participant-history-modal"
++            role="dialog"
++            aria-modal="true"
++            aria-labelledby="participant-history-title"
++            onMouseDown={(event) => event.stopPropagation()}
++          >
++            <button
++              className="modal-close"
++              disabled={saving}
++              onClick={() => setHistoryEmail(null)}
++              aria-label="Cerrar"
++            >
++              ×
++            </button>
++            <div className="participant-modal-head">
++              <span>
++                {historyGroup.name
++                  .split(/\s+/)
++                  .slice(0, 2)
++                  .map((part) => part[0])
++                  .join("")
++                  .toUpperCase()}
++              </span>
++              <div>
++                <p className="eyebrow">HISTORIAL DEL PARTICIPANTE</p>
++                <h2 id="participant-history-title">{historyGroup.name}</h2>
++                <a href={`mailto:${historyGroup.email}`}>{historyGroup.email}</a>
++              </div>
++            </div>
++            <div className="participant-detail-grid">
++              <div>
++                <small>EMPRESA</small>
++                <b>{historyGroup.company ?? "Sin empresa"}</b>
++                <span>{historyGroup.jobTitle ?? "Sin cargo"}</span>
++              </div>
++              <div>
++                <small>TELÉFONO</small>
++                <b>{historyGroup.phone ?? "No registrado"}</b>
++                <span>{historyGroup.records.length} inscripción{historyGroup.records.length === 1 ? "" : "es"}</span>
++              </div>
++            </div>
++            <div className="participant-history">
++              <p className="eyebrow">EVENTOS</p>
++              {historyGroup.records.map((record) => (
++                <article className="participant-history-row" key={record.id}>
++                  <div>
++                    <Link href={`/events/${record.eventSlug}`}>{record.eventTitle}</Link>
++                    <small>
++                      {formatDate(record.registeredAt, userTimezone)} · {sourceLabels[record.source] ?? record.source}
++                      {record.company ? ` · ${record.company}` : ""}
++                    </small>
++                  </div>
++                  <select
++                    aria-label={`Estado en ${record.eventTitle}`}
++                    value={record.status}
++                    disabled={saving}
++                    onChange={(input) =>
++                      void patchStatus(record, input.target.value as RegistrationStatus)
++                    }
++                  >
++                    {Object.entries(statusLabels).map(([value, label]) => (
++                      <option key={value} value={value}>{label}</option>
++                    ))}
++                  </select>
++                  <button
++                    type="button"
++                    className="participant-manage"
++                    onClick={() => {
++                      setError("");
++                      setSelected(record);
++                    }}
++                  >
++                    Ficha
++                  </button>
++                </article>
++              ))}
++            </div>
++            {error && (
++              <p className="form-error" role="alert">{error}</p>
++            )}
++            <div className="participant-modal-actions">
++              <span />
++              <button className="primary-button" disabled={saving} onClick={() => setHistoryEmail(null)}>
++                {saving ? "Guardando…" : "Listo"}
++              </button>
++            </div>
++          </section>
++        </div>
++      )}
++
+       {exportOpen && (
+         <div className="modal-backdrop" onMouseDown={() => setExportOpen(false)}>
+           <section
+@@ -600,7 +799,7 @@ export default function ParticipantsList() {
+                 ))}
+               </select>
+               <span>
+-                Este cambio se guarda inmediatamente en la base local.
++                El cambio se guarda de inmediato.
+               </span>
+             </label>
+ 
+diff --git a/app/team/team-manager.tsx b/app/team/team-manager.tsx
+index 0457943..86f46cd 100644
+--- a/app/team/team-manager.tsx
++++ b/app/team/team-manager.tsx
+@@ -5,6 +5,7 @@ import { useState } from "react";
+ import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+ 
+ type StaffRole = "administrator" | "organizer";
++type AssignableRole = StaffRole | "participant";
+ 
+ type TeamMember = {
+   id: string;
+@@ -110,13 +111,18 @@ export default function TeamManager({
+       }),
+     });
+     const payload = (await response.json()) as {
+-      data?: TeamMember;
++      data?: TeamMember & { promoted?: boolean };
+       error?: string;
+     };
+     if (response.ok && payload.data) {
+-      setMembers((current) => [...current, payload.data!]);
++      const created = payload.data;
++      setMembers((current) => [...current.filter((item) => item.id !== created.id), created]);
+       setCreatedAccess(access);
+-      setMessage(`${access.name} ya tiene una cuenta local.`);
++      setMessage(
++        created.promoted
++          ? `${access.name} ya era participante: ahora tiene rol de ${roleLabels[created.role]} y recibió el acceso por correo.`
++          : `${access.name} recibió su acceso por correo.`,
++      );
+     } else {
+       setError(payload.error ?? "No fue posible crear la cuenta.");
+     }
+@@ -125,7 +131,7 @@ export default function TeamManager({
+ 
+   const patchMember = async (
+     member: TeamMember,
+-    changes: { role?: StaffRole; active?: boolean; password?: string },
++    changes: { role?: AssignableRole; active?: boolean; password?: string },
+   ) => {
+     setSaving(member.id);
+     setMessage("");
+@@ -140,13 +146,18 @@ export default function TeamManager({
+       error?: string;
+     };
+     if (response.ok && payload.data) {
++      // Al volver a participante, la persona sale del equipo (conserva su historial).
+       setMembers((current) =>
+-        current.map((item) => (item.id === member.id ? payload.data! : item)),
++        payload.data!.role === "participant"
++          ? current.filter((item) => item.id !== member.id)
++          : current.map((item) => (item.id === member.id ? payload.data! : item)),
+       );
+       setMessage(
+         changes.password
+-          ? `La contraseña de ${member.name} fue restablecida.`
+-          : `Acceso de ${member.name} actualizado.`,
++          ? `La contraseña de ${member.name} fue restablecida y se le envió por correo.`
++          : changes.role === "participant"
++            ? `${member.name} vuelve a ser participante; se le avisó por correo.`
++            : `Acceso de ${member.name} actualizado; se le avisó por correo.`,
+       );
+       if (changes.password) {
+         setCreatedAccess({
+@@ -217,7 +228,7 @@ export default function TeamManager({
+           <div>
+             <p className="eyebrow">MIEMBROS</p>
+             <h2>Acceso al espacio de trabajo</h2>
+-            <p>Los cambios de rol o contraseña cierran las sesiones abiertas del miembro.</p>
++            <p>Cada alta, cambio de rol o contraseña se notifica por correo y cierra las sesiones abiertas del miembro.</p>
+           </div>
+           <span>{activeMembers} activos</span>
+         </div>
+@@ -243,12 +254,13 @@ export default function TeamManager({
+                   disabled={isCurrent || saving === member.id}
+                   onChange={(input) =>
+                     void patchMember(member, {
+-                      role: input.target.value as StaffRole,
++                      role: input.target.value as AssignableRole,
+                     })
+                   }
+                 >
+                   <option value="administrator">{roleLabels.administrator}</option>
+                   <option value="organizer">{roleLabels.organizer}</option>
++                  <option value="participant">{roleLabels.participant} (sale del equipo)</option>
+                 </select>
+                 <div className="team-last-access">
+                   <b>{member.lastLoginAt ? formatStableDate(member.lastLoginAt) : "Sin ingreso"}</b>
+@@ -291,15 +303,6 @@ export default function TeamManager({
+         </div>
+       </section>
+ 
+-      <section className="panel local-team-note">
+-        <span>⌁</span>
+-        <div>
+-          <p className="eyebrow">ACCESOS LOCALES</p>
+-          <h2>Sin invitaciones por correo todavía</h2>
+-          <p>Comparte las credenciales temporales por un canal seguro. Cuando conectemos el proveedor de correo, este flujo podrá enviar invitaciones y recuperación de contraseña.</p>
+-        </div>
+-      </section>
+-
+       {inviteOpen && (
+         <div className="modal-backdrop" onMouseDown={() => setInviteOpen(false)}>
+           <section className="modal team-modal" role="dialog" aria-modal="true" aria-labelledby="team-invite-title" onMouseDown={(event) => event.stopPropagation()}>
+@@ -307,9 +310,9 @@ export default function TeamManager({
+             {createdAccess ? (
+               <div className="team-access-created">
+                 <span>✓</span>
+-                <p className="eyebrow">CUENTA CREADA</p>
+-                <h2 id="team-invite-title">Comparte el acceso con seguridad</h2>
+-                <p>Esta contraseña se muestra para que puedas entregarla al nuevo miembro.</p>
++                <p className="eyebrow">ACCESO ENVIADO</p>
++                <h2 id="team-invite-title">Le enviamos el acceso por correo</h2>
++                <p>El miembro recibió un correo con su rol, el enlace de ingreso y esta contraseña temporal. Puedes copiarla por si necesita ayuda.</p>
+                 <div><small>CORREO</small><b>{createdAccess.email}</b><small>CONTRASEÑA TEMPORAL</small><code>{createdAccess.password}</code></div>
+                 <button className="primary-button" onClick={() => void copyAccess()}>Copiar credenciales</button>
+               </div>
+@@ -317,8 +320,8 @@ export default function TeamManager({
+               <>
+                 <span className="modal-icon">♧</span>
+                 <p className="eyebrow">NUEVO MIEMBRO</p>
+-                <h2 id="team-invite-title">Crear acceso local</h2>
+-                <p>El miembro podrá iniciar sesión inmediatamente con estas credenciales.</p>
++                <h2 id="team-invite-title">Añadir miembro del equipo</h2>
++                <p>Recibirá un correo con su acceso. Si el correo ya pertenece a un participante registrado, se le asigna el rol y conserva su historial de eventos.</p>
+                 <form className="team-invite-form" onSubmit={createMember}>
+                   <label>Nombre completo<input name="name" required minLength={2} maxLength={100} autoComplete="name" /></label>
+                   <label>Correo electrónico<input name="email" type="email" required maxLength={254} autoComplete="email" /></label>
+@@ -340,7 +343,7 @@ export default function TeamManager({
+             <span className="modal-icon">↻</span>
+             <p className="eyebrow">RESTABLECER ACCESO</p>
+             <h2 id="team-reset-title">Nueva contraseña para {resetMember.name}</h2>
+-            <p>La sesión actual del miembro se cerrará y deberá usar la nueva contraseña.</p>
++            <p>La sesión actual del miembro se cerrará y recibirá la nueva contraseña por correo.</p>
+             <div className="team-reset-password"><input aria-label="Nueva contraseña temporal" value={generatedPassword} onChange={(input) => setGeneratedPassword(input.target.value)} /><button onClick={() => setGeneratedPassword(temporaryPassword())}>Generar otra</button></div>
+             <button className="primary-button" disabled={saving === resetMember.id} onClick={() => void patchMember(resetMember, { password: generatedPassword })}>{saving === resetMember.id ? "Actualizando…" : "Confirmar restablecimiento"}</button>
+           </section>

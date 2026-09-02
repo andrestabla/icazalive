@@ -2,7 +2,7 @@
 """Equipo con notificaciones por correo y promoción de participantes;
 Participantes agrupados por correo con historial; seed sin datos demo.
 Copia archivos propios verificando por md5 que Replit no los modificó."""
-import hashlib, os, shutil, sys
+import hashlib, os, shutil, subprocess, sys
 
 SRC = os.environ.get("SRC", "/tmp/icazalive-feat-aws-ivs-s3")
 def md5(p):
@@ -16,6 +16,8 @@ EXPECTED_OLD = {
 }
 NEW_FILES = ["lib/team-notifications.ts"]
 MERGED = set()
+# Archivos que el agente de Replit modificó (iconos): se parchean, no se copian.
+PATCHED = {"app/participants/participants-list.tsx", "app/team/team-manager.tsx"}
 
 problems = []
 for rel in NEW_FILES + list(EXPECTED_OLD):
@@ -25,6 +27,18 @@ for rel in NEW_FILES + list(EXPECTED_OLD):
     current = md5(rel)
     if current == md5(src):
         print("al día", rel); continue
+    if rel in PATCHED and current is not None and current != EXPECTED_OLD[rel]:
+        marker = "groupByEmail" if "participants" in rel else "AssignableRole"
+        if marker in open(rel, encoding="utf-8").read():
+            print("ya parcheado", rel); continue
+        r = subprocess.run(["patch", "-p1", "--forward", "--fuzz=3", "--no-backup-if-mismatch", rel,
+                            "-i", os.path.join(SRC, "scripts/patches/team-ui.patch")], capture_output=True, text=True)
+        print(r.stdout.strip())
+        if r.returncode != 0 or os.path.exists(rel + ".rej"):
+            problems.append(f"parche con rechazos en {rel}: revisa {rel}.rej")
+        else:
+            print("parcheado", rel)
+        continue
     if rel in EXPECTED_OLD and rel not in MERGED and current is not None and current != EXPECTED_OLD[rel]:
         problems.append(f"DIVERGIÓ en Replit (no se sobrescribe): {rel}"); continue
     os.makedirs(os.path.dirname(rel) or ".", exist_ok=True)
