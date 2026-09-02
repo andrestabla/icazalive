@@ -162,6 +162,20 @@ export async function runSimulatedAutomation(): Promise<{ started: number; stopp
     const endsAt = event.endsAt;
     const running = session.emitterStatus === "running";
 
+    // Emisor ya corriendo dentro de la ventana (p. ej. arrancado a mano antes
+    // de la hora): solo falta poner el evento en vivo y avisar.
+    if (now >= switchAt && now < endsAt && running && event.status !== "live") {
+      await db.update(events).set({ status: "live", updatedAt: new Date() }).where(eq(events.id, event.id));
+      await notifyEventLive(event.id).catch((error) => console.error("[live_now]", error));
+      await writeAuditLog({
+        action: "event.simulated.started",
+        resourceType: "event",
+        resourceId: event.id,
+        summary: `“${event.title}” pasó a en vivo con la emisión ya activa.`,
+      });
+      continue;
+    }
+
     if (now >= switchAt && now < endsAt && !running && session.emitterStatus !== "error") {
       // Evita relanzar si la tarea anterior ya terminó (video más corto que el evento).
       if (session.emitterStatus === "stopped" && session.emitterStartedAt && session.emitterStartedAt >= switchAt) continue;
