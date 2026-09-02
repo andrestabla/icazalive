@@ -19,6 +19,18 @@ export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
     let hls: { destroy: () => void } | null = null;
     const onPlaying = () => setState("live");
     video.addEventListener("playing", onPlaying);
+    // Chrome pausa el autoplay en pestañas ocultas: al volver a ser visible (o
+    // cuando hay datos suficientes) se reanuda la reproducción silenciada.
+    const tryPlay = () => {
+      if (!video.paused) return;
+      video.muted = true;
+      video.play().catch(() => undefined);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") tryPlay();
+    };
+    video.addEventListener("canplay", tryPlay);
+    document.addEventListener("visibilitychange", onVisibility);
 
     const playNative = () => {
       video.src = playbackUrl;
@@ -46,9 +58,7 @@ export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
         hls = instance;
         instance.attachMedia(video);
         instance.loadSource(playbackUrl);
-        instance.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play().catch(() => undefined);
-        });
+        instance.on(Hls.Events.MANIFEST_PARSED, tryPlay);
         instance.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
@@ -72,6 +82,8 @@ export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
     return () => {
       cancelled = true;
       video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("canplay", tryPlay);
+      document.removeEventListener("visibilitychange", onVisibility);
       hls?.destroy();
       video.removeAttribute("src");
       video.load();
