@@ -1,11 +1,13 @@
 import { and, count, eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getDb } from "@/db";
 import { authSessions, events, users } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiPermission } from "@/lib/api-guards";
 import { hashPassword } from "@/lib/password";
 import { isValidPassword, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
+import { getPublicOrigin } from "@/lib/public-origin";
+import { sendTeamAccessEmail } from "@/lib/team-notifications";
 
 export const runtime = "nodejs";
 
@@ -62,6 +64,12 @@ function cleanRole(value: unknown): StaffRole {
   return value as StaffRole;
 }
 
+type AnyRole = StaffRole | "participant";
+function cleanAnyRole(value: unknown): AnyRole {
+  if (value === "participant") return value;
+  return cleanRole(value);
+}
+
 export async function GET() {
   const auth = await requireAdministrator();
   if ("error" in auth) return auth.error;
@@ -110,15 +118,61 @@ export async function POST(request: Request) {
   }
 
   const db = getDb();
+  const origin = getPublicOrigin(request);
   const [existing] = await db
-    .select({ id: users.id })
+    .select()
     .from(users)
     .where(eq(users.email, email))
     .limit(1);
-  if (existing) {
+  if (existing && existing.role !== "participant") {
     return NextResponse.json(
-      { error: "Ese correo ya pertenece a una cuenta o participante." },
+      { error: "Ese correo ya pertenece a un miembro del equipo." },
       { status: 409 },
+    );
+  }
+
+  // Un participante existente conserva su cuenta e historial: solo recibe el
+  // rol de gestión y una contraseña temporal para entrar al panel.
+  if (existing) {
+    const [promoted] = await db
+      .update(users)
+      .set({
+        name,
+        role,
+        passwordHash: await hashPassword(password),
+        passwordChangedAt: new Date(),
+        active: true,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, existing.id))
+      .returning();
+    await db.delete(authSessions).where(eq(authSessions.userId, existing.id));
+    await writeAuditLog({
+      actor: auth.user,
+      action: "team.member.promoted",
+      resourceType: "team_member",
+      resourceId: promoted.id,
+      summary: `El participante ${promoted.email} recibió el rol ${promoted.role}.`,
+      details: { previousRole: "participant", role: promoted.role },
+      request,
+    });
+    after(() =>
+      sendTeamAccessEmail({
+        kind: "promoted",
+        to: promoted.email,
+        name: promoted.name,
+        role: promoted.role,
+        previousRole: "participant",
+        temporaryPassword: password,
+        origin,
+        actorEmail: auth.user.email,
+      }),
+    );
+    return NextResponse.json(
+      { data: { ...safeMember(promoted), promoted: true } },
+      { status: 200 },
     );
   }
 
@@ -143,6 +197,17 @@ export async function POST(request: Request) {
     details: { role: member.role, active: member.active },
     request,
   });
+  after(() =>
+    sendTeamAccessEmail({
+      kind: "created",
+      to: member.email,
+      name: member.name,
+      role: member.role,
+      temporaryPassword: password,
+      origin,
+      actorEmail: auth.user.email,
+    }),
+  );
   return NextResponse.json({ data: safeMember(member) }, { status: 201 });
 }
 
@@ -152,7 +217,7 @@ export async function PATCH(request: Request) {
 
   const body = (await request.json()) as {
     id?: string;
-    role?: StaffRole;
+    role?: StaffRole | "participant";
     active?: boolean;
     password?: string;
   };
@@ -162,6 +227,7 @@ export async function PATCH(request: Request) {
       { status: 400 },
     );
   }
+  const origin = getPublicOrigin(request);
 
   const db = getDb();
   const [target] = await db
@@ -180,6 +246,7 @@ export async function PATCH(request: Request) {
     target.id === auth.user.id &&
     (body.active === false ||
       body.role === "organizer" ||
+      body.role === "participant" ||
       body.password !== undefined)
   ) {
     return NextResponse.json(
@@ -188,10 +255,10 @@ export async function PATCH(request: Request) {
     );
   }
 
-  let role = target.role as StaffRole;
+  let role: AnyRole = target.role as StaffRole;
   let passwordHash = target.passwordHash;
   try {
-    if (body.role !== undefined) role = cleanRole(body.role);
+    if (body.role !== undefined) role = cleanAnyRole(body.role);
     if (body.active !== undefined && typeof body.active !== "boolean") {
       throw new Error("invalid");
     }
@@ -261,6 +328,21 @@ export async function PATCH(request: Request) {
     },
     request,
   });
+  if (role !== target.role || body.password !== undefined) {
+    const kind = role !== target.role ? "role_changed" : "password_reset";
+    after(() =>
+      sendTeamAccessEmail({
+        kind,
+        to: updated.email,
+        name: updated.name,
+        role: updated.role,
+        previousRole: target.role,
+        temporaryPassword: body.password ?? null,
+        origin,
+        actorEmail: auth.user.email,
+      }),
+    );
+  }
   return NextResponse.json({ data: safeMember(updated) });
 }
 
