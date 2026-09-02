@@ -7,7 +7,7 @@ import BrandEditor from "./brand-editor";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Marca — Icaza Live",
+  title: "Marca — Icaza Jammoul Live",
 };
 
 export default async function BrandPage() {

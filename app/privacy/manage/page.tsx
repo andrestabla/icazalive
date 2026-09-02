@@ -4,7 +4,7 @@ import PrivacyManager from "./privacy-manager";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Privacidad y datos — Icaza Live",
+  title: "Privacidad y datos — Icaza Jammoul Live",
 };
 
 export default async function PrivacyManagementPage() {

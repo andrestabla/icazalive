@@ -60,7 +60,7 @@ export async function GET(request: Request, context: RouteContext) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Icaza Live//Eventos//ES",
+    "PRODID:-//Icaza Jammoul Live//Eventos//ES",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
@@ -69,7 +69,7 @@ export async function GET(request: Request, context: RouteContext) {
     `DTSTART:${icsDate(event.startsAt)}`,
     `DTEND:${icsDate(event.endsAt)}`,
     `SUMMARY:${icsText(event.title)}`,
-    `DESCRIPTION:${icsText(`${event.description ?? "Evento de Icaza Live"}\n\nAcceso: ${roomUrl}\nGestionar inscripción: ${manageUrl}`)}`,
+    `DESCRIPTION:${icsText(`${event.description ?? "Evento de Icaza Jammoul Live"}\n\nAcceso: ${roomUrl}\nGestionar inscripción: ${manageUrl}`)}`,
     `URL:${roomUrl}`,
     `LOCATION:${icsText(event.format === "hybrid" ? "Evento híbrido · acceso online" : "Evento online")}`,
     "STATUS:CONFIRMED",

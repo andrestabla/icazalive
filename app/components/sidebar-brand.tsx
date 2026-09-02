@@ -37,7 +37,7 @@ export default function SidebarBrand() {
       ) : (
         <div className="brand-mark">{brand?.markText ?? "I"}</div>
       )}
-      <span>{brand?.organizationName ?? "Icaza Live"}</span>
+      <span>{brand?.organizationName ?? "Icaza Jammoul Live"}</span>
     </>
   );
 }

@@ -8,7 +8,7 @@ import AnalyticsCharts from "./analytics-charts";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Analítica — Icaza Live",
+  title: "Analítica — Icaza Jammoul Live",
 };
 
 const statusLabels = {

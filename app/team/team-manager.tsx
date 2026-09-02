@@ -186,7 +186,7 @@ export default function TeamManager({
   const copyAccess = async () => {
     if (!createdAccess) return;
     await navigator.clipboard.writeText(
-      `Icaza Live\nCorreo: ${createdAccess.email}\nContraseña temporal: ${createdAccess.password}`,
+      `Icaza Jammoul Live\nCorreo: ${createdAccess.email}\nContraseña temporal: ${createdAccess.password}`,
     );
     setMessage("Datos de acceso copiados.");
   };

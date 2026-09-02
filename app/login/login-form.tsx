@@ -88,7 +88,7 @@ export default function LoginForm({
       <section className="login-story">
         <div className="login-brand">
           <div className="brand-mark">I</div>
-          <span>Icaza Live</span>
+          <span>Icaza Jammoul Live</span>
         </div>
         <div className="story-copy">
           <span className="story-label">EVENTOS QUE CONECTAN</span>
@@ -107,7 +107,7 @@ export default function LoginForm({
         <div className="login-card">
           <div className="login-mobile-brand">
             <div className="brand-mark">I</div>
-            <span>Icaza Live</span>
+            <span>Icaza Jammoul Live</span>
           </div>
           <p className="eyebrow">BIENVENIDO DE NUEVO</p>
           <h2>Inicia sesión</h2>
@@ -156,7 +156,7 @@ export default function LoginForm({
               </label>
             )}
             {error && <div className="login-error" role="alert">ⓘ {error}</div>}
-            <button className="login-submit" disabled={loading}>{loading ? "Validando…" : "Ingresar a Icaza Live"}<span>→</span></button>
+            <button className="login-submit" disabled={loading}>{loading ? "Validando…" : "Ingresar a Icaza Jammoul Live"}<span>→</span></button>
           </form>
 
           {showLocalCredentials && (

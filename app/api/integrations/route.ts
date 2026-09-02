@@ -211,11 +211,11 @@ export async function PATCH(request: Request) {
       );
     }
     const providerName = providerLabels[activeProviderName()];
-    const testBody = `Este es un correo de prueba enviado desde la configuración de correo saliente de Icaza Live (proveedor: ${providerName}). Si lo estás leyendo, el envío funciona correctamente.`;
+    const testBody = `Este es un correo de prueba enviado desde la configuración de correo saliente de Icaza Jammoul Live (proveedor: ${providerName}). Si lo estás leyendo, el envío funciona correctamente.`;
     const brand = await getBrandSettings().catch(() => null);
     const result = await sendEmail({
       to: recipient,
-      subject: "Correo de prueba — Icaza Live",
+      subject: "Correo de prueba — Icaza Jammoul Live",
       body: testBody,
       html: renderBrandedEmail({ bodyText: testBody, brand }),
     });

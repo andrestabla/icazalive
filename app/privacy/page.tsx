@@ -6,7 +6,7 @@ import PrivacyCenterClient from "./privacy-center-client";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Privacidad — Icaza Live",
+  title: "Privacidad — Icaza Jammoul Live",
 };
 
 export default async function PrivacyPage() {
