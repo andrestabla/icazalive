@@ -162,8 +162,7 @@ export default function RecordedVideoPanel({
               }}
             />
             <small>
-              MP4 de hasta 1 GB. El archivo se guarda en este equipo
-              (~/.icaza-live/media), fuera de la carpeta sincronizada.
+              MP4 de hasta 1 GB. El archivo se guarda en Amazon S3 (directorio event-videos/) y se sirve desde allí.
             </small>
           </div>
         )}

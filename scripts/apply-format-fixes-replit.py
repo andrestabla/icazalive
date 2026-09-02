@@ -35,5 +35,5 @@ import re as _re
 p = "app/events/[slug]/recorded-video-panel.tsx"
 if os.path.exists(p):
     s = open(p, encoding="utf-8").read()
-    t = _re.sub(r'MP4 de hasta 1 GB\. El archivo se guarda en este equipo \(~/\.icaza-live/media\), fuera de la carpeta sincronizada\.', 'MP4 de hasta 1 GB. El archivo se guarda en Amazon S3 (directorio event-videos/) y se sirve desde allí.', s)
+    t = _re.sub(r'MP4 de hasta 1 GB\. El archivo se guarda en este equipo\s+\(~/\.icaza-live/media\), fuera de la carpeta sincronizada\.', 'MP4 de hasta 1 GB. El archivo se guarda en Amazon S3 (directorio event-videos/) y se sirve desde allí.', s)
     if t != s: open(p, "w", encoding="utf-8").write(t); print("ajustado", p)
