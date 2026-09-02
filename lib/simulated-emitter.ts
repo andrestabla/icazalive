@@ -53,7 +53,15 @@ export async function startEventEmitter(
   const session = await mainSession(event.id);
   if (!session) return { ok: false, code: 409, error: "El evento no tiene sesión principal." };
   if (session.emitterStatus === "running" && session.emitterTaskArn) {
-    return { ok: true, status: "running", playbackUrl: session.playbackUrl };
+    // Confirmar con ECS: si la tarea anterior ya murió, se relanza.
+    const described = await describeEmitter(ecs, session.emitterTaskArn);
+    if (described.ok && (described.state === "running" || described.state === "pending")) {
+      return { ok: true, status: "running", playbackUrl: session.playbackUrl };
+    }
+    await getDb()
+      .update(sessions)
+      .set({ emitterStatus: "stopped", updatedAt: new Date() })
+      .where(eq(sessions.id, session.id));
   }
   const sourceUrl = await librarySourceUrl(event);
   if (!sourceUrl) {
