@@ -1,3 +1,4 @@
+import { absoluteFileUrl } from "@/lib/uploads";
 import { DEFAULT_BRAND, type PublicBrand } from "@/lib/brand-config";
 
 // Convierte el cuerpo de texto de una comunicación en un correo HTML con la
@@ -70,8 +71,12 @@ export function renderBrandedEmail(options: {
     return `<p style="margin:0 0 16px;line-height:1.6;">${lines.join("<br />")}</p>`;
   });
 
-  const logo = brand.logoUrl
-    ? `<img src="${escapeHtml(brand.logoUrl)}" alt="${escapeHtml(organization)}" height="40" style="display:block;max-height:40px;" />`
+  const logoSrc =
+    absoluteFileUrl(brand.logoDarkKey) ??
+    absoluteFileUrl(brand.logoLightKey) ??
+    brand.logoUrl;
+  const logo = logoSrc
+    ? `<img src="${escapeHtml(logoSrc)}" alt="${escapeHtml(organization)}" height="40" style="display:block;max-height:40px;" />`
     : `<span style="display:inline-block;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:700;letter-spacing:.02em;">${escapeHtml(organization)}</span>`;
 
   return (

@@ -220,7 +220,7 @@ export default function ContentLibrary() {
           <p className="content-empty">Cargando…</p>
         ) : assets.length === 0 ? (
           <p className="content-empty">
-            Aún no hay contenidos. Sube videos al prefijo <code>library/</code>{" "}
+            Aún no hay contenidos. Sube videos al directorio <code>content/</code>{" "}
             del bucket y regístralos desde la lista de abajo.
           </p>
         ) : (
@@ -248,7 +248,7 @@ export default function ContentLibrary() {
         <section className="content-section">
           <h2>En el bucket, sin registrar</h2>
           <p className="module-subtitle">
-            Objetos bajo <code>library/</code> que aún no están en la biblioteca.
+            Objetos bajo <code>content/</code> (o <code>library/</code>) que aún no están en la biblioteca.
           </p>
           <div className="content-grid">
             {unregistered.map((object) => {

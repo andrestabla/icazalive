@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AccountSecurity from "@/app/components/account-security";
 import type { AuthenticatedUser } from "@/lib/auth";
+import SidebarBrand from "@/app/components/sidebar-brand";
 
 export type SidebarSection =
   | "Resumen"
@@ -76,8 +77,7 @@ export default function AdminSidebar({
   return (
     <aside className="sidebar">
       <Link href="/" className="brand brand-link">
-        <div className="brand-mark">I</div>
-        <span>Icaza Live</span>
+        <SidebarBrand />
       </Link>
       <nav aria-label="Navegación principal">
         {visibleWorkspace.length > 0 && (
