@@ -213,6 +213,8 @@ export async function POST(request: Request) {
       title: "Sesión principal",
       startsAt,
       endsAt,
+      // Un evento simulado reproduce contenido pregrabado; los demás parten de Zoom → IVS.
+      streamingMode: event.format === "simulated" ? "simulated" : "zoom_to_ivs",
     });
 
     await transaction.insert(eventOrganizers).values({
