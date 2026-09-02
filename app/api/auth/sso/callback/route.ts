@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getPublicOrigin } from "@/lib/public-origin";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
@@ -26,7 +27,7 @@ function fail(request: Request, intent: SsoIntent, code: string) {
     intent.kind === "prefill"
       ? `/register/${intent.slug}?sso_error=${code}`
       : `/login?sso_error=${code}`;
-  return NextResponse.redirect(new URL(back, request.url));
+  return NextResponse.redirect(new URL(back, getPublicOrigin(request)));
 }
 
 // Retorno de Google: valida state, canjea el código, comprueba el correo y
@@ -78,8 +79,7 @@ export async function GET(request: Request) {
         maxAge: 300,
       },
     );
-    return NextResponse.redirect(
-      new URL(`/register/${intent.slug}?google=1`, request.url),
+    return NextResponse.redirect(new URL(`/register/${intent.slug}?google=1`, getPublicOrigin(request)),
     );
   }
 
@@ -128,5 +128,5 @@ export async function GET(request: Request) {
 
   // El personal entra al panel; los asistentes van al Centro de ayuda.
   const destination = account.role === "participant" ? "/help" : "/";
-  return NextResponse.redirect(new URL(destination, request.url));
+  return NextResponse.redirect(new URL(destination, getPublicOrigin(request)));
 }
