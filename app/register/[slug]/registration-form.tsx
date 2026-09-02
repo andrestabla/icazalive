@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import type { PublicBrand } from "@/lib/brand-config";
@@ -39,11 +39,15 @@ export default function RegistrationForm({
   event,
   brand,
   fields,
+  googleEnabled = false,
+  googlePrefill = null,
   legalDocuments,
 }: {
   event: PublicEvent;
   brand: PublicBrand;
   fields: RegistrationFieldDefinition[];
+  googleEnabled?: boolean;
+  googlePrefill?: { name: string; email: string } | null;
   legalDocuments: {
     privacy: { id: string; title: string; version: number };
     terms: { id: string; title: string; version: number };
@@ -55,6 +59,20 @@ export default function RegistrationForm({
   const [accessUrl, setAccessUrl] = useState("");
   const [manageUrl, setManageUrl] = useState("");
   const [calendarUrl, setCalendarUrl] = useState("");
+  const [googleError, setGoogleError] = useState("");
+  const [googleLinked, setGoogleLinked] = useState(Boolean(googlePrefill));
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("sso_error");
+    if (!code) return;
+    const messages: Record<string, string> = {
+      cancelled: "Se canceló la conexión con Google. Puedes completar los datos manualmente.",
+      unverified: "Google no ha verificado ese correo. Escríbelo manualmente.",
+      disabled: "El acceso con Google no está disponible por ahora.",
+    };
+    setGoogleError(messages[code] ?? "No fue posible obtener tus datos de Google. Complétalos manualmente.");
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
   const start = new Date(event.startsAt);
   const end = new Date(event.endsAt);
   const registrationAvailable =
@@ -178,9 +196,30 @@ export default function RegistrationForm({
               <p className="eyebrow">RESERVA TU LUGAR</p>
               <h2>Regístrate al evento</h2>
               <p className="registration-intro">Completa tus datos. Los campos marcados son obligatorios.</p>
+              {googleEnabled && !googleLinked && (
+                <div className="registration-google">
+                  <a
+                    className="login-google"
+                    href={`/api/auth/sso/google/start?intent=prefill&slug=${encodeURIComponent(event.slug)}`}
+                  >
+                    <span className="login-google-mark">G</span>
+                    Continuar con Google
+                  </a>
+                  <p>Toma tu nombre y correo de tu cuenta de Google. El resto lo completas aquí.</p>
+                  <div className="login-divider"><span>o escribe tus datos</span></div>
+                </div>
+              )}
+              {googleLinked && googlePrefill && (
+                <div className="registration-google-linked" role="status">
+                  <span className="login-google-mark">G</span>
+                  <p>Nombre y correo tomados de <b>{googlePrefill.email}</b>. Puedes editarlos si lo necesitas.</p>
+                  <button type="button" onClick={() => setGoogleLinked(false)}>Usar otros datos</button>
+                </div>
+              )}
+              {googleError && <div className="login-sso-error" role="alert">{googleError}</div>}
               <form className="public-form" onSubmit={submit}>
-                <label>Nombre completo *<input name="name" required minLength={2} maxLength={100} autoComplete="name" placeholder="Tu nombre y apellido" /></label>
-                <label>Correo electrónico *<input name="email" type="email" required maxLength={254} autoComplete="email" placeholder="nombre@empresa.com" /></label>
+                <label>Nombre completo *<input name="name" required minLength={2} maxLength={100} autoComplete="name" placeholder="Tu nombre y apellido" defaultValue={googlePrefill?.name ?? ""} /></label>
+                <label>Correo electrónico *<input name="email" type="email" required maxLength={254} autoComplete="email" placeholder="nombre@empresa.com" defaultValue={googlePrefill?.email ?? ""} /></label>
                 <div className="public-form-row">
                   <label>Empresa<input name="company" maxLength={150} autoComplete="organization" placeholder="Nombre de la empresa" /></label>
                   <label>Cargo<input name="jobTitle" maxLength={150} autoComplete="organization-title" placeholder="Tu cargo" /></label>

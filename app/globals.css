@@ -1025,3 +1025,12 @@ button { font: inherit; }
 .setup-wizard-card i.pending { color: #8a8695; }
 .config-modal { max-width: 860px; }
 .config-modal .panel { box-shadow: none; border: 0; padding: 0; margin: 0; }
+
+
+/* Registro publico: prellenar con Google */
+.registration-google { display: grid; gap: 8px; margin: 4px 0 6px; }
+.registration-google > p { margin: 0; color: #6f6b7a; font-size: 12px; text-align: center; }
+.registration-google .login-divider { margin: 6px 0 2px; }
+.registration-google-linked { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; padding: 10px 12px; border: 1px solid #d9e8f7; border-radius: 10px; background: #f3f8fe; color: #2f3a4a; font-size: 13px; }
+.registration-google-linked p { flex: 1; margin: 0; }
+.registration-google-linked button { border: 0; background: none; color: #4a5bd6; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
