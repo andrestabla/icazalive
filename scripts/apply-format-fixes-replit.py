@@ -2,7 +2,7 @@
 """La sesión principal de un evento nace con el modo acorde al formato
 (simulado -> contenido pregrabado; en vivo/híbrido -> Zoom → IVS) y la
 lista de preparación describe el paso de transmisión según el formato."""
-import sys
+import os, sys
 p = "app/api/events/route.ts"; s = open(p, encoding="utf-8").read()
 old = '''    await transaction.insert(sessions).values({
       eventId: event.id,
@@ -29,3 +29,11 @@ if new not in s:
     if old not in s: print("FALLO: ancla de preparación"); sys.exit(1)
     s = s.replace(old, new, 1); open(p, "w", encoding="utf-8").write(s); print("ajustado", p)
 print("LISTO")
+
+# Texto del panel de video pregrabado: el archivo va a S3, no al disco local.
+import re as _re
+p = "app/events/[slug]/recorded-video-panel.tsx"
+if os.path.exists(p):
+    s = open(p, encoding="utf-8").read()
+    t = _re.sub(r'MP4 de hasta 1 GB\. El archivo se guarda en este equipo \(~/\.icaza-live/media\), fuera de la carpeta sincronizada\.', 'MP4 de hasta 1 GB. El archivo se guarda en Amazon S3 (directorio event-videos/) y se sirve desde allí.', s)
+    if t != s: open(p, "w", encoding="utf-8").write(t); print("ajustado", p)
