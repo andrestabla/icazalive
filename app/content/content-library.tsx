@@ -151,6 +151,41 @@ export default function ContentLibrary() {
     setRefreshKey((value) => value + 1);
   };
 
+  const [selected, setSelected] = useState<Asset | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+
+  const openAsset = async (asset: Asset) => {
+    setSelected(asset);
+    setNewTitle(asset.title);
+    setPreviewUrl(null);
+    const response = await fetch(`/api/content-assets/preview?id=${asset.id}`, { cache: "no-store" });
+    const payload = (await response.json().catch(() => null)) as { data?: { url: string } } | null;
+    if (payload?.data?.url) setPreviewUrl(payload.data.url);
+  };
+
+  const rename = async () => {
+    if (!selected) return;
+    const title = newTitle.trim();
+    if (title.length < 2 || title === selected.title) return;
+    setRenaming(true);
+    const response = await fetch("/api/content-assets", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: selected.id, title }),
+    });
+    const payload = (await response.json()) as { data?: Asset; error?: string };
+    if (response.ok && payload.data) {
+      setSelected(payload.data);
+      setStatus({ text: `Contenido renombrado a “${payload.data.title}” (también en S3).`, error: false });
+      setRefreshKey((value) => value + 1);
+    } else {
+      setStatus({ text: payload.error ?? "No fue posible renombrar.", error: true });
+    }
+    setRenaming(false);
+  };
+
   const remove = async (asset: Asset) => {
     if (!window.confirm(`¿Retirar “${asset.title}” de la biblioteca?`)) return;
     const response = await fetch(`/api/content-assets?id=${asset.id}`, {
@@ -227,7 +262,7 @@ export default function ContentLibrary() {
           <div className="content-grid">
             {assets.map((asset) => (
               <article key={asset.id} className="content-card">
-                <div className="content-card-body">
+                <div className="content-card-body content-card-clickable" role="button" tabIndex={0} onClick={() => void openAsset(asset)} onKeyDown={(e) => { if (e.key === "Enter") void openAsset(asset); }}>
                   <span className="content-card-icon">▷</span>
                   <div>
                     <b>{asset.title}</b>
@@ -274,6 +309,41 @@ export default function ContentLibrary() {
             })}
           </div>
         </section>
+      )}
+
+      {selected && (
+        <div className="modal-backdrop" onMouseDown={() => !renaming && setSelected(null)}>
+          <section className="modal content-preview-modal" role="dialog" aria-modal="true" aria-labelledby="content-preview-title" onMouseDown={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelected(null)} aria-label="Cerrar" disabled={renaming}>×</button>
+            <p className="eyebrow">CONTENIDO</p>
+            <h2 id="content-preview-title">{selected.title}</h2>
+            <div className="content-preview-player">
+              {previewUrl ? (
+                <video src={previewUrl} controls playsInline preload="metadata" />
+              ) : (
+                <p>Preparando vista previa…</p>
+              )}
+            </div>
+            <div className="content-preview-meta">
+              <span>{formatSize(selected.sizeBytes)}</span>
+              {selected.durationSeconds ? <span>{Math.round(selected.durationSeconds / 60)} min</span> : null}
+              <code>{selected.s3Key}</code>
+            </div>
+            <label className="content-rename">
+              Nombre del contenido
+              <div>
+                <input value={newTitle} maxLength={120} disabled={renaming} onChange={(e) => setNewTitle(e.target.value)} />
+                <button className="primary-button" disabled={renaming || newTitle.trim().length < 2 || newTitle.trim() === selected.title} onClick={() => void rename()}>
+                  {renaming ? "Guardando…" : "Guardar nombre"}
+                </button>
+              </div>
+              <small>El cambio se aplica también al archivo en Amazon S3; los eventos que lo usan no se ven afectados.</small>
+            </label>
+            <div className="content-preview-actions">
+              <button className="content-remove" disabled={renaming} onClick={() => { void remove(selected); setSelected(null); }}>Retirar de la biblioteca</button>
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

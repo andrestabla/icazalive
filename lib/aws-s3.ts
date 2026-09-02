@@ -250,3 +250,34 @@ export function presignUploadUrl(
     expiresInSeconds,
   });
 }
+
+// Copia un objeto dentro del bucket (PUT con x-amz-copy-source). Se usa para
+// renombrar contenidos de la biblioteca: copiar a la clave nueva y borrar la
+// anterior, de modo que el nombre visible y el nombre en S3 coincidan.
+export async function copyObject(
+  config: { credentials: AwsCredentials; bucket: string },
+  sourceKey: string,
+  targetKey: string,
+): Promise<S3Result> {
+  const host = bucketHost(config.bucket, config.credentials.region);
+  const copySource = `/${config.bucket}${objectPath(sourceKey)}`;
+  const signed = signRequest({
+    credentials: config.credentials,
+    service: "s3",
+    host,
+    method: "PUT",
+    path: objectPath(targetKey),
+    extraHeaders: { "x-amz-copy-source": copySource },
+    payloadHash: "UNSIGNED-PAYLOAD",
+  });
+  try {
+    const response = await fetch(signed.url, { method: "PUT", headers: signed.headers });
+    if (!response.ok) {
+      const detail = await response.text();
+      return { ok: false, error: `S3 ${response.status}: ${detail.slice(0, 200)}` };
+    }
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Fallo de red con S3." };
+  }
+}
