@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getPublicOrigin } from "@/lib/public-origin";
 import {
   SSO_INTENT_COOKIE,
   SSO_STATE_COOKIE,
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       intent.kind === "prefill"
         ? `/register/${intent.slug}?sso_error=disabled`
         : "/login?sso_error=disabled";
-    return NextResponse.redirect(new URL(back, request.url));
+    return NextResponse.redirect(new URL(back, getPublicOrigin(request)));
   }
 
   const state = randomBytes(24).toString("base64url");
