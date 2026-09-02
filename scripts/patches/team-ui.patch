@@ -308,9 +308,9 @@ index 6c8e28c..5ee484d 100644
              </label>
  
 diff --git a/app/team/team-manager.tsx b/app/team/team-manager.tsx
-index 0457943..86f46cd 100644
---- a/app/team/team-manager.tsx
-+++ b/app/team/team-manager.tsx
+index 0457943..1fba78f 100644
+--- a/tmp/team-manager.old.tsx
++++ b/tmp/team-manager.new.tsx
 @@ -5,6 +5,7 @@ import { useState } from "react";
  import { PLATFORM_TIMEZONE } from "@/lib/timezone";
  
@@ -396,23 +396,7 @@ index 0457943..86f46cd 100644
                  </select>
                  <div className="team-last-access">
                    <b>{member.lastLoginAt ? formatStableDate(member.lastLoginAt) : "Sin ingreso"}</b>
-@@ -291,15 +303,6 @@ export default function TeamManager({
-         </div>
-       </section>
- 
--      <section className="panel local-team-note">
--        <span>⌁</span>
--        <div>
--          <p className="eyebrow">ACCESOS LOCALES</p>
--          <h2>Sin invitaciones por correo todavía</h2>
--          <p>Comparte las credenciales temporales por un canal seguro. Cuando conectemos el proveedor de correo, este flujo podrá enviar invitaciones y recuperación de contraseña.</p>
--        </div>
--      </section>
--
-       {inviteOpen && (
-         <div className="modal-backdrop" onMouseDown={() => setInviteOpen(false)}>
-           <section className="modal team-modal" role="dialog" aria-modal="true" aria-labelledby="team-invite-title" onMouseDown={(event) => event.stopPropagation()}>
-@@ -307,9 +310,9 @@ export default function TeamManager({
+@@ -307,9 +319,9 @@ export default function TeamManager({
              {createdAccess ? (
                <div className="team-access-created">
                  <span>✓</span>
@@ -425,7 +409,7 @@ index 0457943..86f46cd 100644
                  <div><small>CORREO</small><b>{createdAccess.email}</b><small>CONTRASEÑA TEMPORAL</small><code>{createdAccess.password}</code></div>
                  <button className="primary-button" onClick={() => void copyAccess()}>Copiar credenciales</button>
                </div>
-@@ -317,8 +320,8 @@ export default function TeamManager({
+@@ -317,8 +329,8 @@ export default function TeamManager({
                <>
                  <span className="modal-icon">♧</span>
                  <p className="eyebrow">NUEVO MIEMBRO</p>
@@ -436,7 +420,7 @@ index 0457943..86f46cd 100644
                  <form className="team-invite-form" onSubmit={createMember}>
                    <label>Nombre completo<input name="name" required minLength={2} maxLength={100} autoComplete="name" /></label>
                    <label>Correo electrónico<input name="email" type="email" required maxLength={254} autoComplete="email" /></label>
-@@ -340,7 +343,7 @@ export default function TeamManager({
+@@ -340,7 +352,7 @@ export default function TeamManager({
              <span className="modal-icon">↻</span>
              <p className="eyebrow">RESTABLECER ACCESO</p>
              <h2 id="team-reset-title">Nueva contraseña para {resetMember.name}</h2>

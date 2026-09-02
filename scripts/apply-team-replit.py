@@ -49,6 +49,15 @@ if pending:
     else:
         print("parcheados", ", ".join(pending))
 
+# Bloque "Accesos locales" del equipo: se elimina por regex (el agente cambió su icono).
+import re
+p = "app/team/team-manager.tsx"
+if os.path.exists(p):
+    s = open(p, encoding="utf-8").read()
+    t = re.sub(r'\n\s*<section className="panel local-team-note">[\s\S]*?</section>\n', "\n", s, count=1)
+    if t != s:
+        open(p, "w", encoding="utf-8").write(t); print("eliminado bloque Accesos locales")
+
 css_src = open(os.path.join(SRC, "app/globals.css"), encoding="utf-8").read()
 marker = "/* Participantes agrupados por correo e historial */"
 block = css_src[css_src.index(marker):]
