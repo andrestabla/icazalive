@@ -39,12 +39,13 @@ for rel in NEW_FILES + list(EXPECTED_OLD):
 markers = {"app/participants/participants-list.tsx": "groupByEmail", "app/team/team-manager.tsx": "AssignableRole"}
 pending = [rel for rel, mark in markers.items() if os.path.exists(rel) and mark not in open(rel, encoding="utf-8").read()]
 if pending:
-    r = subprocess.run(["patch", "-p1", "--forward", "--fuzz=3", "--no-backup-if-mismatch",
-                        "-i", os.path.join(SRC, "scripts/patches/team-ui.patch")], capture_output=True, text=True)
-    print(r.stdout.strip())
-    rejects = [rel for rel in markers if os.path.exists(rel + ".rej")]
-    if r.returncode != 0 or rejects:
-        problems.append("parche con rechazos: " + ", ".join(rejects or ["ver salida"]))
+    patch_file = os.path.join(SRC, "scripts/patches/team-ui.patch")
+    # git apply funciona sin repositorio; -C1 exige solo una línea de contexto.
+    r = subprocess.run(["git", "apply", "-p1", "-C1", "--recount", "--verbose", patch_file],
+                       capture_output=True, text=True)
+    print((r.stdout + r.stderr).strip()[-1500:])
+    if r.returncode != 0:
+        problems.append("git apply falló (ver salida)")
     else:
         print("parcheados", ", ".join(pending))
 
