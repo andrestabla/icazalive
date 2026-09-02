@@ -26,7 +26,7 @@ def manager(s):
 def detail(s):
     if "EventDateEditor" in s: return s
     s = s.replace('import RecordedVideoPanel from "./recorded-video-panel";', 'import EventDateEditor from "./event-date-editor";\nimport RecordedVideoPanel from "./recorded-video-panel";', 1)
-    anchor = re.search(r'(\n(\s*)<p>◷ \{formatStableDateTime\(start, event\.timezone\)\}[^\n]*</p>)', s)
+    anchor = re.search(r'(\n(\s*)<p>(?:[^<\n]|<AdminIcon[^>]*/>)*\{formatStableDateTime\(start, event\.timezone\)\}[^\n]*</p>)', s)
     if not anchor: print("FALLO: ancla de fecha en event-detail"); sys.exit(1)
     indent = anchor.group(2)
     insert = f'{anchor.group(1)}\n{indent}<EventDateEditor slug={{event.slug}} status={{event.status}} startsAt={{event.startsAt}} endsAt={{event.endsAt}} />'
