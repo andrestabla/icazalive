@@ -20,8 +20,8 @@ p = "app/events/[slug]/event-detail.tsx"; s = open(p, encoding="utf-8").read(); 
 s = re.sub(r'\n\s*\{event\.format === "simulated" && \(\s*<RecordedVideoPanel[\s\S]*?/>\s*\)\}', '', s, count=1)
 s = s.replace('import RecordedVideoPanel from "./recorded-video-panel";\n', '', 1)
 # pasar la redirección al panel de contenido
-s = re.sub(r'<SimulatedContentPanel\s*\n(\s*)eventSlug=\{event\.slug\}\s*\n\s*isHybrid=\{event\.format === "hybrid"\}\s*\n(\s*)/>',
-           lambda m: f'<SimulatedContentPanel\n{m.group(1)}eventSlug={{event.slug}}\n{m.group(1)}isHybrid={{event.format === "hybrid"}}\n{m.group(1)}postEventRedirectUrl={{event.postEventRedirectUrl}}\n{m.group(1)}onRedirectChange={{(value) => void patchEvent({{ postEventRedirectUrl: value }})}}\n{m.group(2)}/>', s, count=1)
+s = re.sub(r'<SimulatedContentPanel\s+eventSlug=\{event\.slug\}\s+isHybrid=\{event\.format === "hybrid"\}\s*/>',
+           '<SimulatedContentPanel eventSlug={event.slug} isHybrid={event.format === "hybrid"} postEventRedirectUrl={event.postEventRedirectUrl} onRedirectChange={(value) => void patchEvent({ postEventRedirectUrl: value })} />', s, count=1)
 if "RecordedVideoPanel" in s: print("FALLO: RecordedVideoPanel sigue en event-detail"); sys.exit(1)
 if "postEventRedirectUrl={event.postEventRedirectUrl}" not in s: print("FALLO: props de redirección no insertadas"); sys.exit(1)
 if s != o: open(p, "w", encoding="utf-8").write(s); print("ajustado event-detail.tsx")
