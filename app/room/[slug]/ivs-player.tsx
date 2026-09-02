@@ -4,9 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 type PlayerState = "connecting" | "live" | "waiting" | "error";
 
-// Reproductor de la señal de Amazon IVS dentro de la sala. Safari reproduce
-// HLS de forma nativa; el resto de navegadores carga hls.js bajo demanda para
-// no añadir peso al resto de la sala.
+// Reproductor de la señal de Amazon IVS dentro de la sala. Se carga hls.js
+// bajo demanda (MSE) y solo se usa HLS nativo donde no hay MSE (Safari iOS).
 export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -21,42 +20,54 @@ export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
     const onPlaying = () => setState("live");
     video.addEventListener("playing", onPlaying);
 
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    const playNative = () => {
       video.src = playbackUrl;
       video.play().catch(() => setState("waiting"));
-    } else {
-      import("hls.js")
-        .then(({ default: Hls }) => {
-          if (cancelled) return;
-          if (!Hls.isSupported()) {
+    };
+
+    // Chrome/Edge recientes responden "maybe" a canPlayType para HLS sin
+    // reproducirlo realmente, así que hls.js (MSE) va primero y la reproducción
+    // nativa queda solo para navegadores sin MSE (Safari iOS).
+    import("hls.js")
+      .then(({ default: Hls }) => {
+        if (cancelled) return;
+        if (!Hls.isSupported()) {
+          if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            playNative();
+          } else {
             setState("error");
-            return;
           }
-          const instance = new Hls({
-            liveSyncDurationCount: 3,
-            maxBufferLength: 12,
-          });
-          hls = instance;
-          instance.attachMedia(video);
-          instance.loadSource(playbackUrl);
-          instance.on(Hls.Events.ERROR, (_event, data) => {
-            if (!data.fatal) return;
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              // Mientras el canal no recibe señal, IVS responde 404: se
-              // reintenta en lugar de romper la sala.
-              setState("waiting");
-              window.setTimeout(() => instance.startLoad(), 4000);
-            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              instance.recoverMediaError();
-            } else {
-              setState("error");
-            }
-          });
-        })
-        .catch(() => {
-          if (!cancelled) setState("error");
+          return;
+        }
+        const instance = new Hls({
+          liveSyncDurationCount: 3,
+          maxBufferLength: 12,
         });
-    }
+        hls = instance;
+        instance.attachMedia(video);
+        instance.loadSource(playbackUrl);
+        instance.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => undefined);
+        });
+        instance.on(Hls.Events.ERROR, (_event, data) => {
+          if (!data.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            // Mientras el canal no recibe señal, IVS responde 404: se
+            // reintenta en lugar de romper la sala.
+            setState("waiting");
+            window.setTimeout(() => instance.startLoad(), 4000);
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            instance.recoverMediaError();
+          } else {
+            setState("error");
+          }
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        if (video.canPlayType("application/vnd.apple.mpegurl")) playNative();
+        else setState("error");
+      });
 
     return () => {
       cancelled = true;
