@@ -1074,3 +1074,19 @@ button { font: inherit; }
 body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 @keyframes brand-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .brand-loader-ring { animation-duration: 2s; } }
+
+
+/* Participantes agrupados por correo e historial */
+.participant-events-cell b { display: block; font-size: 13px; }
+.participant-events-cell small { display: block; color: #817b8d; font-size: 11px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.participant-status-summary { display: flex; flex-wrap: wrap; gap: 4px; }
+.participant-status-summary i { font-style: normal; font-size: 11px; }
+.participant-history-modal { max-width: 720px; }
+.participant-history { display: grid; gap: 8px; margin-top: 16px; }
+.participant-history .eyebrow { margin-bottom: 2px; }
+.participant-history-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #e6e2ee; border-radius: 10px; background: #fff; }
+.participant-history-row > div { min-width: 0; display: grid; gap: 2px; }
+.participant-history-row a { font-weight: 600; color: #4a3bb8; text-decoration: none; }
+.participant-history-row small { color: #817b8d; font-size: 11px; }
+.participant-history-row select { padding: 6px 8px; border: 1px solid #dfdce5; border-radius: 8px; font-size: 12px; background: #fff; }
+@media (max-width: 640px) { .participant-history-row { grid-template-columns: 1fr; } }

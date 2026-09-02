@@ -5,6 +5,7 @@ import { useState } from "react";
 import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 
 type StaffRole = "administrator" | "organizer";
+type AssignableRole = StaffRole | "participant";
 
 type TeamMember = {
   id: string;
@@ -110,13 +111,18 @@ export default function TeamManager({
       }),
     });
     const payload = (await response.json()) as {
-      data?: TeamMember;
+      data?: TeamMember & { promoted?: boolean };
       error?: string;
     };
     if (response.ok && payload.data) {
-      setMembers((current) => [...current, payload.data!]);
+      const created = payload.data;
+      setMembers((current) => [...current.filter((item) => item.id !== created.id), created]);
       setCreatedAccess(access);
-      setMessage(`${access.name} ya tiene una cuenta local.`);
+      setMessage(
+        created.promoted
+          ? `${access.name} ya era participante: ahora tiene rol de ${roleLabels[created.role]} y recibió el acceso por correo.`
+          : `${access.name} recibió su acceso por correo.`,
+      );
     } else {
       setError(payload.error ?? "No fue posible crear la cuenta.");
     }
@@ -125,7 +131,7 @@ export default function TeamManager({
 
   const patchMember = async (
     member: TeamMember,
-    changes: { role?: StaffRole; active?: boolean; password?: string },
+    changes: { role?: AssignableRole; active?: boolean; password?: string },
   ) => {
     setSaving(member.id);
     setMessage("");
@@ -140,13 +146,18 @@ export default function TeamManager({
       error?: string;
     };
     if (response.ok && payload.data) {
+      // Al volver a participante, la persona sale del equipo (conserva su historial).
       setMembers((current) =>
-        current.map((item) => (item.id === member.id ? payload.data! : item)),
+        payload.data!.role === "participant"
+          ? current.filter((item) => item.id !== member.id)
+          : current.map((item) => (item.id === member.id ? payload.data! : item)),
       );
       setMessage(
         changes.password
-          ? `La contraseña de ${member.name} fue restablecida.`
-          : `Acceso de ${member.name} actualizado.`,
+          ? `La contraseña de ${member.name} fue restablecida y se le envió por correo.`
+          : changes.role === "participant"
+            ? `${member.name} vuelve a ser participante; se le avisó por correo.`
+            : `Acceso de ${member.name} actualizado; se le avisó por correo.`,
       );
       if (changes.password) {
         setCreatedAccess({
@@ -217,7 +228,7 @@ export default function TeamManager({
           <div>
             <p className="eyebrow">MIEMBROS</p>
             <h2>Acceso al espacio de trabajo</h2>
-            <p>Los cambios de rol o contraseña cierran las sesiones abiertas del miembro.</p>
+            <p>Cada alta, cambio de rol o contraseña se notifica por correo y cierra las sesiones abiertas del miembro.</p>
           </div>
           <span>{activeMembers} activos</span>
         </div>
@@ -243,12 +254,13 @@ export default function TeamManager({
                   disabled={isCurrent || saving === member.id}
                   onChange={(input) =>
                     void patchMember(member, {
-                      role: input.target.value as StaffRole,
+                      role: input.target.value as AssignableRole,
                     })
                   }
                 >
                   <option value="administrator">{roleLabels.administrator}</option>
                   <option value="organizer">{roleLabels.organizer}</option>
+                  <option value="participant">{roleLabels.participant} (sale del equipo)</option>
                 </select>
                 <div className="team-last-access">
                   <b>{member.lastLoginAt ? formatStableDate(member.lastLoginAt) : "Sin ingreso"}</b>
@@ -291,15 +303,6 @@ export default function TeamManager({
         </div>
       </section>
 
-      <section className="panel local-team-note">
-        <span>⌁</span>
-        <div>
-          <p className="eyebrow">ACCESOS LOCALES</p>
-          <h2>Sin invitaciones por correo todavía</h2>
-          <p>Comparte las credenciales temporales por un canal seguro. Cuando conectemos el proveedor de correo, este flujo podrá enviar invitaciones y recuperación de contraseña.</p>
-        </div>
-      </section>
-
       {inviteOpen && (
         <div className="modal-backdrop" onMouseDown={() => setInviteOpen(false)}>
           <section className="modal team-modal" role="dialog" aria-modal="true" aria-labelledby="team-invite-title" onMouseDown={(event) => event.stopPropagation()}>
@@ -307,9 +310,9 @@ export default function TeamManager({
             {createdAccess ? (
               <div className="team-access-created">
                 <span>✓</span>
-                <p className="eyebrow">CUENTA CREADA</p>
-                <h2 id="team-invite-title">Comparte el acceso con seguridad</h2>
-                <p>Esta contraseña se muestra para que puedas entregarla al nuevo miembro.</p>
+                <p className="eyebrow">ACCESO ENVIADO</p>
+                <h2 id="team-invite-title">Le enviamos el acceso por correo</h2>
+                <p>El miembro recibió un correo con su rol, el enlace de ingreso y esta contraseña temporal. Puedes copiarla por si necesita ayuda.</p>
                 <div><small>CORREO</small><b>{createdAccess.email}</b><small>CONTRASEÑA TEMPORAL</small><code>{createdAccess.password}</code></div>
                 <button className="primary-button" onClick={() => void copyAccess()}>Copiar credenciales</button>
               </div>
@@ -317,8 +320,8 @@ export default function TeamManager({
               <>
                 <span className="modal-icon">♧</span>
                 <p className="eyebrow">NUEVO MIEMBRO</p>
-                <h2 id="team-invite-title">Crear acceso local</h2>
-                <p>El miembro podrá iniciar sesión inmediatamente con estas credenciales.</p>
+                <h2 id="team-invite-title">Añadir miembro del equipo</h2>
+                <p>Recibirá un correo con su acceso. Si el correo ya pertenece a un participante registrado, se le asigna el rol y conserva su historial de eventos.</p>
                 <form className="team-invite-form" onSubmit={createMember}>
                   <label>Nombre completo<input name="name" required minLength={2} maxLength={100} autoComplete="name" /></label>
                   <label>Correo electrónico<input name="email" type="email" required maxLength={254} autoComplete="email" /></label>
@@ -340,7 +343,7 @@ export default function TeamManager({
             <span className="modal-icon">↻</span>
             <p className="eyebrow">RESTABLECER ACCESO</p>
             <h2 id="team-reset-title">Nueva contraseña para {resetMember.name}</h2>
-            <p>La sesión actual del miembro se cerrará y deberá usar la nueva contraseña.</p>
+            <p>La sesión actual del miembro se cerrará y recibirá la nueva contraseña por correo.</p>
             <div className="team-reset-password"><input aria-label="Nueva contraseña temporal" value={generatedPassword} onChange={(input) => setGeneratedPassword(input.target.value)} /><button onClick={() => setGeneratedPassword(temporaryPassword())}>Generar otra</button></div>
             <button className="primary-button" disabled={saving === resetMember.id} onClick={() => void patchMember(resetMember, { password: generatedPassword })}>{saving === resetMember.id ? "Actualizando…" : "Confirmar restablecimiento"}</button>
           </section>

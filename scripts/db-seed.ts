@@ -80,6 +80,11 @@ await db
   })
   .onConflictDoNothing();
 
+// Los datos de demostración (eventos y participantes de ejemplo) solo se
+// siembran con SEED_DEMO=1. Por defecto queda el administrador, la marca,
+// los documentos legales y los permisos.
+const demoData = process.env.SEED_DEMO === "1";
+
 const eventSeeds = [
   {
     title: "Liderazgo que transforma",
@@ -156,7 +161,7 @@ const defaultMessages = [
   },
 ];
 
-for (const eventSeed of eventSeeds) {
+for (const eventSeed of demoData ? eventSeeds : []) {
   const [event] = await db
     .insert(events)
     .values({ ...eventSeed, createdBy: administrator.id })
@@ -239,7 +244,7 @@ const seededRegistrations = new Map<
   { id: string; eventId: string }
 >();
 
-for (const participantSeed of participantSeeds) {
+for (const participantSeed of demoData ? participantSeeds : []) {
   const eventId = seededEventIds.get(participantSeed.eventSlug);
   if (!eventId) continue;
 

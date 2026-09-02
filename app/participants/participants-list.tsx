@@ -61,6 +61,49 @@ function csvCell(value: string | number | boolean | null) {
 
 const PAGE_SIZE = 25;
 
+// Vista agrupada: una fila por persona (el correo es su identificador) con el
+// historial de todos los eventos en los que se ha inscrito.
+type ParticipantGroup = {
+  email: string;
+  name: string;
+  company: string | null;
+  jobTitle: string | null;
+  phone: string | null;
+  records: ParticipantRecord[];
+  lastRegisteredAt: string;
+};
+
+function groupByEmail(records: ParticipantRecord[]): ParticipantGroup[] {
+  const groups = new Map<string, ParticipantGroup>();
+  for (const record of records) {
+    const key = record.email.toLowerCase();
+    const group = groups.get(key);
+    if (!group) {
+      groups.set(key, {
+        email: record.email,
+        name: record.name,
+        company: record.company,
+        jobTitle: record.jobTitle,
+        phone: record.phone,
+        records: [record],
+        lastRegisteredAt: record.registeredAt,
+      });
+      continue;
+    }
+    group.records.push(record);
+    if (record.registeredAt > group.lastRegisteredAt) {
+      group.lastRegisteredAt = record.registeredAt;
+      group.name = record.name;
+    }
+    group.company ??= record.company;
+    group.jobTitle ??= record.jobTitle;
+    group.phone ??= record.phone;
+  }
+  return Array.from(groups.values()).sort((a, b) =>
+    b.lastRegisteredAt.localeCompare(a.lastRegisteredAt),
+  );
+}
+
 type ExportColumn = {
   key: string;
   label: string;
@@ -109,6 +152,7 @@ export default function ParticipantsList() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ParticipantRecord | null>(null);
+  const [historyEmail, setHistoryEmail] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -165,12 +209,27 @@ export default function ParticipantsList() {
     });
   }, [records, search, eventFilter, statusFilter]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Sin filtros de evento ni estado, la tabla muestra personas (no registros).
+  const grouped = eventFilter === "all" && statusFilter === "all";
+  const groups = useMemo(() => groupByEmail(filtered), [filtered]);
+  const uniqueParticipants = useMemo(
+    () => new Set(records.map((record) => record.email.toLowerCase())).size,
+    [records],
+  );
+  const listLength = grouped ? groups.length : filtered.length;
+  const pageCount = Math.max(1, Math.ceil(listLength / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const paginated = filtered.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
+  const paginatedGroups = groups.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+  const historyGroup = historyEmail
+    ? groupByEmail(records).find((group) => group.email.toLowerCase() === historyEmail)
+    : null;
 
   const runExport = (format: "csv" | "xlsx") => {
     if (!filtered.length) return;
@@ -249,7 +308,7 @@ export default function ParticipantsList() {
       setRecords((items) =>
         items.map((item) => (item.id === updated.id ? updated : item)),
       );
-      setSelected(updated);
+      setSelected((current) => (current ? updated : current));
       setMessage(`Estado de ${record.name} actualizado.`);
     } else {
       setError(payload.error ?? "No fue posible actualizar el estado.");
@@ -294,8 +353,8 @@ export default function ParticipantsList() {
         <article>
           <span className="stat-icon blue">♙</span>
           <div>
-            <strong>{records.length}</strong>
-            <p>Registros totales</p>
+            <strong>{uniqueParticipants}</strong>
+            <p>Participantes · {records.length} registro{records.length === 1 ? "" : "s"}</p>
           </div>
         </article>
         <article>
@@ -366,17 +425,59 @@ export default function ParticipantsList() {
         <div className="participant-table-head">
           <span>PARTICIPANTE</span>
           <span>EMPRESA / CARGO</span>
-          <span>EVENTO</span>
-          <span>REGISTRO</span>
-          <span>ESTADO</span>
+          <span>{grouped ? "EVENTOS" : "EVENTO"}</span>
+          <span>{grouped ? "ÚLTIMO REGISTRO" : "REGISTRO"}</span>
+          <span>{grouped ? "ESTADOS" : "ESTADO"}</span>
           <span>ACCIÓN</span>
         </div>
         {loading ? (
           <div className="table-empty">Cargando participantes…</div>
-        ) : filtered.length === 0 ? (
+        ) : listLength === 0 ? (
           <div className="table-empty">
             No hay participantes para los filtros seleccionados.
           </div>
+        ) : grouped ? (
+          paginatedGroups.map((group) => (
+            <div className="participant-row" key={group.email}>
+              <div className="participant-person">
+                <span>
+                  {group.name
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((part) => part[0])
+                    .join("")
+                    .toUpperCase()}
+                </span>
+                <p>
+                  <b>{group.name}</b>
+                  <small>{group.email}</small>
+                </p>
+              </div>
+              <div>
+                <b>{group.company ?? "—"}</b>
+                <small>{group.jobTitle ?? "Sin cargo"}</small>
+              </div>
+              <div className="participant-events-cell">
+                <b>{group.records.length} evento{group.records.length === 1 ? "" : "s"}</b>
+                <small>{group.records.slice(0, 2).map((record) => record.eventTitle).join(" · ")}{group.records.length > 2 ? " …" : ""}</small>
+              </div>
+              <time>{formatDate(group.lastRegisteredAt, userTimezone)}</time>
+              <span className="participant-status-summary">
+                {Array.from(new Set(group.records.map((record) => record.status))).map((status) => (
+                  <i className={`participant-status ${status}`} key={status}>● {statusLabels[status]}</i>
+                ))}
+              </span>
+              <button
+                className="participant-manage"
+                onClick={() => {
+                  setError("");
+                  setHistoryEmail(group.email.toLowerCase());
+                }}
+              >
+                Ver historial
+              </button>
+            </div>
+          ))
         ) : (
           paginated.map((record) => (
             <div className="participant-row" key={record.id}>
@@ -417,7 +518,7 @@ export default function ParticipantsList() {
             </div>
           ))
         )}
-        {!loading && filtered.length > PAGE_SIZE && (
+        {!loading && listLength > PAGE_SIZE && (
           <footer className="participants-pagination">
             <button
               disabled={currentPage <= 1}
@@ -426,8 +527,8 @@ export default function ParticipantsList() {
               ← Anterior
             </button>
             <span>
-              Página <b>{currentPage}</b> de {pageCount} · {filtered.length}{" "}
-              registros
+              Página <b>{currentPage}</b> de {pageCount} · {listLength}{" "}
+              {grouped ? "participantes" : "registros"}
             </span>
             <button
               disabled={currentPage >= pageCount}
@@ -438,6 +539,104 @@ export default function ParticipantsList() {
           </footer>
         )}
       </section>
+
+      {historyGroup && (
+        <div
+          className="modal-backdrop"
+          onMouseDown={() => {
+            if (!saving) setHistoryEmail(null);
+          }}
+        >
+          <section
+            className="modal participant-modal participant-history-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="participant-history-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              disabled={saving}
+              onClick={() => setHistoryEmail(null)}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+            <div className="participant-modal-head">
+              <span>
+                {historyGroup.name
+                  .split(/\s+/)
+                  .slice(0, 2)
+                  .map((part) => part[0])
+                  .join("")
+                  .toUpperCase()}
+              </span>
+              <div>
+                <p className="eyebrow">HISTORIAL DEL PARTICIPANTE</p>
+                <h2 id="participant-history-title">{historyGroup.name}</h2>
+                <a href={`mailto:${historyGroup.email}`}>{historyGroup.email}</a>
+              </div>
+            </div>
+            <div className="participant-detail-grid">
+              <div>
+                <small>EMPRESA</small>
+                <b>{historyGroup.company ?? "Sin empresa"}</b>
+                <span>{historyGroup.jobTitle ?? "Sin cargo"}</span>
+              </div>
+              <div>
+                <small>TELÉFONO</small>
+                <b>{historyGroup.phone ?? "No registrado"}</b>
+                <span>{historyGroup.records.length} inscripción{historyGroup.records.length === 1 ? "" : "es"}</span>
+              </div>
+            </div>
+            <div className="participant-history">
+              <p className="eyebrow">EVENTOS</p>
+              {historyGroup.records.map((record) => (
+                <article className="participant-history-row" key={record.id}>
+                  <div>
+                    <Link href={`/events/${record.eventSlug}`}>{record.eventTitle}</Link>
+                    <small>
+                      {formatDate(record.registeredAt, userTimezone)} · {sourceLabels[record.source] ?? record.source}
+                      {record.company ? ` · ${record.company}` : ""}
+                    </small>
+                  </div>
+                  <select
+                    aria-label={`Estado en ${record.eventTitle}`}
+                    value={record.status}
+                    disabled={saving}
+                    onChange={(input) =>
+                      void patchStatus(record, input.target.value as RegistrationStatus)
+                    }
+                  >
+                    {Object.entries(statusLabels).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="participant-manage"
+                    onClick={() => {
+                      setError("");
+                      setSelected(record);
+                    }}
+                  >
+                    Ficha
+                  </button>
+                </article>
+              ))}
+            </div>
+            {error && (
+              <p className="form-error" role="alert">{error}</p>
+            )}
+            <div className="participant-modal-actions">
+              <span />
+              <button className="primary-button" disabled={saving} onClick={() => setHistoryEmail(null)}>
+                {saving ? "Guardando…" : "Listo"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {exportOpen && (
         <div className="modal-backdrop" onMouseDown={() => setExportOpen(false)}>
@@ -600,7 +799,7 @@ export default function ParticipantsList() {
                 ))}
               </select>
               <span>
-                Este cambio se guarda inmediatamente en la base local.
+                El cambio se guarda de inmediato.
               </span>
             </label>
 
