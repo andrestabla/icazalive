@@ -33,6 +33,9 @@ NEW_FILES = [
     "app/loading.tsx",
 ]
 
+# Archivos cuya versión de Replit ya fue integrada en la nueva (se sobrescriben).
+MERGED = {"app/brand/brand-editor.tsx", "app/components/public-brand.tsx"}
+
 problems = []
 for rel in NEW_FILES + list(EXPECTED_OLD):
     src = os.path.join(SRC, rel)
@@ -41,10 +44,22 @@ for rel in NEW_FILES + list(EXPECTED_OLD):
     current = md5(rel)
     if current == md5(src):
         print("al día", rel); continue
-    if rel in EXPECTED_OLD and current is not None and current != EXPECTED_OLD[rel]:
+    if rel in EXPECTED_OLD and rel not in MERGED and current is not None and current != EXPECTED_OLD[rel]:
         problems.append(f"DIVERGIÓ en Replit (no se sobrescribe): {rel}"); continue
     os.makedirs(os.path.dirname(rel) or ".", exist_ok=True)
     shutil.copyfile(src, rel); print("copiado", rel)
+
+# Iconos del agente en el editor de marca (AdminIcon existe solo en Replit).
+if os.path.exists("app/components/admin-icon.tsx"):
+    p = "app/brand/brand-editor.tsx"; s = open(p, encoding="utf-8").read(); o = s
+    if "AdminIcon" not in s:
+        s = s.replace('import PublicBrandIdentity from "@/app/components/public-brand";', 'import { AdminIcon } from "@/app/components/admin-icon";\nimport PublicBrandIdentity from "@/app/components/public-brand";', 1)
+        s = s.replace('Abrir página pública ↗', 'Abrir página pública <AdminIcon name="arrow-right" />', 1)
+        s = s.replace('role="alert">ⓘ {error}', 'role="alert"><AdminIcon name="info" /> {error}', 1)
+        s = s.replace('{brand.registrationButtonLabel} →</button>', '{brand.registrationButtonLabel} <AdminIcon name="arrow-right" /></button>', 1)
+        s = s.replace('<span>✓</span>', '<span><AdminIcon name="check" /></span>', 1)
+    if s != o:
+        open(p, "w", encoding="utf-8").write(s); print("iconos AdminIcon aplicados en brand-editor.tsx")
 
 # db/schema.ts (anclado)
 p = "db/schema.ts"; s = open(p, encoding="utf-8").read()

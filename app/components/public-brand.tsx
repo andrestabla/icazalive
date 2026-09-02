@@ -29,9 +29,17 @@ export default function PublicBrandIdentity({
           height={32}
         />
       ) : (
-        <div className="brand-mark">{brand.markText}</div>
+        // Sin logo configurado: logotipo oficial de la plataforma.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="public-brand-logo official-brand-logo"
+          src="/icaza-live-logo.png"
+          alt={brand.organizationName}
+          width={160}
+          height={39}
+        />
       )}
-      <span>{brand.organizationName}</span>
+      {logo ? <span>{brand.organizationName}</span> : null}
     </div>
   );
 }
