@@ -12,6 +12,7 @@ import EventAnalyticsPanel from "./event-analytics-panel";
 import FeedbackAdminPanel from "./feedback-admin-panel";
 import OrganizersPanel from "./organizers-panel";
 import EventDateEditor from "./event-date-editor";
+import EventRegistrants from "./event-registrants";
 import SimulatedContentPanel from "./simulated-content-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
 import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
@@ -1074,6 +1075,7 @@ export default function EventDetail({
               <div><span style={{ width: `${Math.min(100, (registrationCount / event.maxAttendees) * 100)}%` }} /></div>
               <Link href="/participants">Ver participantes →</Link>
             </section>
+            <EventRegistrants eventSlug={event.slug} refreshKey={registrationCount} />
           </div>
           <section className="panel event-brand-card">
             <div className="panel-heading">

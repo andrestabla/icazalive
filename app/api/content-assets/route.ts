@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { contentAssets } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
-import { listVideos, readS3Config, statVideo } from "@/lib/aws-s3";
+import { copyObject, deleteVideo, listVideos, objectPlaybackUrl, readS3Config, statVideo } from "@/lib/aws-s3";
 
 export const runtime = "nodejs";
 
@@ -155,4 +155,54 @@ export async function DELETE(request: Request) {
     request,
   });
   return NextResponse.json({ data: { removed: true } });
+}
+
+
+// Renombra un contenido: título en la biblioteca y clave del objeto en S3
+// (copia a la clave nueva y borra la anterior). Los eventos lo referencian por
+// id, así que no pierden la asignación.
+export async function PATCH(request: Request) {
+  const auth = await requireStaff();
+  if ("error" in auth) return auth.error;
+  const body = (await request.json().catch(() => ({}))) as { id?: string; title?: string };
+  const title = body.title?.trim().replace(/\s+/g, " ") ?? "";
+  if (!body.id || title.length < 2 || title.length > 120) {
+    return NextResponse.json({ error: "Indica un nombre de 2 a 120 caracteres." }, { status: 400 });
+  }
+  const db = getDb();
+  const [asset] = await db.select().from(contentAssets).where(eq(contentAssets.id, body.id)).limit(1);
+  if (!asset) return NextResponse.json({ error: "Contenido no encontrado." }, { status: 404 });
+
+  const s3 = readS3Config();
+  if (!s3) return NextResponse.json({ error: "Amazon S3 no está configurado." }, { status: 409 });
+
+  const extension = (asset.s3Key.match(/\.[A-Za-z0-9]{2,5}$/) ?? [".mp4"])[0];
+  const safe = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100) || "contenido";
+  const directory = asset.s3Key.includes("/") ? asset.s3Key.slice(0, asset.s3Key.lastIndexOf("/") + 1) : "content/";
+  const stamp = asset.s3Key.split("/").pop()?.match(/^([a-z0-9]{6,10})-/)?.[1] ?? Date.now().toString(36);
+  const newKey = `${directory}${stamp}-${safe}${extension}`;
+
+  if (newKey !== asset.s3Key) {
+    const copied = await copyObject(s3, asset.s3Key, newKey);
+    if (!copied.ok) {
+      return NextResponse.json({ error: `No fue posible renombrar en S3: ${copied.error}` }, { status: 502 });
+    }
+    await deleteVideo(s3, asset.s3Key);
+  }
+
+  const [updated] = await db
+    .update(contentAssets)
+    .set({ title, s3Key: newKey, updatedAt: new Date() })
+    .where(eq(contentAssets.id, asset.id))
+    .returning();
+  await writeAuditLog({
+    actor: auth.user,
+    action: "content_asset.renamed",
+    resourceType: "content_asset",
+    resourceId: asset.id,
+    summary: `Contenido “${asset.title}” renombrado a “${title}”.`,
+    details: { previousKey: asset.s3Key, s3Key: newKey },
+    request,
+  });
+  return NextResponse.json({ data: updated });
 }
