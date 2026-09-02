@@ -11,10 +11,13 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandSettings().catch(() => null);
   const icon = brand?.faviconUrl ?? "/favicon.svg";
+  // Verificación de propiedad en Google Search Console (Safe Browsing, revisión).
+  const verification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
   return {
     title: `${brand?.organizationName ?? "Icaza Jammoul Live"} — Gestión de eventos`,
     description: "Plataforma para crear, transmitir y medir eventos digitales e híbridos.",
     icons: { icon, shortcut: icon, apple: icon },
+    ...(verification ? { verification: { google: verification } } : {}),
   };
 }
 
