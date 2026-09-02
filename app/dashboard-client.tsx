@@ -14,7 +14,7 @@ import { useState } from "react";
 import AdminSidebar from "@/app/components/admin-sidebar";
 import type { AuthenticatedUser } from "@/lib/auth";
 import type { DashboardSummary } from "@/lib/dashboard";
-import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
 
 type EventFormat = "live" | "simulated" | "hybrid";
 type ScheduleConflict = {
@@ -176,7 +176,7 @@ export default function Dashboard({
     setFormError("");
 
     const form = new FormData(formEvent.currentTarget);
-    const startsAt = new Date(String(form.get("startsAt")));
+    const startsAt = platformLocalToDate(String(form.get("startsAt")));
     const duration = Number(form.get("duration"));
     if (Number.isNaN(startsAt.getTime()) || !duration) {
       setFormError("Selecciona una fecha, hora y duración válidas.");
@@ -635,7 +635,7 @@ export default function Dashboard({
                   </label>
                   <div className="form-row">
                     <label>
-                      Fecha y hora
+                      Fecha y hora <small>hora de Miami</small>
                       <input
                         name="startsAt"
                         type="datetime-local"

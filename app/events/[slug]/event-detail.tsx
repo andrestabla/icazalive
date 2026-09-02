@@ -14,6 +14,7 @@ import OrganizersPanel from "./organizers-panel";
 import RecordedVideoPanel from "./recorded-video-panel";
 import SimulatedContentPanel from "./simulated-content-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
+import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
 
 type EventData = {
   id: string;
@@ -222,9 +223,7 @@ function formatStableTime(date: Date, timeZone: string) {
 }
 
 function toLocalDateTimeInput(value: string) {
-  const date = new Date(value);
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return toPlatformDateTimeInput(value);
 }
 
 function normalizeSession(session: SessionData): SessionData {
@@ -399,8 +398,8 @@ export default function EventDetail({
     setMessage("");
 
     const form = new FormData(formEvent.currentTarget);
-    const startsAt = new Date(String(form.get("startsAt")));
-    const endsAt = new Date(String(form.get("endsAt")));
+    const startsAt = platformLocalToDate(String(form.get("startsAt")));
+    const endsAt = platformLocalToDate(String(form.get("endsAt")));
     if (
       Number.isNaN(startsAt.getTime()) ||
       Number.isNaN(endsAt.getTime()) ||
