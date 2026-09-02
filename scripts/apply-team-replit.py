@@ -55,8 +55,11 @@ p = "app/team/team-manager.tsx"
 if os.path.exists(p):
     s = open(p, encoding="utf-8").read()
     t = re.sub(r'\n\s*<section className="panel local-team-note">[\s\S]*?</section>\n', "\n", s, count=1)
+    t = t.replace('<p className="eyebrow">CUENTA CREADA</p>', '<p className="eyebrow">ACCESO ENVIADO</p>', 1)
+    t = t.replace('<h2 id="team-invite-title">Comparte el acceso con seguridad</h2>', '<h2 id="team-invite-title">Le enviamos el acceso por correo</h2>', 1)
+    t = t.replace('<p>Esta contraseña se muestra para que puedas entregarla al nuevo miembro.</p>', '<p>El miembro recibió un correo con su rol, el enlace de ingreso y esta contraseña temporal. Puedes copiarla por si necesita ayuda.</p>', 1)
     if t != s:
-        open(p, "w", encoding="utf-8").write(t); print("eliminado bloque Accesos locales")
+        open(p, "w", encoding="utf-8").write(t); print("textos y bloque Accesos locales ajustados")
 
 css_src = open(os.path.join(SRC, "app/globals.css"), encoding="utf-8").read()
 marker = "/* Participantes agrupados por correo e historial */"

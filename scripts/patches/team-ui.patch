@@ -308,7 +308,7 @@ index 6c8e28c..5ee484d 100644
              </label>
  
 diff --git a/app/team/team-manager.tsx b/app/team/team-manager.tsx
-index 0457943..1fba78f 100644
+index 0457943..e75d45c 100644
 --- a/app/team/team-manager.tsx
 +++ b/app/team/team-manager.tsx
 @@ -5,6 +5,7 @@ import { useState } from "react";
@@ -396,19 +396,6 @@ index 0457943..1fba78f 100644
                  </select>
                  <div className="team-last-access">
                    <b>{member.lastLoginAt ? formatStableDate(member.lastLoginAt) : "Sin ingreso"}</b>
-@@ -307,9 +319,9 @@ export default function TeamManager({
-             {createdAccess ? (
-               <div className="team-access-created">
-                 <span>✓</span>
--                <p className="eyebrow">CUENTA CREADA</p>
--                <h2 id="team-invite-title">Comparte el acceso con seguridad</h2>
--                <p>Esta contraseña se muestra para que puedas entregarla al nuevo miembro.</p>
-+                <p className="eyebrow">ACCESO ENVIADO</p>
-+                <h2 id="team-invite-title">Le enviamos el acceso por correo</h2>
-+                <p>El miembro recibió un correo con su rol, el enlace de ingreso y esta contraseña temporal. Puedes copiarla por si necesita ayuda.</p>
-                 <div><small>CORREO</small><b>{createdAccess.email}</b><small>CONTRASEÑA TEMPORAL</small><code>{createdAccess.password}</code></div>
-                 <button className="primary-button" onClick={() => void copyAccess()}>Copiar credenciales</button>
-               </div>
 @@ -317,8 +329,8 @@ export default function TeamManager({
                <>
                  <span className="modal-icon">♧</span>
