@@ -119,3 +119,52 @@ export async function exchangeCode(options: {
 export function decryptClientSecret(row: GoogleSsoSettings): string | null {
   return row.clientSecretEncrypted ? decryptSecret(row.clientSecretEncrypted) : null;
 }
+
+// ---- Prefill de registro público ------------------------------------------
+// El asistente puede tomar nombre y correo de su cuenta de Google al inscribirse
+// a un evento. No abre sesión ni crea usuario: solo devuelve los datos al
+// formulario mediante una cookie de corta vida.
+
+export const SSO_STATE_COOKIE = "icaza_sso_state";
+export const SSO_INTENT_COOKIE = "icaza_sso_intent";
+export const REGISTRATION_PREFILL_COOKIE = "icaza_reg_prefill";
+
+export type SsoIntent = { kind: "login" } | { kind: "prefill"; slug: string };
+
+export function encodeIntent(intent: SsoIntent): string {
+  return intent.kind === "prefill" ? `prefill:${intent.slug}` : "login";
+}
+
+export function decodeIntent(value: string | undefined): SsoIntent {
+  if (value?.startsWith("prefill:")) {
+    const slug = value.slice("prefill:".length);
+    if (/^[a-z0-9-]{1,120}$/i.test(slug)) return { kind: "prefill", slug };
+  }
+  return { kind: "login" };
+}
+
+export type RegistrationPrefill = { slug: string; name: string; email: string };
+
+export function encodePrefill(prefill: RegistrationPrefill): string {
+  return Buffer.from(JSON.stringify(prefill), "utf8").toString("base64url");
+}
+
+export function decodePrefill(
+  value: string | undefined,
+  slug: string,
+): RegistrationPrefill | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(value, "base64url").toString("utf8"),
+    ) as Partial<RegistrationPrefill>;
+    if (parsed.slug !== slug || typeof parsed.email !== "string") return null;
+    return {
+      slug,
+      email: parsed.email.slice(0, 254),
+      name: typeof parsed.name === "string" ? parsed.name.slice(0, 100) : "",
+    };
+  } catch {
+    return null;
+  }
+}

@@ -1,9 +1,16 @@
 import { and, asc, eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { eventRegistrationFields, events } from "@/db/schema";
 import { getBrandSettings } from "@/lib/brand";
 import { applyEventBrand } from "@/lib/brand-config";
+import {
+  REGISTRATION_PREFILL_COOKIE,
+  decodePrefill,
+  isSsoUsable,
+  readGoogleSso,
+} from "@/lib/google-sso";
 import { getPublishedLegalDocuments } from "@/lib/privacy";
 import RegistrationForm from "./registration-form";
 
@@ -15,7 +22,7 @@ export default async function PublicRegistrationPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [[event], brand, legalDocuments] = await Promise.all([
+  const [[event], brand, legalDocuments, googleSso, cookieStore] = await Promise.all([
     getDb()
       .select({
         id: events.id,
@@ -38,6 +45,8 @@ export default async function PublicRegistrationPage({
       .limit(1),
     getBrandSettings(),
     getPublishedLegalDocuments(),
+    readGoogleSso().catch(() => null),
+    cookies(),
   ]);
 
   if (!event) notFound();
@@ -55,6 +64,12 @@ export default async function PublicRegistrationPage({
       asc(eventRegistrationFields.createdAt),
     );
 
+  // Datos devueltos por Google (si el asistente pulsó "Continuar con Google").
+  const googlePrefill = decodePrefill(
+    cookieStore.get(REGISTRATION_PREFILL_COOKIE)?.value,
+    slug,
+  );
+
   return (
     <RegistrationForm
       event={{
@@ -64,6 +79,8 @@ export default async function PublicRegistrationPage({
       }}
       brand={applyEventBrand(brand, event)}
       fields={fields}
+      googleEnabled={isSsoUsable(googleSso)}
+      googlePrefill={googlePrefill ? { name: googlePrefill.name, email: googlePrefill.email } : null}
       legalDocuments={{
         privacy: {
           id: legalDocuments.privacy.id,
