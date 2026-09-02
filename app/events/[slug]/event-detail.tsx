@@ -16,6 +16,7 @@ import OrganizersPanel from "./organizers-panel";
 import RecordedVideoPanel from "./recorded-video-panel";
 import SimulatedContentPanel from "./simulated-content-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
+import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
 
 type EventData = {
   id: string;
@@ -228,9 +229,7 @@ function formatStableTime(date: Date, timeZone: string) {
 }
 
 function toLocalDateTimeInput(value: string) {
-  const date = new Date(value);
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return toPlatformDateTimeInput(value);
 }
 
 function normalizeSession(session: SessionData): SessionData {
@@ -430,8 +429,8 @@ export default function EventDetail({
     setMessage("");
 
     const form = new FormData(formEvent.currentTarget);
-    const startsAt = new Date(String(form.get("startsAt")));
-    const endsAt = new Date(String(form.get("endsAt")));
+    const startsAt = platformLocalToDate(String(form.get("startsAt")));
+    const endsAt = platformLocalToDate(String(form.get("endsAt")));
     if (
       Number.isNaN(startsAt.getTime()) ||
       Number.isNaN(endsAt.getTime()) ||
@@ -1068,7 +1067,7 @@ export default function EventDetail({
               <div className="readiness-list">
                 <div className="ready"><span><AdminIcon name="check" /></span><div><b>Información principal</b><p>Fecha, formato y capacidad definidos.</p></div><small>Completo</small></div>
                 <div className={event.registrationOpen ? "ready" : ""}><span>{event.registrationOpen ? <AdminIcon name="check" /> : "2"}</span><div><b>Página de registro</b><p>Configura campos, marca y mensajes.</p></div><small>{event.registrationOpen ? "Activa" : "Pendiente"}</small></div>
-                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? <AdminIcon name="check" /> : "3"}</span><div><b>Transmisión</b><p>Configura Zoom y prepara el canal de IVS.</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista localmente" : "Pendiente"}</small></div>
+                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? <AdminIcon name="check" /> : "3"}</span><div><b>Transmisión</b><p>{event.format === "simulated" ? "Elige el contenido pregrabado y prepara el canal de IVS." : event.format === "hybrid" ? "Configura Zoom, el contenido simulado y el canal de IVS." : "Configura Zoom y prepara el canal de IVS."}</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista localmente" : "Pendiente"}</small></div>
               </div>
             </section>
           </div>

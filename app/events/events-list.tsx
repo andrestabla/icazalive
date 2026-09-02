@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminIcon } from "@/app/components/admin-icon";
-import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
 
 type ScheduleConflict = {
   id: string;
@@ -44,9 +44,7 @@ const statusLabels: Record<string, string> = {
 };
 
 function toLocalDateTimeInput(value: string) {
-  const date = new Date(value);
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return toPlatformDateTimeInput(value);
 }
 
 function eventDateKey(value: string) {
@@ -172,7 +170,7 @@ export default function EventsList() {
     if (!duplicateSource) return;
     setDuplicateSaving(true);
     setDuplicateError("");
-    const startsAt = new Date(duplicateStartsAt);
+    const startsAt = platformLocalToDate(duplicateStartsAt);
     const response = await fetch(
       `/api/events/${duplicateSource.slug}/duplicate`,
       {
