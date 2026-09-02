@@ -35,7 +35,7 @@ NEW_FILES = [
 ]
 
 # Archivos cuya versión de Replit ya fue integrada en la nueva (se sobrescriben).
-MERGED = {"app/brand/brand-editor.tsx", "app/components/public-brand.tsx"}
+MERGED = {"app/brand/brand-editor.tsx", "app/components/public-brand.tsx", "app/components/admin-sidebar.tsx"}
 
 problems = []
 for rel in NEW_FILES + list(EXPECTED_OLD):
