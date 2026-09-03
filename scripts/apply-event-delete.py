@@ -69,7 +69,7 @@ BUTTON = r'''\1
                       Eliminar
                     </button>
                   )}'''
-sub(r'(<button onClick=\{\(\) => openDuplicate\(event\)\}>Duplicar</button>)', BUTTON)
+sub(r'(<button onClick=\{\(\) => openDuplicate\(event\)\}>(?:<AdminIcon[^>]*/>)?\s*Duplicar</button>)', BUTTON)
 
 MODAL = r'''
       {deleteTarget && (
