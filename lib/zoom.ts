@@ -143,10 +143,28 @@ export async function createZoomMeeting({
   return parseMeeting(payload);
 }
 
-export async function updateZoomMeeting({ id, startAt, durationMinutes, timezone }: ZoomMeetingUpdate): Promise<void> {
-  const response = await zoomFetch(`/meetings/${encodeURIComponent(id)}`, {
+export async function updateZoomMeeting({
+  meetingId,
+  topic,
+  startsAt,
+  endsAt,
+  timezone,
+}: {
+  meetingId: string;
+  topic: string;
+  startsAt: Date;
+  endsAt: Date;
+  timezone?: string;
+}): Promise<void> {
+  const durationMinutes = Math.max(1, Math.round((endsAt.getTime() - startsAt.getTime()) / 60_000));
+  const response = await zoomFetch(`/meetings/${encodeURIComponent(meetingId)}`, {
     method: "PATCH",
-    body: JSON.stringify({ start_time: startAt.toISOString(), duration: durationMinutes, ...(timezone ? { timezone } : {}) }),
+    body: JSON.stringify({
+      topic,
+      start_time: startsAt.toISOString(),
+      duration: durationMinutes,
+      ...(timezone ? { timezone } : {}),
+    }),
   });
   if (!response.ok && response.status !== 204) {
     const payload = await response.json().catch(() => null);

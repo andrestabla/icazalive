@@ -93,9 +93,10 @@ export async function syncZoomMeetingForEvent(eventId: string, options: Options 
   }
   try {
     await updateZoomMeeting({
-      id: session.zoomMeetingId,
-      startAt: session.startsAt,
-      durationMinutes: Math.max(15, Math.round((session.endsAt.getTime() - session.startsAt.getTime()) / 60_000)),
+      meetingId: session.zoomMeetingId,
+      topic: event.title,
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
       timezone: event.timezone,
     });
     await writeAuditLog({
