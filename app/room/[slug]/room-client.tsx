@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import type { PublicBrand } from "@/lib/brand-config";
 import IvsPlayer from "./ivs-player";
+import "./room-mobile.css";
 import SimulatedPlayer, { type SimulatedPlayback } from "./simulated-player";
 
 type RoomData = {
