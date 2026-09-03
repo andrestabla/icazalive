@@ -1,0 +1,80 @@
+/* Sala del participante en pantallas pequeñas (teléfonos y tabletas en
+   vertical). Complementa globals.css sin modificarlo: el video queda fijo en
+   la parte superior y el chat/preguntas/encuestas se usan debajo. */
+
+@media (max-width: 760px) {
+  .room-body { display: flex; flex-direction: column; min-height: auto; }
+  /* Los hijos de room-main pasan a ser hijos directos del cuerpo para poder
+     intercalar el panel de interacción justo después del escenario. */
+  .room-main { display: contents; }
+  .room-stage {
+    order: 1;
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    min-height: 0;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: 0 10px 30px #17132d33;
+  }
+  .room-interaction { order: 2; border-top: 0; }
+  .room-reaction-bar { order: 3; margin: 10px 10px 0; }
+  .room-session-info { order: 4; margin: 10px 10px 16px; }
+
+  /* Escenario: el video se ajusta a 16:9 y el lobby mantiene un alto útil. */
+  .room-stage-head, .room-stage > footer { padding: 9px 12px; font-size: 10px; }
+  .room-stage > footer small { display: none; }
+  .room-stage .simulated-player { flex: 0 0 auto; }
+  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; max-height: 48vh; background: #000; object-fit: contain; }
+  .simulated-player-bar { flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
+  .simulated-player-bar button { padding: 8px 11px; font-size: 12px; }
+  .simulated-player-bar span { font-size: 10px; }
+  .room-lobby { padding: 28px 0 22px; }
+  .room-lobby > span { width: 42px; height: 42px; margin-bottom: 10px; font-size: 18px; }
+  .room-lobby h1 { font-size: clamp(22px, 7vw, 30px); margin-bottom: 8px; }
+  .room-lobby > p:not(.eyebrow) { font-size: 12px; }
+  .room-lobby > div { margin-top: 14px; padding: 8px 12px; }
+  .room-video-ready { padding: 26px 0; }
+
+  /* Panel de interacción: altura natural, lista acotada y compositor a la vista. */
+  .room-interaction > nav { position: sticky; top: var(--room-stage-height, 0); z-index: 5; background: #fff; }
+  .room-interaction > nav button { font-size: 12px; }
+  .room-interaction > nav button span { display: inline; }
+  .room-chat-panel { min-height: 0; display: flex; flex-direction: column; }
+  .room-chat-list { min-height: 140px; max-height: 42vh; }
+  .room-question-list, .room-poll-list { max-height: 50vh; overflow-y: auto; }
+  .room-chat-form { position: sticky; bottom: 0; }
+  .room-chat-form textarea, .room-question-form textarea { font-size: 16px; } /* evita el zoom automático de iOS */
+  .room-chat-form > div { grid-template-columns: 1fr 44px; }
+  .room-chat-form button, .room-question-form button { min-height: 40px; }
+  .room-empty { padding: 22px 12px; }
+
+  /* Reacciones en una sola fila desplazable, con área táctil cómoda. */
+  .room-reaction-bar { flex-wrap: nowrap; overflow-x: auto; gap: 6px; }
+  .room-reaction-bar > p { flex: 0 0 auto; min-width: 0; }
+  .room-reaction-bar > p small { display: none; }
+  .room-reaction-bar button { flex: 0 0 auto; min-width: 48px; min-height: 40px; }
+
+  /* Cabecera compacta. */
+  .room-topbar { min-height: 56px; padding: 8px 12px; gap: 10px; }
+  .room-viewer p { display: none; }
+  .room-preview-banner { font-size: 10px; padding: 6px 10px; }
+
+  /* El widget de ayuda no debe tapar el botón de enviar del chat. */
+  body:has(.participant-room) .global-help-widget { right: 10px; bottom: 10px; }
+  body:has(.participant-room) .global-help-trigger { width: 38px; height: 38px; opacity: .8; }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  /* Teléfono girado: el video ocupa el alto disponible y el panel sigue debajo. */
+  .room-stage { position: static; }
+  .room-stage .simulated-player video { max-height: 70vh; }
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+  /* Tabletas: una sola columna con el escenario en 16:9 y el panel debajo. */
+  .room-stage { min-height: 0; }
+  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; max-height: 60vh; object-fit: contain; background: #000; }
+  .room-chat-panel { min-height: 0; }
+  .room-chat-list { min-height: 180px; max-height: 45vh; }
+}
