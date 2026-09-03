@@ -126,18 +126,45 @@ export async function cancelZoomMeetingForEvent(eventId: string, options: Option
   const record = await loadEventWithMainSession(eventId);
   if (!record?.session.zoomMeetingId) return;
   const { event, session } = record;
-  try {
-    await deleteZoomMeeting(session.zoomMeetingId!);
-    await getDb()
+  const meetingId = session.zoomMeetingId!;
+  const unlink = () =>
+    getDb()
       .update(sessions)
       .set({ zoomMeetingId: null, zoomJoinUrl: null, updatedAt: new Date() })
       .where(eq(sessions.id, session.id));
+  try {
+    try {
+      await deleteZoomMeeting(meetingId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (!/scope/i.test(message)) throw error;
+      // La conexión de Zoom no tiene permiso para borrar reuniones: se marca
+      // la reunión como cancelada en su título para que no se use por error.
+      await updateZoomMeeting({
+        meetingId,
+        topic: `[CANCELADO] ${event.title}`.slice(0, 200),
+        startsAt: session.startsAt,
+        endsAt: session.endsAt,
+        timezone: event.timezone,
+      });
+      await unlink();
+      await writeAuditLog({
+        actor: options.actor ?? undefined,
+        action: "zoom.meeting.cancel_marked",
+        resourceType: "session",
+        resourceId: session.id,
+        summary: `Reunión de Zoom ${meetingId} marcada como [CANCELADO] (la conexión no permite borrarla) al cancelar “${event.title}”.`,
+        request: options.request,
+      });
+      return;
+    }
+    await unlink();
     await writeAuditLog({
       actor: options.actor ?? undefined,
       action: "zoom.meeting.deleted",
       resourceType: "session",
       resourceId: session.id,
-      summary: `Reunión de Zoom ${session.zoomMeetingId} eliminada al cancelar “${event.title}”.`,
+      summary: `Reunión de Zoom ${meetingId} eliminada al cancelar “${event.title}”.`,
       request: options.request,
     });
   } catch (error) {
