@@ -93,6 +93,43 @@ export default function EventsList() {
   >([]);
   const [duplicateError, setDuplicateError] = useState("");
   const [duplicateSaving, setDuplicateSaving] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<EventRecord | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteNotice, setDeleteNotice] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { data?: { role?: string } } | null) => {
+        if (!cancelled) setIsAdmin(payload?.data?.role === "administrator");
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const deleteEvent = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError("");
+    const response = await fetch(`/api/events/${deleteTarget.slug}`, { method: "DELETE" });
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) {
+      setDeleteError(payload.error ?? "No fue posible eliminar el evento.");
+      setDeleting(false);
+      return;
+    }
+    setEvents((current) => current.filter((item) => item.id !== deleteTarget.id));
+    setDeleteNotice(`Evento “${deleteTarget.title}” eliminado. Queda registrado en Auditoría.`);
+    setDeleteTarget(null);
+    setDeleteConfirmation("");
+    setDeleting(false);
+  };
   const [notice, setNotice] = useState<{
     text: string;
     slug: string;
@@ -224,6 +261,12 @@ export default function EventsList() {
         </div>
         <Link href="/" className="primary-button link-button">＋ Crear evento</Link>
       </header>
+      {deleteNotice && (
+        <div className="events-notice" role="status">
+          <span>{deleteNotice}</span>
+          <button type="button" onClick={() => setDeleteNotice("")}>Cerrar</button>
+        </div>
+      )}
 
       {notice && (
         <div className="events-notice" role="status">
@@ -322,6 +365,11 @@ export default function EventsList() {
                 </div>
                 <div className="catalog-actions">
                   <button onClick={() => openDuplicate(event)}>Duplicar</button>
+                  {isAdmin && (
+                    <button style={{ color: "#b33b50" }} onClick={() => { setDeleteTarget(event); setDeleteConfirmation(""); setDeleteError(""); }}>
+                      Eliminar
+                    </button>
+                  )}
                   <Link href={`/events/${event.slug}`} className="detail-link">Gestionar <span>→</span></Link>
                 </div>
               </article>
@@ -480,6 +528,46 @@ export default function EventsList() {
                     : duplicateConflicts.length
                       ? "Duplicar de todas formas"
                       : "Duplicar como borrador"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+      {deleteTarget && (
+        <div className="modal-backdrop" role="presentation">
+          <section className="modal duplicate-event-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setDeleteTarget(null)}>×</button>
+            <span className="modal-icon danger">×</span>
+            <p className="eyebrow">ELIMINAR EVENTO</p>
+            <h2 id="delete-title">Eliminar “{deleteTarget.title}”</h2>
+            <p>
+              Se borrarán de forma definitiva sus sesiones, inscripciones, comunicaciones,
+              chat, preguntas, encuestas y recursos. Si tiene reunión de Zoom, se marcará
+              como cancelada. La eliminación queda registrada en Auditoría.
+            </p>
+            <form
+              className="event-form"
+              onSubmit={(formEvent) => {
+                formEvent.preventDefault();
+                void deleteEvent();
+              }}
+            >
+              <label>
+                Escribe ELIMINAR para confirmar
+                <input
+                  required
+                  autoComplete="off"
+                  value={deleteConfirmation}
+                  onChange={(input) => setDeleteConfirmation(input.target.value)}
+                  placeholder="ELIMINAR"
+                />
+              </label>
+              {deleteError && <p className="form-error" role="alert">{deleteError}</p>}
+              <div className="duplicate-modal-actions">
+                <button type="button" onClick={() => setDeleteTarget(null)}>Cancelar</button>
+                <button className="primary-button" disabled={deleting || deleteConfirmation.trim().toUpperCase() !== "ELIMINAR"}>
+                  {deleting ? "Eliminando…" : "Eliminar definitivamente"}
                 </button>
               </div>
             </form>
