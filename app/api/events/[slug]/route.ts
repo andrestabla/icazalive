@@ -12,6 +12,11 @@ import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { canManageEvent } from "@/lib/event-permissions";
 import { notifyEventLive } from "@/lib/live-notifications";
+import {
+  cancelZoomMeetingForEvent,
+  ensureZoomMeetingForEvent,
+  syncZoomMeetingForEvent,
+} from "@/lib/zoom-automation";
 import { getPublicOrigin } from "@/lib/public-origin";
 import {
   canTransition,
@@ -348,6 +353,16 @@ export async function PATCH(request: Request, context: RouteContext) {
     after(() => notifyEventLive(current.id, origin));
   }
 
+  // Zoom: al confirmar el evento (sale de borrador) se crea la reunión
+  // programada; al cancelarlo se elimina. Solo aplica a en vivo e híbrido.
+  const zoomOptions = { actor: currentUser, request };
+  if (changes.status && currentStatus === "draft" && changes.status !== "draft" && changes.status !== "cancelled") {
+    after(() => ensureZoomMeetingForEvent(current.id, zoomOptions));
+  }
+  if (changes.status === "cancelled" && currentStatus !== "cancelled") {
+    after(() => cancelZoomMeetingForEvent(current.id, zoomOptions));
+  }
+
   // Al mover la fecha, las sesiones y los recordatorios pendientes se
   // desplazan el mismo intervalo para que sigan alineados con el evento.
   if (newStartsAt && newEndsAt) {
@@ -355,6 +370,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (deltaMs !== 0) {
       await db.execute(sql`UPDATE sessions SET starts_at = starts_at + ${`${deltaMs} milliseconds`}::interval, ends_at = ends_at + ${`${deltaMs} milliseconds`}::interval WHERE event_id = ${current.id}`);
       await db.execute(sql`UPDATE communication_deliveries SET scheduled_for = scheduled_for + ${`${deltaMs} milliseconds`}::interval, updated_at = now() WHERE event_id = ${current.id} AND status = 'scheduled' AND type <> 'registration_confirmation'`);
+      // La reunión de Zoom (si existe) se reprograma a la nueva fecha.
+      after(() => syncZoomMeetingForEvent(current.id, zoomOptions));
     }
   }
 
