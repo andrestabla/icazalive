@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
@@ -32,6 +32,30 @@ function usesZoom(format: string, streamingMode: string) {
   );
 }
 
+// La versión desplegada guarda además zoom_start_at, zoom_duration_minutes,
+// zoom_timezone, zoom_synced_at y zoom_managed_by_icaza para mostrar el estado
+// "sincronizado" en el evento. Se actualizan con SQL directo y se ignora el
+// error si esas columnas no existen (entorno local).
+async function recordZoomSync(
+  sessionId: string,
+  values: { startsAt: Date; endsAt: Date; timezone: string } | null,
+) {
+  try {
+    if (values) {
+      const minutes = Math.max(1, Math.round((values.endsAt.getTime() - values.startsAt.getTime()) / 60_000));
+      await getDb().execute(
+        sql`UPDATE sessions SET zoom_start_at = ${values.startsAt.toISOString()}::timestamptz, zoom_duration_minutes = ${minutes}, zoom_timezone = ${values.timezone}, zoom_synced_at = now(), zoom_managed_by_icaza = true WHERE id = ${sessionId}`,
+      );
+    } else {
+      await getDb().execute(
+        sql`UPDATE sessions SET zoom_start_at = NULL, zoom_duration_minutes = NULL, zoom_timezone = NULL, zoom_synced_at = NULL, zoom_managed_by_icaza = false WHERE id = ${sessionId}`,
+      );
+    }
+  } catch {
+    // Columnas ausentes en este entorno: no afecta la automatización.
+  }
+}
+
 export async function ensureZoomMeetingForEvent(eventId: string, options: Options = {}) {
   const record = await loadEventWithMainSession(eventId);
   if (!record) return { ok: false as const, reason: "not_found" as const };
@@ -57,6 +81,7 @@ export async function ensureZoomMeetingForEvent(eventId: string, options: Option
         updatedAt: new Date(),
       })
       .where(eq(sessions.id, session.id));
+    await recordZoomSync(session.id, { startsAt: session.startsAt, endsAt: session.endsAt, timezone: event.timezone });
     await writeAuditLog({
       actor: options.actor ?? undefined,
       action: "zoom.meeting.created",
@@ -99,6 +124,7 @@ export async function syncZoomMeetingForEvent(eventId: string, options: Options 
       endsAt: session.endsAt,
       timezone: event.timezone,
     });
+    await recordZoomSync(session.id, { startsAt: session.startsAt, endsAt: session.endsAt, timezone: event.timezone });
     await writeAuditLog({
       actor: options.actor ?? undefined,
       action: "zoom.meeting.updated",
@@ -127,11 +153,13 @@ export async function cancelZoomMeetingForEvent(eventId: string, options: Option
   if (!record?.session.zoomMeetingId) return;
   const { event, session } = record;
   const meetingId = session.zoomMeetingId!;
-  const unlink = () =>
-    getDb()
+  const unlink = async () => {
+    await getDb()
       .update(sessions)
       .set({ zoomMeetingId: null, zoomJoinUrl: null, updatedAt: new Date() })
       .where(eq(sessions.id, session.id));
+    await recordZoomSync(session.id, null);
+  };
   try {
     try {
       await deleteZoomMeeting(meetingId);
