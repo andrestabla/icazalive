@@ -3,72 +3,68 @@
    la parte superior y el chat/preguntas/encuestas se usan debajo. */
 
 @media (max-width: 760px) {
-  .room-body { display: flex; flex-direction: column; min-height: auto; }
+  /* Disposición tipo app: video fijo arriba, reacciones, y debajo el panel de
+     chat/preguntas/encuestas con su propio desplazamiento y el compositor
+     siempre a la vista. */
+  .participant-room { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  .room-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
   /* Los hijos de room-main pasan a ser hijos directos del cuerpo para poder
-     intercalar el panel de interacción justo después del escenario. */
+     ordenarlos con el panel de interacción. */
   .room-main { display: contents; }
-  .room-stage {
-    order: 1;
-    position: sticky;
-    top: 0;
-    z-index: 6;
-    min-height: 0;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: 0 10px 30px #17132d33;
-  }
-  .room-interaction { order: 2; border-top: 0; }
-  .room-reaction-bar { order: 3; margin: 10px 10px 0; }
-  .room-session-info { order: 4; margin: 10px 10px 16px; }
+  .room-stage { order: 1; flex: 0 0 auto; min-height: 0; margin: 0; border-radius: 0; }
+  .room-reaction-bar { order: 2; flex: 0 0 auto; margin: 0; border-left: 0; border-right: 0; border-radius: 0; }
+  .room-interaction { order: 3; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; border-top: 0; }
+  .room-session-info { display: none; }
 
   /* Escenario: el video se ajusta a 16:9 y el lobby mantiene un alto útil. */
-  .room-stage-head, .room-stage > footer { padding: 9px 12px; font-size: 10px; }
+  .room-stage-head, .room-stage > footer { padding: 8px 12px; font-size: 10px; }
   .room-stage > footer small { display: none; }
   .room-stage .simulated-player { flex: 0 0 auto; }
-  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; min-height: 0; max-height: 48vh; background: #000; object-fit: contain; }
+  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; min-height: 0; max-height: 40vh; background: #000; object-fit: contain; }
   .simulated-player-bar { flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
   .simulated-player-bar button { padding: 8px 11px; font-size: 12px; }
   .simulated-player-bar span { font-size: 10px; }
-  .room-lobby { padding: 28px 0 22px; }
+  .room-lobby { padding: 24px 0 20px; }
   .room-lobby > span { width: 42px; height: 42px; margin-bottom: 10px; font-size: 18px; }
   .room-lobby h1 { font-size: clamp(22px, 7vw, 30px); margin-bottom: 8px; }
   .room-lobby > p:not(.eyebrow) { font-size: 12px; }
   .room-lobby > div { margin-top: 14px; padding: 8px 12px; }
   .room-video-ready { padding: 26px 0; }
 
-  /* Panel de interacción: altura natural, lista acotada y compositor a la vista. */
-  .room-interaction > nav { position: sticky; top: var(--room-stage-height, 0); z-index: 5; background: #fff; }
+  /* Panel de interacción: pestañas fijas arriba, lista desplazable y
+     compositor pegado abajo. */
+  .room-interaction > nav { position: sticky; top: 0; z-index: 5; flex: 0 0 auto; background: #fff; }
   .room-interaction > nav button { font-size: 12px; }
   .room-interaction > nav button span { display: inline; }
-  .room-chat-panel { min-height: 0; display: flex; flex-direction: column; }
-  .room-chat-list { min-height: 140px; max-height: 42vh; }
-  .room-question-list, .room-poll-list { max-height: 50vh; overflow-y: auto; }
-  .room-chat-form { position: sticky; bottom: 0; }
+  .room-chat-panel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .room-chat-list { flex: 1 1 auto; min-height: 120px; max-height: none; overflow-y: auto; }
+  .room-question-list, .room-poll-list { max-height: none; }
+  .room-chat-form { position: sticky; bottom: 0; flex: 0 0 auto; }
   .room-chat-form textarea, .room-question-form textarea { font-size: 16px; } /* evita el zoom automático de iOS */
   .room-chat-form > div { grid-template-columns: 1fr 44px; }
   .room-chat-form button, .room-question-form button { min-height: 40px; }
   .room-empty { padding: 22px 12px; }
 
   /* Reacciones en una sola fila desplazable, con área táctil cómoda. */
-  .room-reaction-bar { flex-wrap: nowrap; overflow-x: auto; gap: 6px; }
+  .room-reaction-bar { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 6px 10px; }
   .room-reaction-bar > p { flex: 0 0 auto; min-width: 0; }
   .room-reaction-bar > p small { display: none; }
-  .room-reaction-bar button { flex: 0 0 auto; min-width: 48px; min-height: 40px; }
+  .room-reaction-bar button { flex: 0 0 auto; min-width: 48px; min-height: 38px; }
 
   /* Cabecera compacta. */
-  .room-topbar { min-height: 56px; padding: 8px 12px; gap: 10px; }
+  .room-topbar { flex: 0 0 auto; min-height: 52px; padding: 6px 12px; gap: 10px; }
   .room-viewer p { display: none; }
-  .room-preview-banner { font-size: 10px; padding: 6px 10px; }
+  .room-preview-banner { flex: 0 0 auto; font-size: 10px; padding: 6px 10px; }
 
   /* El widget de ayuda no debe tapar el botón de enviar del chat. */
-  body:has(.participant-room) .global-help-widget { right: 10px; bottom: 10px; }
-  body:has(.participant-room) .global-help-trigger { width: 38px; height: 38px; opacity: .8; }
+  body:has(.participant-room) .global-help-widget { right: 8px; bottom: auto; top: 8px; }
+  body:has(.participant-room) .global-help-trigger { width: 34px; height: 34px; opacity: .85; }
 }
 
 @media (max-width: 760px) and (orientation: landscape) {
-  /* Teléfono girado: el video ocupa el alto disponible y el panel sigue debajo. */
-  .room-stage { position: static; }
-  .room-stage .simulated-player video { max-height: 70vh; }
+  /* Teléfono girado: el video usa más alto y el panel sigue debajo. */
+  .room-stage .simulated-player video { max-height: 55vh; }
+  .room-reaction-bar { display: none; }
 }
 
 @media (min-width: 761px) and (max-width: 1050px) {
