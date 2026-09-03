@@ -62,10 +62,14 @@ export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
         instance.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            // Mientras el canal no recibe señal, IVS responde 404: se
-            // reintenta en lugar de romper la sala.
+            // Mientras el canal no recibe señal, IVS responde 404: se vuelve
+            // a cargar el manifiesto cada pocos segundos (startLoad no lo
+            // reintenta tras un error fatal de manifiesto).
             setState("waiting");
-            window.setTimeout(() => instance.startLoad(), 4000);
+            window.setTimeout(() => {
+              if (cancelled) return;
+              instance.loadSource(playbackUrl);
+            }, 4000);
           } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
             instance.recoverMediaError();
           } else {
