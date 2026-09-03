@@ -45,6 +45,8 @@ export default async function StudioPage({
         title: record.event.title,
         slug: record.event.slug,
         timezone: record.event.timezone,
+        status: record.event.status,
+        format: record.event.format,
       }}
       session={{
         id: record.session.id,
@@ -55,6 +57,7 @@ export default async function StudioPage({
         zoomMeetingId: record.session.zoomMeetingId,
         ivsChannelArn: record.session.ivsChannelArn,
         playbackUrl: record.session.playbackUrl,
+        emitterStatus: record.session.emitterStatus,
         technicalCheckAt:
           record.session.technicalCheckAt?.toISOString() ?? null,
       }}

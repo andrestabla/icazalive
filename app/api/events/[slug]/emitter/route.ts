@@ -54,10 +54,27 @@ export async function GET(_: Request, context: RouteContext) {
         .where(eq(sessions.id, session.id));
     }
   }
+  // Comprueba la señal real del canal: IVS responde 200 solo mientras recibe
+  // stream, así que sirve como verificación de la prueba técnica.
+  let signal: "live" | "offline" | "unknown" = "unknown";
+  if (session.playbackUrl) {
+    try {
+      const probe = await fetch(session.playbackUrl, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(4_000),
+      });
+      signal = probe.ok ? "live" : "offline";
+    } catch {
+      signal = "unknown";
+    }
+  }
   return NextResponse.json({
     data: {
       status: liveState,
+      signal,
+      playbackUrl: session.playbackUrl,
       ecsConfigured: Boolean(ecs),
+      contentConfigured: Boolean(resolved.event.contentAssetId),
       startedAt: session.emitterStartedAt,
     },
   });

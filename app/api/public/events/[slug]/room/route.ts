@@ -326,6 +326,8 @@ export async function GET(request: Request, context: RouteContext) {
         zoomJoinUrl: record.session.zoomJoinUrl,
       },
       attendeeCount: attendeeSummary[0]?.total ?? 0,
+      technicalTest:
+        viewer.kind === "preview" && record.session.emitterStatus === "running",
       simulatedPlayback: simulatedReady
         ? {
             durationSeconds: record.event.recordedVideoDurationSeconds,
