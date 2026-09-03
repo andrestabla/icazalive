@@ -17,6 +17,7 @@ import {
   ensureZoomMeetingForEvent,
   syncZoomMeetingForEvent,
 } from "@/lib/zoom-automation";
+import { stopEventEmitter } from "@/lib/simulated-emitter";
 import { getPublicOrigin } from "@/lib/public-origin";
 import {
   canTransition,
@@ -389,4 +390,72 @@ export async function PATCH(request: Request, context: RouteContext) {
     request,
   });
   return NextResponse.json({ data: updated });
+}
+
+// Eliminación definitiva (solo administradores). Las sesiones, inscripciones,
+// comunicaciones, interacción y contenidos asociados se borran en cascada; la
+// auditoría conserva el registro de quién eliminó qué y cuándo.
+export async function DELETE(request: Request, context: RouteContext) {
+  const permissionCheck = await requireApiPermission("events.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
+  const currentUser = await requireApiUser();
+  if (!currentUser) {
+    return NextResponse.json({ error: "No autenticado." }, { status: 401 });
+  }
+  const { slug } = await context.params;
+  const db = getDb();
+  const [current] = await db.select().from(events).where(eq(events.slug, slug)).limit(1);
+  if (!current) {
+    return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (currentUser.role !== "administrator") {
+    await writeAuditLog({
+      actor: currentUser,
+      action: "event.delete.denied",
+      resourceType: "event",
+      resourceId: current.id,
+      outcome: "denied",
+      summary: `Intento de eliminar “${current.title}” sin rol de administrador.`,
+      request,
+    });
+    return NextResponse.json({ error: "Solo un administrador puede eliminar eventos." }, { status: 403 });
+  }
+  if (current.status === "live") {
+    return NextResponse.json(
+      { error: "El evento está en vivo. Finalízalo o cancélalo antes de eliminarlo." },
+      { status: 409 },
+    );
+  }
+
+  const [registrationSummary] = await db
+    .select({ total: count() })
+    .from(registrations)
+    .where(eq(registrations.eventId, current.id));
+  const registrationCount = registrationSummary?.total ?? 0;
+
+  // Recursos externos: se detiene una emisión activa y se marca la reunión de
+  // Zoom como cancelada antes de borrar el registro local.
+  await stopEventEmitter(current, { actor: currentUser, request, automatic: true }).catch(() => undefined);
+  await cancelZoomMeetingForEvent(current.id, { actor: currentUser, request }).catch(() => undefined);
+
+  await db.delete(events).where(eq(events.id, current.id));
+
+  await writeAuditLog({
+    actor: currentUser,
+    action: "event.deleted",
+    resourceType: "event",
+    resourceId: current.id,
+    summary: `Evento “${current.title}” eliminado definitivamente (${registrationCount} inscripciones).`,
+    details: {
+      slug: current.slug,
+      title: current.title,
+      format: current.format,
+      status: current.status,
+      startsAt: current.startsAt.toISOString(),
+      registrations: registrationCount,
+    },
+    request,
+  });
+
+  return NextResponse.json({ data: { deleted: true, id: current.id } });
 }
