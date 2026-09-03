@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import StudioTechnicalTest from "./studio-technical-test";
 import { ServiceLogo } from "@/app/components/service-logo";
 import { AdminIcon } from "@/app/components/admin-icon";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
@@ -22,6 +23,7 @@ type StudioSession = {
   ivsChannelArn: string | null;
   playbackUrl: string | null;
   technicalCheckAt: string | null;
+  emitterStatus: "idle" | "starting" | "running" | "stopping" | "stopped" | "error";
 };
 
 export default function StudioClient({
@@ -29,7 +31,7 @@ export default function StudioClient({
   session: initialSession,
   initialChecks,
 }: {
-  event: { title: string; slug: string; timezone: string };
+  event: { title: string; slug: string; timezone: string; status: string; format: string };
   session: StudioSession;
   initialChecks: StreamingCheck[];
 }) {
@@ -105,21 +107,7 @@ export default function StudioClient({
 
       <div className="studio-grid">
         <section className="studio-stage-card">
-          <div className="studio-stage">
-            <div className="studio-stage-top">
-              <span>PREVISUALIZACIÓN</span>
-              <i>LOCAL</i>
-            </div>
-            <div className="studio-stage-empty">
-              <span><AdminIcon name="event-live" /></span>
-              <h2>La señal aún no está conectada</h2>
-              <p>Esta vista mostrará la salida de Amazon IVS cuando estén disponibles las credenciales y el canal.</p>
-            </div>
-            <div className="studio-stage-bottom">
-              <span><AdminIcon name="event-live" /> {event.title}</span>
-              <small>Sin emisión pública</small>
-            </div>
-          </div>
+          <StudioTechnicalTest event={event} session={session} />
           <div className="studio-sources">
             <div><ServiceLogo service="zoom" /><p><b>Fuente Zoom</b><small>{session.zoomMeetingId ? `Reunión ${session.zoomMeetingId}` : "Sin reunión configurada"}</small></p></div>
             <div><ServiceLogo service="amazon_ivs" /><p><b>Salida Amazon IVS</b><small>{session.ivsChannelArn ? "Canal configurado" : "Sin canal configurado"}</small></p></div>
@@ -142,7 +130,7 @@ export default function StudioClient({
           <button className="primary-button" disabled={checking} onClick={() => void runCheck()}>
             {checking ? "Verificando…" : "Ejecutar revisión"}
           </button>
-          <p className="studio-safety-note">Esta acción solo valida la configuración. No inicia una transmisión ni crea recursos externos.</p>
+          <p className="studio-safety-note">La revisión valida la configuración. La prueba técnica del escenario emite por Amazon IVS solo para el organizador: no cambia el estado del evento ni notifica a los inscritos; al llegar la hora, la automatización reinicia el contenido desde el comienzo.</p>
         </aside>
       </div>
     </>

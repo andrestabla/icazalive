@@ -76,6 +76,7 @@ type RoomData = {
     reason: string | null;
   };
   serverTime: string;
+  technicalTest?: boolean;
 };
 
 const REACTIONS = ["👏", "❤️", "👍", "🎉", "✋"];
@@ -322,6 +323,9 @@ export default function RoomClient({
   }
 
   const isLive = room.event.status === "live";
+  // Prueba técnica: el organizador ve la señal IVS antes de salir en vivo; los
+  // participantes siguen viendo el lobby.
+  const technicalTest = !isLive && room.viewer.kind === "preview" && Boolean(room.technicalTest);
   const start = new Date(room.event.startsAt);
   const now = new Date(room.serverTime);
   const minutesUntilStart = Math.max(
@@ -353,7 +357,7 @@ export default function RoomClient({
         <section className="room-main">
           <div className="room-stage">
             <div className="room-stage-head">
-              <span className={isLive ? "live" : ""}>● {isLive ? "EN VIVO" : "LOBBY"}</span>
+              <span className={isLive ? "live" : ""}>● {isLive ? "EN VIVO" : technicalTest ? "PRUEBA TÉCNICA · sin emisión pública" : "LOBBY"}</span>
               <small>◉ {room.attendeeCount} participantes</small>
             </div>
             {room.simulatedPlayback &&
@@ -366,7 +370,7 @@ export default function RoomClient({
                 serverTime={room.serverTime}
                 isParticipant={room.viewer.kind === "participant"}
               />
-            ) : isLive && room.session.playbackUrl ? (
+            ) : (isLive || technicalTest) && room.session.playbackUrl ? (
               <IvsPlayer playbackUrl={room.session.playbackUrl} />
             ) : isLive && room.session.zoomJoinUrl ? (
               <div className="room-video-ready">
