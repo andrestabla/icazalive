@@ -25,7 +25,7 @@
   .room-stage-head, .room-stage > footer { padding: 9px 12px; font-size: 10px; }
   .room-stage > footer small { display: none; }
   .room-stage .simulated-player { flex: 0 0 auto; }
-  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; max-height: 48vh; background: #000; object-fit: contain; }
+  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; min-height: 0; max-height: 48vh; background: #000; object-fit: contain; }
   .simulated-player-bar { flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
   .simulated-player-bar button { padding: 8px 11px; font-size: 12px; }
   .simulated-player-bar span { font-size: 10px; }
@@ -74,7 +74,7 @@
 @media (min-width: 761px) and (max-width: 1050px) {
   /* Tabletas: una sola columna con el escenario en 16:9 y el panel debajo. */
   .room-stage { min-height: 0; }
-  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; max-height: 60vh; object-fit: contain; background: #000; }
+  .room-stage .simulated-player video { width: 100%; aspect-ratio: 16 / 9; height: auto; min-height: 0; max-height: 60vh; object-fit: contain; background: #000; }
   .room-chat-panel { min-height: 0; }
   .room-chat-list { min-height: 180px; max-height: 45vh; }
 }
