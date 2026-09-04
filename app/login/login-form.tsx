@@ -1,5 +1,6 @@
 "use client";
 
+import "./login-brand.css";
 import { FormEvent, useEffect, useState } from "react";
 
 export default function LoginForm({
