@@ -1,0 +1,35 @@
+/* Logo de la pantalla de inicio de sesión. El archivo de marca es apaisado
+   (900x218) y con fondo blanco, así que se limita por altura y se presenta
+   como una tarjeta redondeada que funciona sobre el panel morado. */
+
+.login-brand,
+.login-mobile-brand {
+  min-width: 0;
+}
+
+.login-logo {
+  display: block;
+  width: auto;
+  height: 44px;
+  max-width: min(100%, 300px);
+  object-fit: contain;
+  border-radius: 11px;
+  background: #fff;
+  padding: 6px 11px;
+  box-shadow: 0 8px 22px #17132d1f;
+}
+
+.login-mobile-brand .login-logo {
+  height: 38px;
+  max-width: min(100%, 240px);
+  box-shadow: 0 5px 15px #17132d14;
+}
+
+@media (max-width: 1050px) {
+  .login-logo { height: 38px; max-width: min(100%, 250px); }
+}
+
+@media (max-width: 520px) {
+  .login-logo { height: 34px; padding: 5px 9px; border-radius: 9px; }
+  .login-mobile-brand .login-logo { height: 34px; }
+}
