@@ -1,0 +1,93 @@
+/* Menú "Acciones" de cada evento del catálogo. El menú se posiciona con
+   coordenadas fijas porque la tarjeta usa overflow: hidden y recortaría un
+   menú absoluto. */
+
+.event-actions-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line, #e5e2e9);
+  border-radius: 8px;
+  background: #fff;
+  color: #575263;
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+.event-actions-trigger:hover,
+.event-actions-trigger[aria-expanded="true"] {
+  border-color: #c6bcec;
+  background: #f7f5ff;
+  color: #5a3fd0;
+}
+
+.event-actions-trigger > span {
+  font-size: 10px;
+  line-height: 1;
+  opacity: .75;
+}
+
+.event-actions-menu {
+  position: fixed;
+  z-index: 40;
+  min-width: 196px;
+  display: grid;
+  gap: 1px;
+  transform: translateX(-100%);
+  border: 1px solid #e2dfe8;
+  border-radius: 11px;
+  background: #fff;
+  padding: 6px;
+  box-shadow: 0 16px 38px #17132d24;
+}
+
+.event-actions-menu > a,
+.event-actions-menu > button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #443f50;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.event-actions-menu > a:hover,
+.event-actions-menu > button:hover,
+.event-actions-menu > a:focus-visible,
+.event-actions-menu > button:focus-visible {
+  background: #f4f1fd;
+  color: #5a3fd0;
+}
+
+.event-actions-menu > .danger {
+  color: #b33b50;
+}
+
+.event-actions-menu > .danger:hover,
+.event-actions-menu > .danger:focus-visible {
+  background: #fdf1f3;
+  color: #97293d;
+}
+
+.event-actions-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: #eeebf2;
+}
+
+@media (max-width: 760px) {
+  .event-actions-trigger { padding: 8px 12px; }
+  .event-actions-menu > a,
+  .event-actions-menu > button { padding: 11px 12px; font-size: 13px; }
+}
