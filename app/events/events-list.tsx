@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { FormEvent } from "react";
+import "./events-actions.css";
 import { useEffect, useMemo, useState } from "react";
 import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
 
@@ -99,6 +100,29 @@ export default function EventsList() {
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteNotice, setDeleteNotice] = useState("");
+  const [actionsMenu, setActionsMenu] = useState<{
+    event: EventRecord;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!actionsMenu) return;
+    const close = () => setActionsMenu(null);
+    const onKeyDown = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === "Escape") close();
+    };
+    window.addEventListener("click", close);
+    window.addEventListener("resize", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("resize", close);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [actionsMenu]);
 
   useEffect(() => {
     let cancelled = false;
@@ -263,8 +287,9 @@ export default function EventsList() {
       </header>
       {deleteNotice && (
         <div className="events-notice" role="status">
-          <span>{deleteNotice}</span>
-          <button type="button" onClick={() => setDeleteNotice("")}>Cerrar</button>
+          <span>✓</span>
+          <p>{deleteNotice}</p>
+          <button aria-label="Cerrar aviso" onClick={() => setDeleteNotice("")}>×</button>
         </div>
       )}
 
@@ -364,13 +389,23 @@ export default function EventsList() {
                   <b className={event.registrationOpen ? "open" : ""}>{event.registrationOpen ? "Abierto" : "Cerrado"}</b>
                 </div>
                 <div className="catalog-actions">
-                  <button onClick={() => openDuplicate(event)}>Duplicar</button>
-                  {isAdmin && (
-                    <button style={{ color: "#b33b50" }} onClick={() => { setDeleteTarget(event); setDeleteConfirmation(""); setDeleteError(""); }}>
-                      Eliminar
-                    </button>
-                  )}
-                  <Link href={`/events/${event.slug}`} className="detail-link">Gestionar <span>→</span></Link>
+                  <button
+                    type="button"
+                    className="event-actions-trigger"
+                    aria-haspopup="menu"
+                    aria-expanded={actionsMenu?.event.id === event.id}
+                    onClick={(clickEvent) => {
+                      clickEvent.stopPropagation();
+                      const bounds = clickEvent.currentTarget.getBoundingClientRect();
+                      setActionsMenu((current) =>
+                        current?.event.id === event.id
+                          ? null
+                          : { event, x: bounds.right, y: bounds.bottom + 6 },
+                      );
+                    }}
+                  >
+                    Acciones <span aria-hidden="true">▾</span>
+                  </button>
                 </div>
               </article>
             );
@@ -572,6 +607,47 @@ export default function EventsList() {
               </div>
             </form>
           </section>
+        </div>
+      )}
+      {actionsMenu && (
+        <div
+          className="event-actions-menu"
+          role="menu"
+          style={{ left: actionsMenu.x, top: actionsMenu.y }}
+          onClick={(clickEvent) => clickEvent.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              openDuplicate(actionsMenu.event);
+              setActionsMenu(null);
+            }}
+          >
+            Duplicar
+          </button>
+          {isAdmin && (
+            <>
+              <div className="event-actions-separator" />
+              <button
+                type="button"
+                role="menuitem"
+                className="danger"
+                onClick={() => {
+                  setDeleteTarget(actionsMenu.event);
+                  setDeleteConfirmation("");
+                  setDeleteError("");
+                  setActionsMenu(null);
+                }}
+              >
+                Eliminar
+              </button>
+              <div className="event-actions-separator" />
+            </>
+          )}
+          <Link role="menuitem" href={`/events/${actionsMenu.event.slug}`}>
+            Gestionar →
+          </Link>
         </div>
       )}
     </>

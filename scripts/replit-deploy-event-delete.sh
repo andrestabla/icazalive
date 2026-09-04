@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Eliminar eventos (solo administradores) con registro en auditoría. Uso en Replit:
+# Eliminar eventos (solo administradores) + menú "Acciones" en la lista, con
+# registro en auditoría. Uso en Replit:
 #   curl -sL https://codeload.github.com/andrestabla/icazalive/tar.gz/refs/heads/feat/aws-ivs-s3 | tar xz -C /tmp && bash /tmp/icazalive-feat-aws-ivs-s3/scripts/replit-deploy-event-delete.sh
 set -euo pipefail
 SRC=/tmp/icazalive-feat-aws-ivs-s3
 cp "$SRC/app/api/events/[slug]/route.ts" "app/api/events/[slug]/route.ts"; echo "copiado app/api/events/[slug]/route.ts"
 cp "$SRC/lib/zoom-automation.ts" lib/zoom-automation.ts; echo "copiado lib/zoom-automation.ts"
+cp "$SRC/app/events/events-actions.css" app/events/events-actions.css; echo "copiado app/events/events-actions.css"
 python3 "$SRC/scripts/apply-event-delete.py" .
+python3 "$SRC/scripts/apply-event-actions-menu.py" .
 npx tsc --noEmit -p . && echo TSC_OK
 npm run build 2>&1 | tail -3
 echo DEPLOY_PREP_DONE
