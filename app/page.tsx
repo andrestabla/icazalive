@@ -1,12 +1,17 @@
 import { redirect } from "next/navigation";
 import Dashboard from "./dashboard-client";
-import { requirePageUser } from "@/lib/auth";
+import { getCurrentUser, requirePageUser } from "@/lib/auth";
+import PublicHome from "./public-home";
 import { getDashboardSummary } from "@/lib/dashboard";
 import { getEffectivePermissions, permissionCatalog } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  // Visitantes sin sesión: portada pública del dominio.
+  const visitor = await getCurrentUser();
+  if (!visitor) return <PublicHome />;
+
   const user = await requirePageUser();
   const { granted } = await getEffectivePermissions(user);
 
