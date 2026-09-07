@@ -33,12 +33,12 @@ if "broadcast_details" not in s:
         nombres.append("getBroadcastDetails")
     s = sub(s, r'import \{[^}]*\} from "@/lib/aws-ivs";',
             lambda _m: 'import {\n  ' + ",\n  ".join(sorted(nombres)) + ',\n} from "@/lib/aws-ivs";', "import de aws-ivs")
-    s = sub(s, r'(    action\?: "save" \| "run_check" \| "provision";)',
-            r'    action?: "save" | "run_check" | "provision" | "broadcast_details";', "tipo de acción")
-    s = sub(s, r'(      body\.action !== "provision"\))',
-            r'      body.action !== "provision" &&\n      body.action !== "broadcast_details")', "validación de acción")
-    s = sub(s, r'(  const mode = body\.streamingMode \?\? record\.session\.streamingMode;\n)',
-            r'''\1
+    s = sub(s, r'(action\?:\s*"save"(?:\s*\|\s*"[a-z_]+")*)(;)',
+            r'\1 | "broadcast_details"\2', "tipo de acción")
+    s = sub(s, r'(body\.action !== "provision")(\))',
+            r'\1 &&\n      body.action !== "broadcast_details"\2', "validación de acción")
+    s = sub(s, r'(\n  if \(body\.action === "provision"\) \{)',
+            r'''
   // Datos de emisión: se piden a IVS en el momento porque la clave no se
   // guarda en la base. Sirven para configurar Zoom o un codificador externo.
   if (body.action === "broadcast_details") {
@@ -75,7 +75,7 @@ if "broadcast_details" not in s:
       },
     });
   }
-''', "bloque de datos de emisión")
+\1''', "bloque de datos de emisión")
     p.write_text(s); hechos.append("consulta de datos de emisión")
 
 print("ok:", ", ".join(hechos) if hechos else "ya aplicado")

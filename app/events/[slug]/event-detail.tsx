@@ -1027,39 +1027,6 @@ export default function EventDetail({
                   </div>
                 ))}
               </div>
-              {broadcastDetails && (
-                <div className="broadcast-details">
-                  <p className="eyebrow">DATOS DE EMISIÓN</p>
-                  <p>
-                    Configura estos valores en tu fuente de video. En Zoom:
-                    Más → En vivo en un servicio de streaming personalizado.
-                  </p>
-                  <label>
-                    URL del servidor
-                    <input readOnly value={broadcastDetails.ingestEndpoint} onFocus={(input) => input.target.select()} />
-                  </label>
-                  <label>
-                    Clave de emisión
-                    <input
-                      readOnly
-                      type={broadcastRevealed ? "text" : "password"}
-                      value={broadcastDetails.streamKey}
-                      onFocus={(input) => input.target.select()}
-                    />
-                  </label>
-                  <div className="broadcast-details-actions">
-                    <button className="secondary-action" onClick={() => setBroadcastRevealed((value) => !value)}>
-                      {broadcastRevealed ? "Ocultar clave" : "Mostrar clave"}
-                    </button>
-                    <button className="secondary-action" onClick={() => setBroadcastDetails(null)}>
-                      Cerrar
-                    </button>
-                  </div>
-                  <small>
-                    Trata la clave como una contraseña: quien la tenga puede emitir en este evento.
-                  </small>
-                </div>
-              )}
             </section>
 
             <section className="panel detail-panel">
@@ -1800,22 +1767,56 @@ export default function EventDetail({
               <div className="streaming-overview-actions">
                 <button
                   className="secondary-action"
-                  disabled={streamingSaving}
-                  onClick={() => void saveStreamingConfiguration("run_check")}
-                >
-                  {streamingSaving ? "Verificando…" : "Ejecutar revisión técnica"}
-                </button>
-                <button
-                  className="secondary-action"
                   disabled={broadcastLoading}
                   onClick={() => void loadBroadcastDetails()}
                 >
                   {broadcastLoading ? "Consultando…" : "Datos de emisión"}
                 </button>
+                <button
+                  className="secondary-action"
+                  disabled={streamingSaving}
+                  onClick={() => void saveStreamingConfiguration("run_check")}
+                >
+                  {streamingSaving ? "Verificando…" : "Ejecutar revisión técnica"}
+                </button>
                 <Link className="primary-button link-button" href={`/events/${event.slug}/studio`}>
                   Abrir sala técnica
                 </Link>
               </div>
+
+              {broadcastDetails && (
+                <div className="broadcast-details">
+                  <p className="eyebrow">DATOS DE EMISIÓN</p>
+                  <p>
+                    Configura estos valores en tu fuente de video. En Zoom:
+                    Más → En vivo en un servicio de streaming personalizado.
+                  </p>
+                  <label>
+                    URL del servidor
+                    <input readOnly value={broadcastDetails.ingestEndpoint} onFocus={(input) => input.target.select()} />
+                  </label>
+                  <label>
+                    Clave de emisión
+                    <input
+                      readOnly
+                      type={broadcastRevealed ? "text" : "password"}
+                      value={broadcastDetails.streamKey}
+                      onFocus={(input) => input.target.select()}
+                    />
+                  </label>
+                  <div className="broadcast-details-actions">
+                    <button className="secondary-action" onClick={() => setBroadcastRevealed((value) => !value)}>
+                      {broadcastRevealed ? "Ocultar clave" : "Mostrar clave"}
+                    </button>
+                    <button className="secondary-action" onClick={() => setBroadcastDetails(null)}>
+                      Cerrar
+                    </button>
+                  </div>
+                  <small>
+                    Trata la clave como una contraseña: quien la tenga puede emitir en este evento.
+                  </small>
+                </div>
+              )}
             </section>
 
             <div className="streaming-pipeline" aria-label="Flujo de transmisión">

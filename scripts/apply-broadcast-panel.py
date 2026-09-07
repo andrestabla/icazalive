@@ -59,23 +59,19 @@ sub(r'(  const saveStreamingConfiguration = async \()',
 
   const saveStreamingConfiguration = async (''', "función de consulta")
 
-# Botón junto a los demás
-sub(r'(                <Link className="primary-button link-button" href=\{`/events/\$\{event\.slug\}/studio`\}>\n                  Abrir sala técnica\n                </Link>\n)',
-    lambda _m: '''                <button
+# El botón entra en el contenedor de acciones y el panel justo detrás. Se
+# ancla al propio contenedor, que no tiene divs dentro, en vez de a los textos
+# de los botones (que en algunas versiones llevan iconos).
+BOTON = """<div className="streaming-overview-actions">
+                <button
                   className="secondary-action"
                   disabled={broadcastLoading}
                   onClick={() => void loadBroadcastDetails()}
                 >
                   {broadcastLoading ? "Consultando…" : "Datos de emisión"}
-                </button>
-                <Link className="primary-button link-button" href={`/events/${event.slug}/studio`}>
-                  Abrir sala técnica
-                </Link>
-''', "botón de datos de emisión")
+                </button>"""
 
-# Panel con los datos
-sub(r'(              </div>\n            </section>\n)',
-    lambda _m: '''              </div>
+PANEL = """
               {broadcastDetails && (
                 <div className="broadcast-details">
                   <p className="eyebrow">DATOS DE EMISIÓN</p>
@@ -109,8 +105,12 @@ sub(r'(              </div>\n            </section>\n)',
                   </small>
                 </div>
               )}
-            </section>
-''', "panel de datos")
+"""
+
+m = re.search(r'<div className="streaming-overview-actions">(.*?)</div>\n', s_target := s, re.S)
+sub(r'(<div className="streaming-overview-actions">)(.*?)(</div>\n)',
+    lambda match: BOTON + match.group(2) + match.group(3) + PANEL,
+    "contenedor de acciones de transmisión")
 
 p.write_text(s)
 print("ok", p)
