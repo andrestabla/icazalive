@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gt } from "drizzle-orm";
+import { and, count, desc, eq, gte } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventChatMessages, eventQuestions, eventReactions } from "@/db/schema";
 
@@ -26,9 +26,28 @@ type Watcher = {
   timer: ReturnType<typeof setInterval> | null;
   lastChatAt: Date | null;
   lastQuestionAt: Date | null;
+  // PostgreSQL guarda los instantes con microsegundos y el driver los entrega
+  // redondeados a milisegundos: comparar "posterior a la última marca" vuelve a
+  // encontrar la misma fila una y otra vez. Se recuerdan los identificadores ya
+  // difundidos para no repetir nada.
+  seenChat: Set<string>;
+  seenQuestions: Set<string>;
   reactionsSignature: string | null;
   running: boolean;
 };
+
+const SEEN_LIMIT = 400;
+
+function remember(seen: Set<string>, ids: string[]) {
+  for (const id of ids) seen.add(id);
+  if (seen.size <= SEEN_LIMIT) return;
+  const excess = seen.size - SEEN_LIMIT;
+  let removed = 0;
+  for (const id of seen) {
+    seen.delete(id);
+    if (++removed >= excess) break;
+  }
+}
 
 const globalStore = globalThis as unknown as {
   __icazaRoomWatchers?: Map<string, Watcher>;
@@ -73,7 +92,7 @@ async function tick(eventId: string, watcher: Watcher) {
           eq(eventChatMessages.channel, "public"),
           eq(eventChatMessages.status, "visible"),
           ...(watcher.lastChatAt
-            ? [gt(eventChatMessages.createdAt, watcher.lastChatAt)]
+            ? [gte(eventChatMessages.createdAt, watcher.lastChatAt)]
             : []),
         ),
       )
@@ -81,13 +100,14 @@ async function tick(eventId: string, watcher: Watcher) {
       .limit(CHAT_LIMIT);
 
     if (chatRows.length) {
-      const newest = chatRows[0].createdAt;
       const first = watcher.lastChatAt === null;
-      watcher.lastChatAt = newest;
-      if (!first) {
+      watcher.lastChatAt = chatRows[0].createdAt;
+      const fresh = chatRows.filter((row) => !watcher.seenChat.has(row.id));
+      remember(watcher.seenChat, chatRows.map((row) => row.id));
+      if (!first && fresh.length) {
         broadcast(watcher, {
           type: "chat",
-          messages: chatRows.map((row) => ({
+          messages: fresh.map((row) => ({
             id: row.id,
             authorName: row.authorName,
             message: row.message,
@@ -106,7 +126,7 @@ async function tick(eventId: string, watcher: Watcher) {
         and(
           eq(eventQuestions.eventId, eventId),
           ...(watcher.lastQuestionAt
-            ? [gt(eventQuestions.createdAt, watcher.lastQuestionAt)]
+            ? [gte(eventQuestions.createdAt, watcher.lastQuestionAt)]
             : []),
         ),
       )
@@ -116,7 +136,11 @@ async function tick(eventId: string, watcher: Watcher) {
     if (questionRows.length) {
       const first = watcher.lastQuestionAt === null;
       watcher.lastQuestionAt = questionRows[0].createdAt;
-      if (!first) broadcast(watcher, { type: "refresh", reason: "question" });
+      const fresh = questionRows.filter((row) => !watcher.seenQuestions.has(row.id));
+      remember(watcher.seenQuestions, questionRows.map((row) => row.id));
+      if (!first && fresh.length) {
+        broadcast(watcher, { type: "refresh", reason: "question" });
+      }
     }
 
     // Reacciones: el agregado es diminuto, así que viaja completo.
@@ -152,6 +176,8 @@ export function subscribeToRoom(eventId: string, subscriber: Subscriber) {
       timer: null,
       lastChatAt: null,
       lastQuestionAt: null,
+      seenChat: new Set(),
+      seenQuestions: new Set(),
       reactionsSignature: null,
       running: false,
     };
