@@ -1,5 +1,7 @@
 "use client";
 
+import "../broadcast-details.css";
+
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
@@ -303,6 +305,12 @@ export default function EventDetail({
   const [pendingStatus, setPendingStatus] = useState<EventData["status"] | null>(null);
   const [communicationSaving, setCommunicationSaving] = useState(false);
   const [streamingSaving, setStreamingSaving] = useState(false);
+  const [broadcastDetails, setBroadcastDetails] = useState<{
+    ingestEndpoint: string;
+    streamKey: string;
+  } | null>(null);
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
+  const [broadcastRevealed, setBroadcastRevealed] = useState(false);
   const [sessionEditor, setSessionEditor] = useState<
     SessionData | "new" | null
   >(null);
@@ -514,6 +522,33 @@ export default function EventDetail({
       setMessage(payload.error ?? "No fue posible guardar la comunicación.");
     }
     setCommunicationSaving(false);
+  };
+
+  // La clave de emisión no se guarda en la base: se pide a Amazon IVS en el
+  // momento en que el organizador la necesita para configurar la fuente.
+  const loadBroadcastDetails = async () => {
+    if (!streamingSession) return;
+    setBroadcastLoading(true);
+    setMessage("");
+    const response = await fetch(`/api/events/${event.slug}/streaming`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        sessionId: streamingSession.id,
+        action: "broadcast_details",
+      }),
+    });
+    const payload = (await response.json()) as {
+      data?: { ingestEndpoint: string; streamKey: string };
+      error?: string;
+    };
+    if (response.ok && payload.data) {
+      setBroadcastDetails(payload.data);
+      setBroadcastRevealed(false);
+    } else {
+      setMessage(payload.error ?? "No fue posible obtener los datos de emisión.");
+    }
+    setBroadcastLoading(false);
   };
 
   const saveStreamingConfiguration = async (
@@ -992,6 +1027,39 @@ export default function EventDetail({
                   </div>
                 ))}
               </div>
+              {broadcastDetails && (
+                <div className="broadcast-details">
+                  <p className="eyebrow">DATOS DE EMISIÓN</p>
+                  <p>
+                    Configura estos valores en tu fuente de video. En Zoom:
+                    Más → En vivo en un servicio de streaming personalizado.
+                  </p>
+                  <label>
+                    URL del servidor
+                    <input readOnly value={broadcastDetails.ingestEndpoint} onFocus={(input) => input.target.select()} />
+                  </label>
+                  <label>
+                    Clave de emisión
+                    <input
+                      readOnly
+                      type={broadcastRevealed ? "text" : "password"}
+                      value={broadcastDetails.streamKey}
+                      onFocus={(input) => input.target.select()}
+                    />
+                  </label>
+                  <div className="broadcast-details-actions">
+                    <button className="secondary-action" onClick={() => setBroadcastRevealed((value) => !value)}>
+                      {broadcastRevealed ? "Ocultar clave" : "Mostrar clave"}
+                    </button>
+                    <button className="secondary-action" onClick={() => setBroadcastDetails(null)}>
+                      Cerrar
+                    </button>
+                  </div>
+                  <small>
+                    Trata la clave como una contraseña: quien la tenga puede emitir en este evento.
+                  </small>
+                </div>
+              )}
             </section>
 
             <section className="panel detail-panel">
@@ -1736,6 +1804,13 @@ export default function EventDetail({
                   onClick={() => void saveStreamingConfiguration("run_check")}
                 >
                   {streamingSaving ? "Verificando…" : "Ejecutar revisión técnica"}
+                </button>
+                <button
+                  className="secondary-action"
+                  disabled={broadcastLoading}
+                  onClick={() => void loadBroadcastDetails()}
+                >
+                  {broadcastLoading ? "Consultando…" : "Datos de emisión"}
                 </button>
                 <Link className="primary-button link-button" href={`/events/${event.slug}/studio`}>
                   Abrir sala técnica

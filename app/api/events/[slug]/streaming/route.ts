@@ -13,6 +13,7 @@ import {
 } from "@/lib/streaming";
 import {
   createEventChannel,
+  getBroadcastDetails,
   getStreamState,
   readIvsCredentials,
 } from "@/lib/aws-ivs";
@@ -107,7 +108,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const body = (await request.json()) as {
     sessionId?: string;
-    action?: "save" | "run_check" | "provision";
+    action?: "save" | "run_check" | "provision" | "broadcast_details";
     streamingMode?: StreamingMode;
     latencyMode?: "low" | "standard";
     zoomMeetingId?: NullableText;
@@ -128,7 +129,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     (body.action !== undefined &&
       body.action !== "save" &&
       body.action !== "run_check" &&
-      body.action !== "provision") ||
+      body.action !== "provision" &&
+      body.action !== "broadcast_details") ||
     (body.streamingMode !== undefined &&
       !allowedModes.includes(body.streamingMode)) ||
     (body.latencyMode !== undefined &&
@@ -199,6 +201,43 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const mode = body.streamingMode ?? record.session.streamingMode;
+
+  // Datos de emisión: se piden a IVS en el momento porque la clave no se
+  // guarda en la base. Sirven para configurar Zoom o un codificador externo.
+  if (body.action === "broadcast_details") {
+    if (!record.session.ivsChannelArn) {
+      return NextResponse.json(
+        { error: "Este evento todavía no tiene canal de Amazon IVS." },
+        { status: 409 },
+      );
+    }
+    const credentials = readIvsCredentials();
+    if (!credentials) {
+      return NextResponse.json(
+        { error: "Faltan las credenciales de AWS en el servidor." },
+        { status: 409 },
+      );
+    }
+    const details = await getBroadcastDetails(credentials, record.session.ivsChannelArn);
+    if (!details.ok) {
+      return NextResponse.json({ error: details.error }, { status: 502 });
+    }
+    await writeAuditLog({
+      actor: auth.user,
+      action: "streaming.broadcast_details.viewed",
+      resourceType: "session",
+      resourceId: record.session.id,
+      summary: `Se consultaron los datos de emisión de “${record.event.title}”.`,
+      request,
+    });
+    return NextResponse.json({
+      data: {
+        ingestEndpoint: details.ingestEndpoint,
+        streamKey: details.streamKey,
+        playbackUrl: details.playbackUrl,
+      },
+    });
+  }
 
   // Aprovisionamiento: crea el canal de IVS para este evento y guarda su ARN
   // y URL de reproducción. El stream key y el ingest se devuelven una sola
