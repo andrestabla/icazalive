@@ -164,20 +164,46 @@ export default function RoomClient({
     void refresh();
     // Canal SSE: actividad nueva dispara un refresco inmediato; el sondeo
     // queda como respaldo con un intervalo más amplio cuando hay push.
-    let pollMs = 2_000;
+    // El canal SSE entrega el contenido nuevo ya resuelto, así que el sondeo
+    // completo queda como respaldo espaciado en lugar de dispararse con cada
+    // mensaje: con miles de asistentes eso provocaba una avalancha.
+    let pollMs = 60_000;
     const streamUrl = accessToken
       ? `/api/public/events/${eventShell.slug}/room/stream?access=${encodeURIComponent(accessToken)}`
       : `/api/public/events/${eventShell.slug}/room/stream`;
     const source = new EventSource(streamUrl);
     source.onopen = () => {
-      pollMs = 10_000;
+      pollMs = 60_000;
     };
     source.onerror = () => {
-      pollMs = 2_000;
+      pollMs = 8_000;
     };
-    source.onmessage = (message) => {
-      if (message.data !== "heartbeat") void refresh();
+    const applyStreamPayload = (raw: string) => {
+      if (raw === "heartbeat" || raw === "connected") return;
+      let payload: { type?: string; messages?: RoomData["messages"]; reactions?: RoomData["reactions"] };
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        void refresh();
+        return;
+      }
+      if (payload.type === "chat" && payload.messages?.length) {
+        setRoom((current) => {
+          if (!current) return current;
+          const known = new Set(current.messages.map((item) => item.id));
+          const fresh = payload.messages!.filter((item) => !known.has(item.id));
+          if (!fresh.length) return current;
+          return { ...current, messages: [...fresh, ...current.messages].slice(0, 100) };
+        });
+        return;
+      }
+      if (payload.type === "reactions" && payload.reactions) {
+        setRoom((current) => (current ? { ...current, reactions: payload.reactions! } : current));
+        return;
+      }
+      void refresh();
     };
+    source.onmessage = (message) => applyStreamPayload(message.data);
     let timer: number | undefined;
     const schedule = () => {
       timer = window.setTimeout(() => {

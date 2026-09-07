@@ -7,7 +7,7 @@ import {
   getBearerToken,
   resolveRegistrationAccess,
 } from "@/lib/registration-access";
-import { getRoomEmitter } from "@/lib/room-events";
+import { subscribeToRoom } from "@/lib/room-stream";
 
 export const runtime = "nodejs";
 
@@ -44,25 +44,23 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
 
-  const emitter = getRoomEmitter();
-  const channel = `room:${event.id}`;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
-      const send = (kind: string) => {
+      const send = (data: string) => {
         try {
-          controller.enqueue(encoder.encode(`data: ${kind}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${data}\n\n`));
         } catch {
           cleanup();
         }
       };
       const heartbeat = setInterval(() => send("heartbeat"), 25_000);
+      const unsubscribe = subscribeToRoom(event.id, send);
       const cleanup = () => {
         clearInterval(heartbeat);
-        emitter.off(channel, send);
+        unsubscribe();
       };
-      emitter.on(channel, send);
       request.signal.addEventListener("abort", () => {
         cleanup();
         try {

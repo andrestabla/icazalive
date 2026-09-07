@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 type PlayerState = "connecting" | "live" | "waiting" | "error";
 
+// Tope de calidad entregada. Amazon IVS cobra la salida por hora y espectador
+// según la resolución que recibe cada uno: 1080p cuesta el doble que 720p y el
+// cuádruple que 480p. Para una charla con diapositivas 720p es suficiente, así
+// que se limita por defecto y se puede ajustar con NEXT_PUBLIC_IVS_MAX_HEIGHT
+// (0 = sin tope).
+const MAX_HEIGHT = Number(process.env.NEXT_PUBLIC_IVS_MAX_HEIGHT ?? 720);
+
 // Reproductor de la señal de Amazon IVS dentro de la sala. Se carga hls.js
 // bajo demanda (MSE) y solo se usa HLS nativo donde no hay MSE (Safari iOS).
 export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
@@ -58,7 +65,21 @@ export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
         hls = instance;
         instance.attachMedia(video);
         instance.loadSource(playbackUrl);
-        instance.on(Hls.Events.MANIFEST_PARSED, tryPlay);
+        instance.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (MAX_HEIGHT > 0) {
+            const levels = instance.levels ?? [];
+            let cap = -1;
+            levels.forEach((level, index) => {
+              const height = level.height ?? 0;
+              if (height > MAX_HEIGHT) return;
+              if (cap === -1 || height > (levels[cap].height ?? 0)) cap = index;
+            });
+            // Si ninguna variante baja del tope se deja el comportamiento
+            // automático: es preferible pagar de más a no reproducir.
+            if (cap >= 0) instance.autoLevelCapping = cap;
+          }
+          tryPlay();
+        });
         instance.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {

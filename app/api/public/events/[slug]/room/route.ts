@@ -29,6 +29,7 @@ import {
   resolveRegistrationAccess,
 } from "@/lib/registration-access";
 import { notifyRoomActivity } from "@/lib/room-events";
+import { nudgeRoom } from "@/lib/room-stream";
 
 export const runtime = "nodejs";
 
@@ -461,6 +462,7 @@ export async function POST(request: Request, context: RouteContext) {
       })
       .returning();
     notifyRoomActivity(access.eventId, "chat");
+    nudgeRoom(access.eventId);
     return NextResponse.json({ data: created }, { status: 201 });
   }
 
@@ -501,6 +503,7 @@ export async function POST(request: Request, context: RouteContext) {
       })
       .returning();
     notifyRoomActivity(access.eventId, "reaction");
+    nudgeRoom(access.eventId);
     return NextResponse.json({ data: created }, { status: 201 });
   }
 
@@ -534,6 +537,7 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
     notifyRoomActivity(access.eventId, "question");
+    nudgeRoom(access.eventId);
     return NextResponse.json({ data: created }, { status: 201 });
   }
 
@@ -590,6 +594,7 @@ export async function POST(request: Request, context: RouteContext) {
       .returning({ id: eventQuestions.id, upvotes: eventQuestions.upvotes });
 
     notifyRoomActivity(access.eventId, "question_vote");
+    nudgeRoom(access.eventId);
     return NextResponse.json({
       data: {
         questionId: updated.id,
@@ -636,6 +641,7 @@ export async function POST(request: Request, context: RouteContext) {
       })
       .returning();
     notifyRoomActivity(access.eventId, "poll_vote");
+    nudgeRoom(access.eventId);
     return NextResponse.json({ data: vote });
   }
 
