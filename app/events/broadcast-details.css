@@ -1,0 +1,50 @@
+/* Datos de emisión del canal de Amazon IVS dentro de la pantalla del evento. */
+
+.broadcast-details {
+  display: grid;
+  gap: 12px;
+  margin: 16px 20px 20px;
+  border: 1px solid #e5e2ee;
+  border-radius: 12px;
+  background: #faf9fd;
+  padding: 18px;
+}
+
+.broadcast-details > p:not(.eyebrow) {
+  color: #625c76;
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.broadcast-details label {
+  display: grid;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: #575263;
+}
+
+.broadcast-details input {
+  width: 100%;
+  border: 1px solid #ddd8e8;
+  border-radius: 8px;
+  background: #fff;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 12.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink, #201c2a);
+}
+
+.broadcast-details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.broadcast-details > small {
+  color: #8b8599;
+  font-size: 11.5px;
+  line-height: 1.5;
+}

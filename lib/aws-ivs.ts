@@ -151,6 +151,61 @@ export async function createEventChannel(
   };
 }
 
+// Recupera los datos de emisión de un canal ya creado. El stream key no se
+// guarda en la base a propósito, así que se vuelve a pedir a IVS cada vez que
+// el organizador necesita configurar su codificador o Zoom.
+export async function getBroadcastDetails(
+  credentials: AwsCredentials,
+  channelArn: string,
+): Promise<
+  { ok: true; ingestEndpoint: string; streamKey: string; playbackUrl: string } | IvsError
+> {
+  const channel = await call<{
+    channel?: { ingestEndpoint?: string; playbackUrl?: string };
+  }>(credentials, "GetChannel", { arn: channelArn });
+  if (!channel.ok) return channel;
+
+  const keys = await call<{ streamKeys?: { arn?: string }[] }>(
+    credentials,
+    "ListStreamKeys",
+    { channelArn },
+  );
+  if (!keys.ok) return keys;
+
+  const keyArn = keys.data.streamKeys?.[0]?.arn;
+  if (!keyArn) {
+    return {
+      ok: false,
+      status: 404,
+      error: "El canal no tiene ninguna clave de emisión activa.",
+    };
+  }
+
+  const key = await call<{ streamKey?: { value?: string } }>(
+    credentials,
+    "GetStreamKey",
+    { arn: keyArn },
+  );
+  if (!key.ok) return key;
+
+  const ingestEndpoint = channel.data.channel?.ingestEndpoint;
+  const streamKey = key.data.streamKey?.value;
+  if (!ingestEndpoint || !streamKey) {
+    return {
+      ok: false,
+      status: 502,
+      error: "IVS no devolvió los datos de emisión del canal.",
+    };
+  }
+
+  return {
+    ok: true,
+    ingestEndpoint: `rtmps://${ingestEndpoint}:443/app/`,
+    streamKey,
+    playbackUrl: channel.data.channel?.playbackUrl ?? "",
+  };
+}
+
 // Comprueba que las credenciales sirven sin crear nada, para el botón
 // "Revisar" de la pantalla de Integraciones.
 export async function verifyIvsAccess(

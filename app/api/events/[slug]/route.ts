@@ -17,6 +17,7 @@ import {
   ensureZoomMeetingForEvent,
   syncZoomMeetingForEvent,
 } from "@/lib/zoom-automation";
+import { ensureIvsChannelForEvent } from "@/lib/ivs-automation";
 import { stopEventEmitter } from "@/lib/simulated-emitter";
 import { getPublicOrigin } from "@/lib/public-origin";
 import {
@@ -359,6 +360,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const zoomOptions = { actor: currentUser, request };
   if (changes.status && currentStatus === "draft" && changes.status !== "draft" && changes.status !== "cancelled") {
     after(() => ensureZoomMeetingForEvent(current.id, zoomOptions));
+    after(() => ensureIvsChannelForEvent(current.id, zoomOptions));
   }
   if (changes.status === "cancelled" && currentStatus !== "cancelled") {
     after(() => cancelZoomMeetingForEvent(current.id, zoomOptions));
