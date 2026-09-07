@@ -7,6 +7,16 @@ import { getEffectivePermissions, permissionCatalog } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata() {
+  const viewer = await getCurrentUser();
+  if (viewer) return {};
+  return {
+    title: "Icaza Jammoul Live — Plataforma de eventos corporativos",
+    description:
+      "Plataforma con la que Icaza Jammoul organiza y transmite sus eventos corporativos en vivo, híbridos y simulados: registro de asistentes, sala de transmisión e interacción en vivo.",
+  };
+}
+
 export default async function Home() {
   // Visitantes sin sesión: portada pública del dominio.
   const visitor = await getCurrentUser();
