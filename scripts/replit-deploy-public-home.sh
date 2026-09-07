@@ -5,6 +5,7 @@ set -euo pipefail
 SRC=/tmp/icazalive-feat-aws-ivs-s3
 cp "$SRC/app/public-home.tsx" app/public-home.tsx; echo "copiado app/public-home.tsx"
 cp "$SRC/app/public-home.css" app/public-home.css; echo "copiado app/public-home.css"
+rm -rf app/info
 python3 "$SRC/scripts/apply-public-home.py" .
 npx tsc --noEmit -p . && echo TSC_OK
 npm run build 2>&1 | tail -3
