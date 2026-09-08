@@ -239,6 +239,13 @@
       "when": 1788387138609,
       "tag": "0033_rapid_husk",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788828156182,
+      "tag": "0034_absent_nick_fury",
+      "breakpoints": true
     }
   ]
 }

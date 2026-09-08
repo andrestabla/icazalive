@@ -151,6 +151,26 @@ export async function createEventChannel(
   };
 }
 
+// Datos públicos del canal: el punto de ingesta y la URL de reproducción.
+export async function getChannelInfo(
+  credentials: AwsCredentials,
+  channelArn: string,
+): Promise<{ ok: true; ingestEndpoint: string; playbackUrl: string } | IvsError> {
+  const channel = await call<{
+    channel?: { ingestEndpoint?: string; playbackUrl?: string };
+  }>(credentials, "GetChannel", { arn: channelArn });
+  if (!channel.ok) return channel;
+  const ingestEndpoint = channel.data.channel?.ingestEndpoint;
+  if (!ingestEndpoint) {
+    return { ok: false, status: 502, error: "IVS no devolvió el punto de ingesta del canal." };
+  }
+  return {
+    ok: true,
+    ingestEndpoint: `rtmps://${ingestEndpoint}:443/app/`,
+    playbackUrl: channel.data.channel?.playbackUrl ?? "",
+  };
+}
+
 // Recupera los datos de emisión de un canal ya creado. El stream key no se
 // guarda en la base a propósito, así que se vuelve a pedir a IVS cada vez que
 // el organizador necesita configurar su codificador o Zoom.
@@ -160,9 +180,7 @@ export async function getBroadcastDetails(
 ): Promise<
   { ok: true; ingestEndpoint: string; streamKey: string; playbackUrl: string } | IvsError
 > {
-  const channel = await call<{
-    channel?: { ingestEndpoint?: string; playbackUrl?: string };
-  }>(credentials, "GetChannel", { arn: channelArn });
+  const channel = await getChannelInfo(credentials, channelArn);
   if (!channel.ok) return channel;
 
   const keys = await call<{ streamKeys?: { arn?: string }[] }>(
@@ -188,21 +206,20 @@ export async function getBroadcastDetails(
   );
   if (!key.ok) return key;
 
-  const ingestEndpoint = channel.data.channel?.ingestEndpoint;
   const streamKey = key.data.streamKey?.value;
-  if (!ingestEndpoint || !streamKey) {
+  if (!streamKey) {
     return {
       ok: false,
       status: 502,
-      error: "IVS no devolvió los datos de emisión del canal.",
+      error: "IVS no devolvió la clave de emisión del canal.",
     };
   }
 
   return {
     ok: true,
-    ingestEndpoint: `rtmps://${ingestEndpoint}:443/app/`,
+    ingestEndpoint: channel.ingestEndpoint,
     streamKey,
-    playbackUrl: channel.data.channel?.playbackUrl ?? "",
+    playbackUrl: channel.playbackUrl,
   };
 }
 

@@ -4,6 +4,7 @@ import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import type { AuthenticatedUser } from "@/lib/auth";
 import { createEventChannel, readIvsCredentials } from "@/lib/aws-ivs";
+import { sealSecret } from "@/lib/secret-box";
 
 // Aprovisionamiento del canal de Amazon IVS al confirmar un evento, igual que
 // la reunión de Zoom. Antes había que recordar pulsar "Aprovisionar" a mano y
@@ -57,6 +58,9 @@ export async function ensureIvsChannelForEvent(eventId: string, options: Options
     .set({
       ivsChannelArn: creation.channel.channelArn,
       playbackUrl: creation.channel.playbackUrl,
+      // La clave solo se entrega al crear el canal: se guarda cifrada para
+      // poder mostrarla después sin volver a pedírsela a AWS.
+      ivsStreamKeyEncrypted: sealSecret(creation.channel.streamKey),
       streamingStatus:
         session.streamingStatus === "not_configured" ? "configured" : session.streamingStatus,
       updatedAt: new Date(),

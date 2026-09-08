@@ -400,6 +400,9 @@ export const sessions = pgTable(
     zoomMeetingId: text("zoom_meeting_id"),
     zoomJoinUrl: text("zoom_join_url"),
     ivsChannelArn: text("ivs_channel_arn"),
+    // Clave de emisión cifrada con SECRET_BOX_KEY. Se guarda para poder
+    // mostrarla al organizador sin volver a pedírsela a AWS.
+    ivsStreamKeyEncrypted: text("ivs_stream_key_encrypted"),
     playbackUrl: text("playback_url"),
     recordingEnabled: boolean("recording_enabled").notNull().default(true),
     technicalCheckAt: timestamp("technical_check_at", { withTimezone: true }),
