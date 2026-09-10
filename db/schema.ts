@@ -1092,6 +1092,7 @@ export const outboundEmailSettings = pgTable("outbound_email_settings", {
   smtpSecure: boolean("smtp_secure").notNull().default(false),
   smtpUsername: text("smtp_username"),
   smtpPasswordEncrypted: text("smtp_password_encrypted"),
+  sendgridApiKeyEncrypted: text("sendgrid_api_key_encrypted"),
   region: text("region"),
   configurationSet: text("configuration_set"),
   lastTestedAt: timestamp("last_tested_at", { withTimezone: true }),

@@ -1,5 +1,6 @@
 import { readSesConfig, sendWithSes } from "@/lib/aws-ses";
-import { resolveActiveSmtp } from "@/lib/email-settings";
+import { resolveActiveOutbound } from "@/lib/email-settings";
+import { sendWithSendgrid } from "@/lib/sendgrid-sender";
 import { sendWithSmtp } from "@/lib/smtp-sender";
 
 // Interfaz de proveedor de correo saliente. El orden de preferencia es:
@@ -9,7 +10,7 @@ import { sendWithSmtp } from "@/lib/smtp-sender";
 //    cuerpo renderizado, sin salir del equipo.
 // Las credenciales viven solo en variables de entorno; nunca en la base.
 
-export type EmailProviderName = "smtp" | "ses" | "resend" | "local";
+export type EmailProviderName = "smtp" | "sendgrid" | "ses" | "resend" | "local";
 
 export type EmailResult =
   | { ok: true; providerId: string }
@@ -31,16 +32,24 @@ export function activeProviderName(): EmailProviderName {
 
 export const providerLabels: Record<EmailProviderName, string> = {
   smtp: "SMTP",
+  sendgrid: "SendGrid",
   ses: "Amazon SES",
   resend: "Resend",
   local: "Buzón local de vista previa",
 };
 
 export async function sendEmail(email: OutgoingEmail): Promise<EmailResult> {
-  // La configuración SMTP guardada desde la UI (si está habilitada) tiene
-  // prioridad sobre las variables de entorno.
-  const smtp = await resolveActiveSmtp().catch(() => null);
-  if (smtp) {
+  // El proveedor guardado desde Integraciones (SMTP o SendGrid, si está
+  // habilitado) tiene prioridad sobre las variables de entorno.
+  const outbound = await resolveActiveOutbound().catch(() => null);
+  if (outbound?.kind === "sendgrid") {
+    const result = await sendWithSendgrid(outbound.sendgrid, email);
+    return result.ok
+      ? { ok: true, providerId: result.messageId }
+      : { ok: false, error: result.error, retryable: result.retryable };
+  }
+  if (outbound?.kind === "smtp") {
+    const smtp = outbound.smtp;
     const result = await sendWithSmtp(smtp, {
       ...email,
       replyTo: email.replyTo ?? smtp.replyTo ?? undefined,

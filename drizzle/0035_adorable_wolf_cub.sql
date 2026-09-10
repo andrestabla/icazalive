@@ -1,0 +1,1 @@
+ALTER TABLE "outbound_email_settings" ADD COLUMN "sendgrid_api_key_encrypted" text;
