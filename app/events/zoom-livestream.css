@@ -1,0 +1,94 @@
+/* Panel Zoom → Amazon IVS gestionado desde la plataforma. */
+
+.zoom-livestream {
+  display: grid;
+  gap: 12px;
+  margin: 16px 20px 20px;
+  border: 1px solid #e5e2ee;
+  border-radius: 12px;
+  background: #faf9fd;
+  padding: 18px;
+}
+.zoom-livestream.compact {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #e9e6f2;
+}
+.zoom-livestream > p:not(.eyebrow) {
+  color: #625c76;
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0;
+}
+.zoom-livestream.compact > p:not(.eyebrow),
+.zoom-livestream.compact .zoom-livestream-steps li { color: #cfcadb; }
+
+.zoom-livestream-steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.zoom-livestream-steps li {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #4c4759;
+}
+.zoom-livestream-steps li i {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 750;
+  border: 1px solid #d5cff0;
+  color: #6946df;
+  background: #fff;
+}
+.zoom-livestream-steps li.done i { background: #1a7565; border-color: #1a7565; color: #fff; }
+.zoom-livestream-steps li.warn i { background: #fff3f5; border-color: #e6a2af; color: #b3374a; }
+.zoom-livestream-steps li button {
+  border: 1px solid #cfc4f2;
+  border-radius: 8px;
+  background: #f8f6ff;
+  color: #5b3bd1;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.zoom-livestream-steps li button:disabled { opacity: .55; cursor: not-allowed; }
+
+.zoom-livestream-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.zoom-livestream-actions .go-live {
+  border: 0;
+  border-radius: 8px;
+  background: #6946df;
+  color: #fff;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.zoom-livestream-actions .go-live.stop { background: #b3374a; }
+.zoom-livestream-actions .go-live:disabled { opacity: .55; cursor: not-allowed; }
+.zoom-livestream-actions a { font-size: 12.5px; font-weight: 650; color: #5b3bd1; }
+.zoom-livestream.compact .zoom-livestream-actions a { color: #c7b8ff; }
+
+.zoom-livestream-status { margin: 0; font-size: 12.5px; font-weight: 600; }
+.zoom-livestream-status.ok { color: #1a7565; }
+.zoom-livestream-status.error { color: #b3374a; }
+.zoom-livestream.compact .zoom-livestream-status.ok { color: #8be0a4; }
+.zoom-livestream.compact .zoom-livestream-status.error { color: #ff8a9b; }

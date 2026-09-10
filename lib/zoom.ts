@@ -186,3 +186,9 @@ export async function listZoomMeetings(): Promise<ZoomMeeting[]> {
   if (!response.ok) throw new Error(zoomErrorMessage(payload, "Zoom no pudo listar las reuniones."));
   return (payload.meetings ?? []).map(parseMeeting);
 }
+
+// Acceso genérico a la API v2 de Zoom para módulos que necesitan endpoints no
+// cubiertos arriba (por ejemplo, la transmisión personalizada de una reunión).
+export async function zoomApiRequest(path: string, init: RequestInit = {}): Promise<Response> {
+  return zoomFetch(path, init);
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import "../broadcast-details.css";
+import ZoomLivestreamPanel from "./zoom-livestream-panel";
 
 import Link from "next/link";
 import type { FormEvent } from "react";
@@ -1816,6 +1817,9 @@ export default function EventDetail({
                     Trata la clave como una contraseña: quien la tenga puede emitir en este evento.
                   </small>
                 </div>
+              )}
+              {streamingSession.streamingMode === "zoom_to_ivs" && (
+                <ZoomLivestreamPanel slug={event.slug} />
               )}
             </section>
 
