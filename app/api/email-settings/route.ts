@@ -155,11 +155,10 @@ export async function PUT(request: Request) {
         { status: 400 },
       );
     }
-    const apiKey = saved.sendgridApiKeyEncrypted ? decryptSecret(saved.sendgridApiKeyEncrypted) : null;
-    if (!apiKey) {
-      return NextResponse.json({ error: "Guarda primero la clave de API de SendGrid." }, { status: 409 });
-    }
-    const check = await verifySendgridAccess(apiKey, saved.fromEmail);
+    const legacyApiKey = saved.sendgridApiKeyEncrypted
+      ? decryptSecret(saved.sendgridApiKeyEncrypted)
+      : null;
+    const check = await verifySendgridAccess(saved.fromEmail, legacyApiKey);
     await writeAuditLog({
       actor: auth.user,
       action: "email_settings.checked",
@@ -191,7 +190,7 @@ export async function PUT(request: Request) {
         {
           error:
             provider === "sendgrid"
-              ? "Completa la clave de API y el remitente, y habilita el envío."
+              ? "Completa el remitente y habilita el envío."
               : "Completa host, puerto, usuario, contraseña y remitente, y habilita el envío.",
         },
         { status: 409 },

@@ -1,3 +1,4 @@
+import { ReplitConnectors } from "@replit/connectors-sdk";
 import type { ResolvedSendgridConfig } from "@/lib/email-settings";
 
 export type SendgridResult =
@@ -23,7 +24,7 @@ async function describeError(response: Response): Promise<string> {
     detail = "";
   }
   if (response.status === 401) {
-    return `SendGrid rechazó la clave de API (401). Verifica que la clave esté vigente y tenga el permiso "Mail Send".${detail ? ` Detalle: ${detail}` : ""}`;
+    return `SendGrid rechazó la conexión (401). Revisa la conexión administrada y el permiso "Mail Send".${detail ? ` Detalle: ${detail}` : ""}`;
   }
   if (response.status === 403) {
     return `SendGrid no permite enviar desde ese remitente (403). Autentica el dominio del remitente en Settings → Sender Authentication.${detail ? ` Detalle: ${detail}` : ""}`;
@@ -32,6 +33,42 @@ async function describeError(response: Response): Promise<string> {
     return "SendGrid limitó la tasa de envío (429). Se reintentará.";
   }
   return `SendGrid ${response.status}${detail ? `: ${detail}` : ""}`;
+}
+
+async function managedRequest(path: string, init: { method?: string; body?: unknown } = {}) {
+  const connectors = new ReplitConnectors();
+  return connectors.proxy("sendgrid", path, init);
+}
+
+async function legacyRequest(
+  apiKey: string,
+  path: string,
+  init: { method?: string; body?: unknown } = {},
+) {
+  return fetch(`${API}${path}`, {
+    method: init.method,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}),
+    },
+    ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+}
+
+// La conexión administrada es siempre la vía principal. La clave cifrada
+// anterior solo cubre entornos donde el proxy no está disponible.
+async function sendgridRequest(
+  path: string,
+  init: { method?: string; body?: unknown } = {},
+  legacyApiKey?: string | null,
+) {
+  try {
+    return await managedRequest(path, init);
+  } catch (managedError) {
+    if (legacyApiKey) return legacyRequest(legacyApiKey, path, init);
+    throw managedError;
+  }
 }
 
 // Envía un correo por la API v3 de SendGrid (Mail Send). Un 202 significa que
@@ -52,15 +89,10 @@ export async function sendWithSendgrid(
     ],
   };
   try {
-    const response = await fetch(`${API}/mail/send`, {
+    const response = await sendgridRequest("/v3/mail/send", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+      body: payload,
+    }, config.apiKey);
     if (response.status === 202 || response.ok) {
       return { ok: true, messageId: response.headers.get("x-message-id") ?? "sendgrid" };
     }
@@ -86,16 +118,12 @@ export type SendgridCheck = {
 // Comprueba la clave sin enviar nada: permisos de la clave (GET /scopes) y, si
 // la clave lo permite, si el dominio del remitente está autenticado (DKIM/SPF).
 export async function verifySendgridAccess(
-  apiKey: string,
   fromEmail: string | null,
+  legacyApiKey?: string | null,
 ): Promise<SendgridCheck> {
-  const headers = { Authorization: `Bearer ${apiKey}` };
   let scopes: string[] = [];
   try {
-    const response = await fetch(`${API}/scopes`, {
-      headers,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    const response = await sendgridRequest("/v3/scopes", {}, legacyApiKey);
     if (!response.ok) {
       return {
         ok: false,
@@ -120,7 +148,7 @@ export async function verifySendgridAccess(
   if (!mailSend) {
     return {
       ok: false,
-      detail: 'La clave de API es válida pero no tiene el permiso "Mail Send". Crea una clave con acceso restringido y activa Mail Send.',
+      detail: 'La conexión con SendGrid es válida pero no tiene el permiso "Mail Send". Actualiza los permisos de la conexión.',
       mailSend,
       domainAuthenticated: null,
       authenticatedDomains: [],
@@ -133,10 +161,11 @@ export async function verifySendgridAccess(
   let authenticatedDomains: string[] = [];
   const fromDomain = fromEmail?.split("@")[1]?.toLowerCase() ?? null;
   try {
-    const response = await fetch(`${API}/whitelabel/domains?limit=50`, {
-      headers,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    const response = await sendgridRequest(
+      "/v3/whitelabel/domains?limit=50",
+      {},
+      legacyApiKey,
+    );
     if (response.ok) {
       const domains = (await response.json()) as Array<{ domain?: string; valid?: boolean }>;
       authenticatedDomains = domains
@@ -151,7 +180,7 @@ export async function verifySendgridAccess(
   if (fromDomain && domainAuthenticated === false) {
     return {
       ok: true,
-      detail: `Clave válida con permiso Mail Send. El dominio ${fromDomain} aún no aparece autenticado en SendGrid: los correos pueden ir a spam o ser rechazados. Autentícalo en Settings → Sender Authentication → Authenticate Your Domain.`,
+      detail: `Conexión válida con permiso Mail Send. El dominio ${fromDomain} aún no aparece autenticado en SendGrid: los correos pueden ir a spam o ser rechazados. Autentícalo en Settings → Sender Authentication → Authenticate Your Domain.`,
       mailSend,
       domainAuthenticated,
       authenticatedDomains,
@@ -161,8 +190,8 @@ export async function verifySendgridAccess(
     ok: true,
     detail:
       domainAuthenticated === true
-        ? `Clave válida con permiso Mail Send y dominio ${fromDomain} autenticado. Listo para enviar.`
-        : "Clave válida con permiso Mail Send. No fue posible comprobar la autenticación del dominio con esta clave (falta el permiso Sender Authentication de lectura); verifícala en SendGrid.",
+        ? `Conexión válida con permiso Mail Send y dominio ${fromDomain} autenticado. Listo para enviar.`
+        : "Conexión válida con permiso Mail Send. No fue posible comprobar la autenticación del dominio (puede faltar el permiso Sender Authentication de lectura).",
     mailSend,
     domainAuthenticated,
     authenticatedDomains,

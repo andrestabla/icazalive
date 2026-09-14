@@ -48,13 +48,11 @@ const PROVIDER_LABEL: Record<Provider, string> = {
 };
 
 // Asistente de correo saliente: el administrador elige entre un servidor SMTP
-// (Amazon SES u otro) y SendGrid (API), sin tocar variables de entorno. La
-// contraseña y la clave de API se guardan cifradas; "Verificar" comprueba la
-// clave de SendGrid sin enviar nada y "Probar envío" manda un correo real.
+// (Amazon SES u otro) y SendGrid administrado por Replit. "Verificar" comprueba
+// SendGrid sin enviar nada y "Probar envío" manda un correo real.
 export default function SmtpEmailPanel() {
   const [s, setS] = useState<Settings>(EMPTY);
   const [password, setPassword] = useState("");
-  const [apiKey, setApiKey] = useState("");
   const [testTo, setTestTo] = useState("");
   const [busy, setBusy] = useState<"save" | "test" | "check" | null>(null);
   const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
@@ -96,7 +94,6 @@ export default function SmtpEmailPanel() {
           smtpSecure: s.smtpSecure,
           smtpUsername: s.smtpUsername,
           ...(password ? { smtpPassword: password } : {}),
-          ...(apiKey ? { sendgridApiKey: apiKey } : {}),
           region: s.region,
           configurationSet: s.configurationSet,
           ...(action === "test" ? { testRecipient: testTo } : {}),
@@ -115,7 +112,6 @@ export default function SmtpEmailPanel() {
       } else {
         if (payload.data?.settings) setS({ ...EMPTY, ...payload.data.settings });
         setPassword("");
-        setApiKey("");
         if (action === "test" && payload.data?.test) {
           setStatus({ text: payload.data.test.detail, error: !payload.data.test.ok });
         } else if (action === "check" && payload.data?.check) {
@@ -141,8 +137,8 @@ export default function SmtpEmailPanel() {
           <h2>Configurar proveedor de correo</h2>
           <p>
             Elige el proveedor y defínelo desde aquí, sin tocar variables del servidor.
-            Las credenciales se guardan cifradas. Cuando el envío está habilitado, esta
-            configuración tiene prioridad sobre cualquier otra.
+            SMTP guarda su contraseña cifrada. SendGrid usa la conexión segura administrada
+            por Replit. Cuando el envío está habilitado, esta configuración tiene prioridad.
           </p>
         </div>
         <label className="smtp-toggle">
@@ -176,7 +172,7 @@ export default function SmtpEmailPanel() {
         >
           <span className="service-logo sendgrid">SG</span>
           <strong>SendGrid</strong>
-          <span>Envío por API con clave; sin límite de destinatarios verificados.</span>
+          <span>Envío por la conexión segura administrada de Replit.</span>
         </button>
       </div>
 
@@ -192,17 +188,10 @@ export default function SmtpEmailPanel() {
 
         {isSendgrid ? (
           <>
-            <label>
-              Clave de API de SendGrid
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={s.hasSendgridKey ? "•••••••• (guardada)" : "SG.xxxxxxxx…"}
-                name="icaza-sendgrid-key"
-                autoComplete="new-password"
-              />
-            </label>
+            <p className="smtp-note">
+              La autenticación de SendGrid está gestionada de forma segura por Replit; no
+              necesitas pegar ni guardar una clave de API aquí.
+            </p>
             <label>
               Reply-To (opcional)
               <input type="email" value={s.replyTo ?? ""} onChange={(e) => field("replyTo", e.target.value)} placeholder="soporte@tudominio.com" />
@@ -250,9 +239,8 @@ export default function SmtpEmailPanel() {
             (por ejemplo <code>{(s.fromEmail ?? "").split("@")[1] || "tudominio.com"}</code>). Sin esto los correos pueden caer en spam.
           </li>
           <li>
-            <b>Settings → API Keys → Create API Key</b> con acceso restringido: <b>Mail Send</b> en
-            acceso completo. Opcional: <b>Sender Authentication</b> en lectura para que la
-            verificación muestre el estado del dominio. Copia la clave (empieza por <code>SG.</code>) y pégala arriba.
+            La conexión administrada debe tener <b>Mail Send</b> y, para comprobar dominios,
+            <b>Sender Authentication</b> en lectura. No compartas claves por chat.
           </li>
           <li>Guarda, pulsa <b>Verificar conexión</b> y luego <b>Probar envío</b> a un correo externo.</li>
         </ol>
@@ -271,7 +259,7 @@ export default function SmtpEmailPanel() {
           {isSendgrid && (
             <button
               className="smtp-secondary"
-              disabled={busy !== null || (!apiKey && !s.hasSendgridKey)}
+              disabled={busy !== null}
               onClick={() => void submit("check")}
             >
               {busy === "check" ? "Verificando…" : "Verificar conexión"}

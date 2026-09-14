@@ -29,7 +29,7 @@ export type ResolvedSmtpConfig = {
 };
 
 export type ResolvedSendgridConfig = {
-  apiKey: string;
+  apiKey: string | null;
   fromName: string | null;
   fromEmail: string;
   replyTo: string | null;
@@ -80,16 +80,17 @@ export async function resolveActiveSmtp(
   };
 }
 
-// Igual que resolveActiveSmtp, para SendGrid: requiere clave de API descifrable
-// y remitente. La clave vive solo cifrada en la base.
+// SendGrid usa primero la conexión administrada de Replit. Una clave antigua
+// cifrada se conserva únicamente como respaldo si ya existe.
 export async function resolveActiveSendgrid(
   settings?: OutboundEmailSettings | null,
 ): Promise<ResolvedSendgridConfig | null> {
   const row = settings ?? (await readEmailSettings());
   if (!row || !row.enabled || row.provider !== "sendgrid") return null;
-  if (!row.sendgridApiKeyEncrypted || !row.fromEmail) return null;
-  const apiKey = decryptSecret(row.sendgridApiKeyEncrypted);
-  if (!apiKey) return null;
+  if (!row.fromEmail) return null;
+  const apiKey = row.sendgridApiKeyEncrypted
+    ? decryptSecret(row.sendgridApiKeyEncrypted)
+    : null;
   return {
     apiKey,
     fromName: row.fromName,
