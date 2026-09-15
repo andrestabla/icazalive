@@ -540,15 +540,15 @@ button { font: inherit; }
 .team-stats article { min-height: 82px; display: flex; align-items: center; gap: 11px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 11px; background: #fff; }
 .team-stats strong, .team-stats p { display: block; }.team-stats strong { font-size: 21px; }.team-stats p { color: #918d99; font-size: 12px; margin: 4px 0 0; }
 .team-panel { overflow: hidden; }.team-panel .panel-heading > span { border-radius: 8px; padding: 5px 7px; background: #e6f7ef; color: #247e62; font-size: 11px; font-weight: 680; }
-.team-table { overflow-x: auto; }
-.team-table-head, .team-table > article { min-width: 870px; display: grid; grid-template-columns: minmax(220px, 1.35fr) 130px minmax(165px, 1fr) 80px 175px; gap: 15px; align-items: center; }
+.team-table { overflow: visible; }
+.team-table-head, .team-table > article { display: grid; grid-template-columns: minmax(180px, 1.4fr) minmax(120px, 150px) minmax(140px, 1fr) 72px minmax(150px, auto); gap: 12px; align-items: center; }
 .team-table-head { padding: 11px 18px; border-bottom: 1px solid #eceaf0; background: #f8f7fa; color: #9b97a3; font-size: 11px; font-weight: 720; }
 .team-table > article { min-height: 74px; padding: 11px 18px; border-bottom: 1px solid #f0eef3; }.team-table > article:last-child { border-bottom: 0; }
 .team-person { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; }.team-person > span { width: 33px; height: 33px; display: grid; place-items: center; border-radius: 50%; background: #eee9fb; color: #6241d1; font-size: 12px; font-weight: 720; }.team-person p { margin: 0; }.team-person b, .team-person small { display: block; }.team-person b { font-size: 13px; }.team-person b i { display: inline-block; margin-left: 6px; border-radius: 6px; padding: 3px 5px; background: #f0ecff; color: #6241d1; font-size: 10px; font-style: normal; }.team-person small { color: #9995a1; font-size: 11px; margin-top: 4px; }
 .team-table select { width: 100%; border: 1px solid #dfdce5; border-radius: 8px; background: #fff; color: #5d5967; padding: 8px 9px; font-size: 12px; }.team-table select:disabled { opacity: .65; background: #f7f6f8; }
 .team-last-access b, .team-last-access small { display: block; }.team-last-access b { color: #625d6b; font-size: 11px; font-weight: 650; }.team-last-access small { color: #aaa6b0; font-size: 10px; margin-top: 4px; }
 .team-status { justify-self: start; border-radius: 9px; padding: 5px 7px; font-size: 11px; }.team-status.active { background: #e6f7ef; color: #237f62; }.team-status.inactive { background: #f1eff4; color: #817d89; }.team-status.locked { background: #fff1e2; color: #a86b26; }
-.team-actions { display: flex; align-items: center; gap: 6px; }.team-actions button { border: 1px solid #dfdbe6; border-radius: 7px; background: #fff; color: #696473; padding: 7px 8px; font-size: 11px; cursor: pointer; }.team-actions button.danger { border-color: #f0d7dd; color: #ae4053; background: #fff7f8; }.team-actions button.activate { border-color: #d6ebdf; color: #267e63; background: #f4fbf8; }.team-actions button:disabled { opacity: .45; cursor: default; }
+.team-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }.team-actions button { border: 1px solid #dfdbe6; border-radius: 7px; background: #fff; color: #696473; padding: 7px 8px; font-size: 11px; cursor: pointer; }.team-actions button.danger { border-color: #f0d7dd; color: #ae4053; background: #fff7f8; }.team-actions button.activate { border-color: #d6ebdf; color: #267e63; background: #f4fbf8; }.team-actions button:disabled { opacity: .45; cursor: default; }
 .local-team-note { display: grid; grid-template-columns: 39px 1fr; gap: 13px; align-items: center; margin-top: 16px; padding: 17px 20px; }.local-team-note > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: #f0ecff; color: #6240d2; }.local-team-note h2 { font-size: 14px; margin: 0 0 4px; }.local-team-note > div > p:last-child { max-width: 740px; color: #8c8795; font-size: 12px; line-height: 1.5; margin: 0; }
 .team-modal { width: min(500px, 100%); }.team-invite-form { display: grid; gap: 12px; margin-top: 18px; }.team-invite-form > label { display: grid; gap: 6px; color: #575260; font-size: 12px; font-weight: 650; }.team-invite-form input, .team-invite-form select, .team-reset-password input { width: 100%; min-width: 0; border: 1px solid #dfdce5; border-radius: 8px; background: #fff; color: var(--ink); outline: 0; padding: 10px 11px; font-size: 13px; }.team-invite-form input:focus, .team-invite-form select:focus, .team-reset-password input:focus { border-color: #8064e5; box-shadow: 0 0 0 3px #6946df13; }
 .team-invite-form label > div { display: grid; grid-template-columns: 1fr auto; gap: 7px; }.team-invite-form label > div button, .team-reset-password button { border: 1px solid #ddd8ea; border-radius: 8px; background: #f5f2ff; color: #6241d1; padding: 8px 10px; font-size: 11px; font-weight: 650; cursor: pointer; }.team-invite-form > .primary-button { justify-self: end; margin-top: 3px; }.team-invite-form > .primary-button:disabled { opacity: .6; cursor: wait; transform: none; }
@@ -1158,3 +1158,15 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 /* Participantes: eliminación definitiva (solo administrador). */
 .participant-delete-button { border: 1px solid #edccd2; border-radius: 8px; background: #fff5f6; color: #ae3f53; padding: 9px 12px; font-size: 12px; font-weight: 650; cursor: pointer; }
 .participant-delete-button:disabled { opacity: .6; cursor: default; }
+
+
+/* Equipo: en pantallas estrechas cada miembro ocupa una tarjeta de dos líneas. */
+@media (max-width: 1100px) {
+  .team-table-head { display: none; }
+  .team-table > article { grid-template-columns: 1fr auto; grid-template-areas: "person status" "role access" "actions actions"; gap: 10px 14px; }
+  .team-table > article > .team-person { grid-area: person; }
+  .team-table > article > .team-status { grid-area: status; }
+  .team-table > article > select, .team-table > article > .team-role { grid-area: role; max-width: 240px; }
+  .team-table > article > .team-last-access { grid-area: access; }
+  .team-table > article > .team-actions { grid-area: actions; justify-content: flex-start; }
+}
