@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
+import { openSecret, sealSecret } from "@/lib/secret-box";
 import { requireApiUser } from "@/lib/auth";
 import { canManageEvent } from "@/lib/event-permissions";
 import {
@@ -16,6 +17,7 @@ import {
 import {
   createEventChannel,
   getBroadcastDetails,
+  getChannelInfo,
   getStreamState,
   readIvsCredentials,
 } from "@/lib/aws-ivs";
@@ -223,6 +225,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     ingestEndpoint: string;
     streamKey: string;
   } | null = null;
+  let sealedStreamKey: string | null = null;
   // Datos de emisión: se piden a IVS en el momento porque la clave no se
   // guarda en la base. Sirven para configurar Zoom o un codificador externo.
   if (body.action === "broadcast_details") {
@@ -240,9 +243,23 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
     const details = await getBroadcastDetails(credentials, record.session.ivsChannelArn);
-    if (!details.ok) {
+    // Si la cuenta de AWS no permite leer la clave, se recurre a la copia
+    // cifrada que se guardó al crear el canal.
+    const guardada = openSecret(record.session.ivsStreamKeyEncrypted);
+    if (!details.ok && !guardada) {
       return NextResponse.json({ error: details.error }, { status: 502 });
     }
+    let ingestEndpoint = details.ok ? details.ingestEndpoint : "";
+    let playbackUrl = details.ok ? details.playbackUrl : record.session.playbackUrl ?? "";
+    if (!details.ok) {
+      const info = await getChannelInfo(credentials, record.session.ivsChannelArn);
+      if (!info.ok) {
+        return NextResponse.json({ error: info.error }, { status: 502 });
+      }
+      ingestEndpoint = info.ingestEndpoint;
+      playbackUrl = info.playbackUrl || playbackUrl;
+    }
+    const streamKey = details.ok ? details.streamKey : guardada!;
     await writeAuditLog({
       actor: auth.user,
       action: "streaming.broadcast_details.viewed",
@@ -253,9 +270,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     });
     return NextResponse.json({
       data: {
-        ingestEndpoint: details.ingestEndpoint,
-        streamKey: details.streamKey,
-        playbackUrl: details.playbackUrl,
+        ingestEndpoint,
+        streamKey,
+        playbackUrl,
       },
     });
   }
@@ -294,6 +311,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       ingestEndpoint: creation.channel.ingestEndpoint,
       streamKey: creation.channel.streamKey,
     };
+    sealedStreamKey = sealSecret(creation.channel.streamKey);
   }
 
   const merged = {
@@ -399,6 +417,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       zoomSyncedAt,
       ivsChannelArn: merged.ivsChannelArn,
       playbackUrl: merged.playbackUrl,
+      ...(sealedStreamKey ? { ivsStreamKeyEncrypted: sealedStreamKey } : {}),
       recordingEnabled:
         body.recordingEnabled ?? record.session.recordingEnabled,
       technicalCheckAt: body.action === "run_check" ? now : null,

@@ -2,6 +2,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
+import { syncZoomLivestreamForEvent } from "@/lib/zoom-ivs-bridge";
 import type { AuthenticatedUser } from "@/lib/auth";
 import { createZoomMeeting, deleteZoomMeeting, updateZoomMeeting } from "@/lib/zoom";
 
@@ -91,6 +92,8 @@ export async function ensureZoomMeetingForEvent(eventId: string, options: Option
       details: { meetingId: meeting.id, startsAt: session.startsAt.toISOString() },
       request: options.request,
     });
+    // Si el canal de IVS ya existe, la reunión queda apuntando a él.
+    await syncZoomLivestreamForEvent(eventId, options).catch(() => undefined);
     return { ok: true as const, meetingId: meeting.id };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error desconocido.";

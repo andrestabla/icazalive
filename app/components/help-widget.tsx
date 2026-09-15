@@ -37,6 +37,13 @@ const text = {
   },
 };
 
+// Guías paso a paso del organizador, con acceso directo desde el widget.
+const guideLinks: { slug: string; icon: string; label: Record<HelpLocale, string> }[] = [
+  { slug: "guide-manage-events", icon: "◫", label: { es: "Guía: gestionar eventos", en: "Guide: managing events", fr: "Guide : gérer les événements" } },
+  { slug: "guide-participants", icon: "♙", label: { es: "Guía: participantes", en: "Guide: participants", fr: "Guide : participants" } },
+  { slug: "guide-analytics", icon: "⌁", label: { es: "Guía: analítica", en: "Guide: analytics", fr: "Guide : analyses" } },
+];
+
 export default function HelpWidget({
   supportEmail,
   supportHours,
@@ -64,6 +71,17 @@ export default function HelpWidget({
           </header>
           <p>{labels.intro}</p>
           <div className="global-help-actions">
+            {guideLinks.map((guide) => (
+              <Link
+                key={guide.slug}
+                href={`/help?lang=${locale}&article=${guide.slug}`}
+                onClick={() => setOpen(false)}
+              >
+                <span>{guide.icon}</span>
+                {guide.label[locale]}
+                <i>→</i>
+              </Link>
+            ))}
             <Link href={`/help?lang=${locale}`} onClick={() => setOpen(false)}>
               <span>⌕</span>
               {labels.center}

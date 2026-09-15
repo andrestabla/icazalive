@@ -1,5 +1,6 @@
 "use client";
 
+import "./help-guide.css";
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import type { AuthenticatedUser } from "@/lib/auth";
@@ -10,8 +11,86 @@ import {
   helpArticles,
   helpCategories,
   type HelpArticle,
+  type HelpGuideSection,
   type HelpLocale,
 } from "@/lib/help-content";
+
+const guideText = {
+  es: { contents: "Contenido de la guía", steps: "pasos", open: "Ver captura a tamaño completo", related: "Guías relacionadas", tip: "Consejo", warning: "Atención" },
+  en: { contents: "In this guide", steps: "steps", open: "Open screenshot at full size", related: "Related guides", tip: "Tip", warning: "Heads up" },
+  fr: { contents: "Dans ce guide", steps: "étapes", open: "Ouvrir la capture en taille réelle", related: "Guides associés", tip: "Conseil", warning: "Attention" },
+} as const;
+
+// Marcado mínimo en los pasos: **negrita**, `código` y [[tecla]].
+function renderInline(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[\[[^\]]+\]\])/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <b key={index}>{part.slice(2, -2)}</b>;
+    if (part.startsWith("`") && part.endsWith("`")) return <code key={index}>{part.slice(1, -1)}</code>;
+    if (part.startsWith("[[") && part.endsWith("]]")) return <kbd key={index}>{part.slice(2, -2)}</kbd>;
+    return <span key={index}>{part}</span>;
+  });
+}
+
+function GuideBody({
+  sections,
+  locale,
+}: {
+  sections: HelpGuideSection[];
+  locale: HelpLocale;
+}) {
+  const labels = guideText[locale];
+  let counter = 0;
+  return (
+    <>
+      <nav className="help-guide-toc" aria-label={labels.contents}>
+        <b>{labels.contents}</b>
+        <ol>
+          {sections.map((section) => (
+            <li key={section.id}>
+              <a href={`#guide-${section.id}`}>{section.title[locale]}</a>
+              <small>{section.steps.length} {labels.steps}</small>
+            </li>
+          ))}
+        </ol>
+      </nav>
+      {sections.map((section) => (
+        <section className="help-guide-section" id={`guide-${section.id}`} key={section.id}>
+          <h2>{section.title[locale]}</h2>
+          {section.intro && <p>{section.intro[locale]}</p>}
+          <ol className="help-guide-steps">
+            {section.steps.map((step, index) => {
+              counter += 1;
+              return (
+                <li className="help-guide-step" key={`${section.id}-${index}`}>
+                  <i>{counter}</i>
+                  <div>
+                    <p>{renderInline(step.text[locale])}</p>
+                    {step.image && (
+                      <figure className="help-guide-figure">
+                        <a href={step.image} target="_blank" rel="noreferrer" title={labels.open}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={step.image} alt={step.caption?.[locale] ?? ""} loading="lazy" />
+                        </a>
+                        {step.caption && <figcaption>{step.caption[locale]}</figcaption>}
+                      </figure>
+                    )}
+                    {step.tip && (
+                      <div className="help-guide-note tip"><span>✓</span><div><b>{labels.tip}.</b> {renderInline(step.tip[locale])}</div></div>
+                    )}
+                    {step.warning && (
+                      <div className="help-guide-note warning"><span>!</span><div><b>{labels.warning}.</b> {renderInline(step.warning[locale])}</div></div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))}
+    </>
+  );
+}
 
 const uiText = {
   es: {
@@ -206,6 +285,10 @@ function articleMatches(article: HelpArticle, locale: HelpLocale, query: string)
       article.summary[locale],
       article.content[locale],
       ...article.keywords[locale],
+      ...(article.sections ?? []).flatMap((section) => [
+        section.title[locale],
+        ...section.steps.map((step) => step.text[locale]),
+      ]),
     ].join(" "),
   );
   return normalize(query)
@@ -396,9 +479,27 @@ export default function HelpCenterClient({
               <div className="help-article-content">
                 {selectedArticle.content[locale]
                   .split("\n\n")
+                  .filter(Boolean)
                   .map((paragraph) => (
                     <p key={paragraph}>{paragraph}</p>
                   ))}
+                {selectedArticle.sections && (
+                  <GuideBody sections={selectedArticle.sections} locale={locale} />
+                )}
+                {selectedArticle.related && selectedArticle.related.length > 0 && (
+                  <div className="help-guide-related">
+                    <b>{guideText[locale].related}</b>
+                    {selectedArticle.related.map((slug) => {
+                      const target = articleBySlug(slug);
+                      if (!target) return null;
+                      return (
+                        <button key={slug} onClick={() => { setSelectedArticle(target); window.scrollTo({ top: 0 }); }}>
+                          {target.title[locale]} →
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
               <section className="help-article-support">
                 <div>

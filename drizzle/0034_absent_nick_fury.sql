@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "ivs_stream_key_encrypted" text;

@@ -230,3 +230,9 @@ export async function listZoomMeetings() {
     next_page_token?: string;
   };
 }
+// Acceso genérico a la API v2 de Zoom a través del conector administrado de Replit.
+export async function zoomApiRequest(path: string, init: RequestInit = {}): Promise<Response> {
+  const connectors = new ReplitConnectors();
+  const body = typeof init.body === "string" ? JSON.parse(init.body) : init.body;
+  return connectors.proxy("zoom", path, { method: init.method ?? "GET", body });
+}
