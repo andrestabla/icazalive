@@ -1,0 +1,6 @@
+/* Plantilla CSV de ejemplo en el modal de invitación. */
+.csv-template-hint { grid-column: 1 / -1; display: grid; gap: 4px; margin: -4px 0 6px; }
+.csv-template-hint a { width: fit-content; color: #5b3bd1; font-size: 13px; font-weight: 700; text-decoration: none; }
+.csv-template-hint a:hover { text-decoration: underline; }
+.csv-template-hint small { color: #6b6578; font-size: 12px; line-height: 1.55; }
+.csv-template-hint code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; background: #f1eef7; border-radius: 4px; padding: 1px 5px; }

@@ -516,9 +516,9 @@ const participantsSections: HelpGuideSection[] = [
     steps: [
       step(
         t(
-          "En la misma ventana elige la pestaña **Importar CSV** y el **Evento** destino. Prepara un archivo con la primera fila de encabezados exactamente así: `nombre,correo,empresa,cargo,telefono`. Solo nombre y correo son obligatorios.",
-          "In the same dialog choose the **Import CSV** tab and the target **Event**. Prepare a file whose first row has the headers exactly like this: `nombre,correo,empresa,cargo,telefono`. Only name and email are required.",
-          "Dans la même fenêtre, choisissez l’onglet **Importer un CSV** et l’**Événement** cible. Préparez un fichier dont la première ligne contient exactement ces en-têtes : `nombre,correo,empresa,cargo,telefono`. Seuls le nom et l’e-mail sont obligatoires.",
+          "En la misma ventana elige la pestaña **Importar CSV** y el **Evento** destino. Pulsa **Descargar plantilla de ejemplo (CSV)**: trae los encabezados `nombre,correo,empresa,cargo,telefono` y filas de muestra que puedes reemplazar. Solo nombre y correo son obligatorios; empresa, cargo y teléfono pueden quedar vacíos.",
+          "In the same dialog choose the **Import CSV** tab and the target **Event**. Click **Download sample template (CSV)**: it has the headers `nombre,correo,empresa,cargo,telefono` and sample rows you can replace. Only name and email are required; company, job title and phone may be left empty.",
+          "Dans la même fenêtre, choisissez l’onglet **Importer un CSV** et l’**Événement** cible. Cliquez sur **Télécharger le modèle d’exemple (CSV)** : il contient les en-têtes `nombre,correo,empresa,cargo,telefono` et des lignes d’exemple à remplacer. Seuls le nom et l’e-mail sont obligatoires ; entreprise, poste et téléphone peuvent rester vides.",
         ),
         { image: img("participantes-csv"), caption: t("Importación por CSV.", "CSV import.", "Import CSV.") },
       ),
