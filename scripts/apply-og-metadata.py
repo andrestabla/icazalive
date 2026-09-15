@@ -5,6 +5,10 @@ import sys, pathlib
 root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
 p = root / "app/register/[slug]/page.tsx"; s = p.read_text()
 if "generateMetadata" in s:
+    if "metadataBase" not in s:
+        s = s.replace('if (!event) return { title: "Evento no encontrado" };', 'if (!event) return { title: "Evento no encontrado", metadataBase: new URL(getPublicOriginFromEnv()) };')
+        s = s.replace('  return {\n    title: `${event.title} · ${brand.organizationName}`,', '  return {\n    metadataBase: new URL(origin),\n    title: `${event.title} · ${brand.organizationName}`,')
+        p.write_text(s); print("OK register page.tsx: metadataBase añadido"); sys.exit(0)
     print("OK register page.tsx: metadata ya presente"); sys.exit(0)
 if 'import type { Metadata } from "next";' not in s:
     s = 'import type { Metadata } from "next";\n' + s
@@ -21,13 +25,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .from(events)
     .where(eq(events.slug, slug))
     .limit(1);
-  if (!event) return { title: "Evento no encontrado" };
+  if (!event) return { title: "Evento no encontrado", metadataBase: new URL(getPublicOriginFromEnv()) };
   const brand = await getBrandSettings();
   const when = new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: event.timezone }).format(event.startsAt);
   const description = event.description?.trim() || `Regístrate y recibe tu acceso personal. ${when} (hora de Miami).`;
   const origin = getPublicOriginFromEnv();
   const url = `${origin}/register/${slug}`;
   return {
+    metadataBase: new URL(origin),
     title: `${event.title} · ${brand.organizationName}`,
     description,
     openGraph: {
