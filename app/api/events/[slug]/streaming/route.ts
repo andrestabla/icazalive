@@ -296,8 +296,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
     const creation = await createEventChannel(ivsCredentials, {
       name: `icaza-${record.event.slug}`,
+      // Solo graba si la sesión tiene marcado "Grabar la sesión".
       recordingConfigurationArn:
-        process.env.AWS_IVS_RECORDING_CONFIGURATION_ARN || undefined,
+        (body.recordingEnabled ?? record.session.recordingEnabled)
+          ? process.env.AWS_IVS_RECORDING_CONFIGURATION_ARN || undefined
+          : undefined,
     });
     if (!creation.ok) {
       return NextResponse.json(

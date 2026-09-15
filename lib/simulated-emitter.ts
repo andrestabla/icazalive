@@ -71,7 +71,8 @@ export async function startEventEmitter(
 
   const channel = await createEventChannel(ivs, {
     name: `icaza-sim-${event.slug}`,
-    recordingConfigurationArn: process.env.AWS_IVS_RECORDING_CONFIGURATION_ARN || undefined,
+    // Solo graba si la sesión tiene marcado "Grabar la sesión".
+    recordingConfigurationArn: session.recordingEnabled ? process.env.AWS_IVS_RECORDING_CONFIGURATION_ARN || undefined : undefined,
   });
   if (!channel.ok) return { ok: false, code: 502, error: `No fue posible preparar el canal: ${channel.error}` };
 
