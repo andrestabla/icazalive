@@ -1,6 +1,7 @@
 import { and, count, desc, eq, gte } from "drizzle-orm";
 import { getDb } from "@/db";
-import { eventChatMessages, eventQuestions, eventReactions } from "@/db/schema";
+import { eventChatMessages, eventQuestions, eventReactions, events } from "@/db/schema";
+import { normalizeRoomModules, roomModulesSignature } from "@/lib/room-modules";
 
 // Difusión de la actividad de sala por SSE.
 //
@@ -33,6 +34,7 @@ type Watcher = {
   seenChat: Set<string>;
   seenQuestions: Set<string>;
   reactionsSignature: string | null;
+  modulesSignature: string | null;
   running: boolean;
 };
 
@@ -76,6 +78,24 @@ async function tick(eventId: string, watcher: Watcher) {
   watcher.running = true;
   try {
     const db = getDb();
+
+    // Módulos de la sala: si el organizador enciende o apaga uno durante la
+    // transmisión, todos los asistentes lo reciben sin recargar.
+    const [eventRow] = await db
+      .select({ roomModules: events.roomModules })
+      .from(events)
+      .where(eq(events.id, eventId))
+      .limit(1);
+    if (eventRow) {
+      const modules = normalizeRoomModules(eventRow.roomModules);
+      const signature = roomModulesSignature(modules);
+      if (watcher.modulesSignature === null) {
+        watcher.modulesSignature = signature;
+      } else if (signature !== watcher.modulesSignature) {
+        watcher.modulesSignature = signature;
+        broadcast(watcher, { type: "modules", modules });
+      }
+    }
 
     // Chat: solo los mensajes posteriores al último visto.
     const chatRows = await db
@@ -179,6 +199,7 @@ export function subscribeToRoom(eventId: string, subscriber: Subscriber) {
       seenChat: new Set(),
       seenQuestions: new Set(),
       reactionsSignature: null,
+      modulesSignature: null,
       running: false,
     };
     store.set(eventId, watcher);

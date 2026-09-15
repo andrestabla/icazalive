@@ -59,7 +59,7 @@ function DocumentContent({ document }: { document: LegalDocument }) {
               dateStyle: "long",
               timeZone: PLATFORM_TIMEZONE,
             }).format(new Date(document.publishedAt))
-          : "localmente"}
+          : "pendiente de publicación"}
       </footer>
     </article>
   );
@@ -266,7 +266,7 @@ export default function PrivacyCenterClient({
       <footer className="privacy-public-footer">
         <PublicBrandIdentity brand={brand} />
         <p>
-          Versiones vigentes y solicitudes almacenadas en la base local ·{" "}
+          Versiones vigentes y solicitudes registradas en la plataforma ·{" "}
           <Link href="/help">Centro de ayuda</Link>
         </p>
       </footer>

@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "room_modules" jsonb DEFAULT '{"chat":true,"questions":true,"polls":true,"resources":true,"reactions":true}'::jsonb NOT NULL;

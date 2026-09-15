@@ -109,7 +109,7 @@ export function evaluateStreamingConfiguration(
       label: "Conexiones externas",
       status: missingCredentials.length ? "warning" : "pass",
       detail: missingCredentials.length
-        ? `Configuración local válida; faltan credenciales de ${missingCredentials.join(" y ")} para conectarse.`
+        ? `Configuración válida; faltan credenciales de ${missingCredentials.join(" y ")} en el servidor.`
         : "Las credenciales necesarias están disponibles en el servidor.",
     });
   }

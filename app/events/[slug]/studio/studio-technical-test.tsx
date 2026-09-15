@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import IvsPlayer from "@/app/room/[slug]/ivs-player";
 import ZoomLivestreamPanel from "../zoom-livestream-panel";
+import RoomModulesPanel from "../room-modules-panel";
 
 type EmitterState = {
   status: "idle" | "starting" | "running" | "stopping" | "stopped" | "error";
@@ -145,6 +146,7 @@ export default function StudioTechnicalTest({
       </div>
       {notice && <p className="studio-safety-note" role="status" style={{ margin: "8px 0 0" }}>{notice}</p>}
       {session.streamingMode === "zoom_to_ivs" && <ZoomLivestreamPanel slug={event.slug} compact />}
+      <RoomModulesPanel slug={event.slug} compact />
     </div>
   );
 }

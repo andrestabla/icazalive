@@ -129,7 +129,7 @@ const uiText = {
     articlePlural: "artículos",
     categoryPlural: "categorías",
     unresolved: "¿La guía no resolvió el problema?",
-    footer: "Documentación local disponible en todo momento",
+    footer: "Documentación disponible en todo momento",
     name: "Nombre",
     email: "Correo",
     category: "Categoría",

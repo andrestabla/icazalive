@@ -407,7 +407,7 @@ export default function IntegrationsClient({
       const saved = await persistConnection(item.connection, action);
       setMessage(
         saved.evaluation.ready
-          ? `${providerContent[item.connection.provider].name} está preparada localmente.`
+          ? `${providerContent[item.connection.provider].name} está preparada.`
           : "Metadatos guardados; todavía faltan variables seguras en el servidor.",
       );
     } catch (error) {
@@ -580,8 +580,8 @@ export default function IntegrationsClient({
             <p className="eyebrow">INICIO GUIADO</p>
             <h2>Asistentes de configuración</h2>
             <p>
-              Completa primero los metadatos locales y después traslada los
-              secretos al entorno de despliegue.
+              Completa los datos de cada servicio; las claves privadas se
+              guardan en el servidor, nunca aquí.
             </p>
           </div>
           <span>4 asistentes disponibles</span>
@@ -1397,9 +1397,9 @@ export default function IntegrationsClient({
                     </div>
                   </div>
                   <p className="wizard-note">
-                    Mientras SES no esté configurado, los correos se guardan en
-                    el buzón local de vista previa: puedes revisar el contenido
-                    exacto sin enviar nada al exterior.
+                    Mientras no haya un proveedor de correo activo, los envíos quedan
+                    registrados sin salir: puedes revisar el contenido exacto
+                    antes de conectar el proveedor.
                   </p>
                 </div>
               )}

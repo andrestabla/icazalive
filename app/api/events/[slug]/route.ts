@@ -8,6 +8,7 @@ import {
   sessions,
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
+import { normalizeRoomModules } from "@/lib/room-modules";
 import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { canManageEvent } from "@/lib/event-permissions";
@@ -101,6 +102,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   const { slug } = await context.params;
   const body = (await request.json()) as {
+    roomModules?: Partial<Record<"chat" | "questions" | "polls" | "resources" | "reactions", boolean>>;
     status?: string;
     startsAt?: string;
     endsAt?: string;
@@ -234,7 +236,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const db = getDb();
   const [current] = await db
-    .select({ id: events.id, status: events.status, startsAt: events.startsAt, endsAt: events.endsAt })
+    .select({ id: events.id, status: events.status, startsAt: events.startsAt, endsAt: events.endsAt, roomModules: events.roomModules })
     .from(events)
     .where(eq(events.slug, slug))
     .limit(1);
@@ -275,6 +277,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     postEventRedirectUrl?: string | null;
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
+    roomModules?: ReturnType<typeof normalizeRoomModules>;
     brandPrimaryColor?: string | null;
     brandAccentColor?: string | null;
     brandBackgroundColor?: string | null;
@@ -299,6 +302,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (body.feedbackQuestion !== undefined) {
     changes.feedbackQuestion = body.feedbackQuestion?.trim() || null;
+  }
+  // Módulos de la sala: se pueden cambiar en cualquier estado, incluso en vivo.
+  if (body.roomModules !== undefined) {
+    if (!body.roomModules || typeof body.roomModules !== "object") {
+      return NextResponse.json({ error: "Los módulos de la sala no son válidos." }, { status: 400 });
+    }
+    changes.roomModules = normalizeRoomModules(body.roomModules, normalizeRoomModules(current.roomModules));
   }
   for (const field of brandColorFields) {
     if (body[field] !== undefined) {
