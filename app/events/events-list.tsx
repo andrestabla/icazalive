@@ -104,6 +104,7 @@ export default function EventsList() {
     event: EventRecord;
     x: number;
     y: number;
+    up?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -400,7 +401,11 @@ export default function EventsList() {
                       setActionsMenu((current) =>
                         current?.event.id === event.id
                           ? null
-                          : { event, x: bounds.right, y: bounds.bottom + 6 },
+                          : (() => {
+                              // Si no cabe debajo del botón, el menú se abre hacia arriba.
+                              const up = bounds.bottom + 6 + 130 > window.innerHeight;
+                              return { event, x: bounds.right, y: up ? bounds.top - 6 : bounds.bottom + 6, up };
+                            })(),
                       );
                     }}
                   >
@@ -611,7 +616,7 @@ export default function EventsList() {
       )}
       {actionsMenu && (
         <div
-          className="event-actions-menu"
+          className={`event-actions-menu${actionsMenu.up ? " up" : ""}`}
           role="menu"
           style={{ left: actionsMenu.x, top: actionsMenu.y }}
           onClick={(clickEvent) => clickEvent.stopPropagation()}

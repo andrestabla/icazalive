@@ -21,6 +21,7 @@ import {
 } from "@/lib/zoom-automation";
 import { ensureIvsChannelForEvent } from "@/lib/ivs-automation";
 import { stopEventEmitter } from "@/lib/simulated-emitter";
+import { closeAttendance } from "@/lib/attendance";
 import { getPublicOrigin } from "@/lib/public-origin";
 import {
   canTransition,
@@ -380,6 +381,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     .set(changes)
     .where(eq(events.id, current.id))
     .returning();
+
+  // Al completarse el evento, quien no entró a la sala queda como "No asistió".
+  if (changes.status === "completed" && currentStatus !== "completed") {
+    after(() => closeAttendance(current.id));
+  }
 
   // Al pasar a EN VIVO se avisa a los inscritos ("Ya estamos en vivo").
   if (changes.status === "live" && currentStatus !== "live") {

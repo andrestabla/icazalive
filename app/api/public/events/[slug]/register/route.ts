@@ -265,7 +265,9 @@ export async function POST(request: Request, context: RouteContext) {
           ? now
           : message.type === "live_now"
             ? event.endsAt // se libera al pasar a EN VIVO; si no, el worker la cancela
-            : new Date(event.startsAt.getTime() + message.offsetMinutes * 60_000);
+            : message.type === "post_event"
+              ? new Date(event.endsAt.getTime() + message.offsetMinutes * 60_000) // después de que termine
+              : new Date(event.startsAt.getTime() + message.offsetMinutes * 60_000);
       const status =
         message.type !== "live_now" &&
           (message.type === "registration_confirmation" ||
@@ -366,7 +368,7 @@ export async function POST(request: Request, context: RouteContext) {
         event: { title: event.title, startsAt: event.startsAt },
         accessUrl: `/room/${event.slug}?access=${encodedToken}`,
         manageUrl: `/manage-registration/${event.slug}?access=${encodedToken}`,
-        calendarUrl: `/api/public/events/${event.slug}/calendar?access=${encodedToken}`,
+        calendarUrl: `/calendar/${event.slug}?access=${encodedToken}`,
       },
     },
     { status: 201 },

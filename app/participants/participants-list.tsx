@@ -15,6 +15,7 @@ type RegistrationStatus =
 
 type ParticipantRecord = {
   id: string;
+  participantId: string;
   name: string;
   email: string;
   company: string | null;
@@ -153,6 +154,36 @@ export default function ParticipantsList() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ParticipantRecord | null>(null);
   const [historyEmail, setHistoryEmail] = useState<string | null>(null);
+  // Solo el administrador puede eliminar participantes de forma definitiva.
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { data?: { role?: string } } | null) => {
+        if (!cancelled) setIsAdmin(payload?.data?.role === "administrator");
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const deleteParticipant = async (participantId: string, name: string, email: string) => {
+    if (!window.confirm(`¿Eliminar definitivamente a ${name} (${email})?\n\nSe borrarán sus inscripciones en todos los eventos, sus accesos y los correos pendientes. Esta acción no se puede deshacer.`)) return;
+    setDeleting(true);
+    setError("");
+    const response = await fetch(`/api/participants/${participantId}`, { method: "DELETE" });
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    if (response.ok) {
+      setRecords((items) => items.filter((item) => item.participantId !== participantId));
+      setHistoryEmail(null);
+      setMessage(`Participante eliminado: ${name}.`);
+    } else {
+      setError(payload.error ?? "No fue posible eliminar el participante.");
+    }
+    setDeleting(false);
+  };
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -629,7 +660,17 @@ export default function ParticipantsList() {
               <p className="form-error" role="alert">{error}</p>
             )}
             <div className="participant-modal-actions">
-              <span />
+              {isAdmin ? (
+                <button
+                  className="participant-delete-button"
+                  disabled={saving || deleting}
+                  onClick={() => void deleteParticipant(historyGroup.records[0].participantId, historyGroup.name, historyGroup.email)}
+                >
+                  {deleting ? "Eliminando…" : "Eliminar participante"}
+                </button>
+              ) : (
+                <span />
+              )}
               <button className="primary-button" disabled={saving} onClick={() => setHistoryEmail(null)}>
                 {saving ? "Guardando…" : "Listo"}
               </button>

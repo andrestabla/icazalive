@@ -45,6 +45,7 @@ export async function GET() {
   const records = await db
     .select({
       id: registrations.id,
+      participantId: users.id,
       name: users.name,
       email: users.email,
       company: registrations.company,

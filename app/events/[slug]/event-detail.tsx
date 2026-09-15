@@ -173,6 +173,14 @@ const statusLabels: Record<EventData["status"], string> = {
   cancelled: "Cancelado",
 };
 
+// Texto del momento de envío del seguimiento posterior (minutos tras el fin).
+function describeFollowUpOffset(minutes: number): string {
+  if (minutes <= 0) return "Al terminar el evento";
+  if (minutes % 1440 === 0) return `${minutes / 1440} día${minutes === 1440 ? "" : "s"} después del evento`;
+  if (minutes % 60 === 0) return `${minutes / 60} hora${minutes === 60 ? "" : "s"} después del evento`;
+  return `${minutes} minutos después del evento`;
+}
+
 const communicationLabels: Record<
   CommunicationMessage["type"],
   { title: string; timing: string; icon: string }
@@ -543,7 +551,7 @@ export default function EventDetail({
 
   const patchCommunication = async (
     messageId: string,
-    changes: Partial<Pick<CommunicationMessage, "enabled" | "subject" | "body">>,
+    changes: Partial<Pick<CommunicationMessage, "enabled" | "subject" | "body" | "offsetMinutes">>,
   ) => {
     setCommunicationSaving(true);
     setMessage("");
@@ -1288,7 +1296,7 @@ export default function EventDetail({
                       <span className="communication-icon">{label.icon}</span>
                       <div>
                         <b>{label.title}</b>
-                        <p>{label.timing}</p>
+                        <p>{item.type === "post_event" ? describeFollowUpOffset(item.offsetMinutes) : label.timing}</p>
                         <small>{item.enabled ? "Automatización activa" : "Automatización pausada"}</small>
                       </div>
                       <button
@@ -1360,6 +1368,14 @@ export default function EventDetail({
                       }
                     />
                   </label>
+                  {selectedCommunication.type === "post_event" && (
+                    <FollowUpTiming
+                      key={selectedCommunication.id}
+                      offsetMinutes={selectedCommunication.offsetMinutes}
+                      saving={communicationSaving}
+                      onSave={(minutes) => void patchCommunication(selectedCommunication.id, { offsetMinutes: minutes })}
+                    />
+                  )}
                   {selectedCommunication.type === "post_event" && (
                     <div className="scheduling-link-box">
                       <p className="eyebrow">AGENDAMIENTO · CALENDLY</p>
@@ -2378,5 +2394,49 @@ export default function EventDetail({
         </div>
       )}
     </>
+  );
+}
+
+// Selector del momento de envío del seguimiento posterior: cantidad y unidad
+// (minutos u horas) después de que termine el evento.
+function FollowUpTiming({
+  offsetMinutes,
+  saving,
+  onSave,
+}: {
+  offsetMinutes: number;
+  saving: boolean;
+  onSave: (minutes: number) => void;
+}) {
+  const initialUnit: "min" | "h" = offsetMinutes > 0 && offsetMinutes % 60 === 0 ? "h" : "min";
+  const [unit, setUnit] = useState<"min" | "h">(initialUnit);
+  const [value, setValue] = useState<string>(String(initialUnit === "h" ? offsetMinutes / 60 : offsetMinutes));
+  const minutes = Math.max(0, Math.round(Number(value) || 0)) * (unit === "h" ? 60 : 1);
+  const changed = minutes !== offsetMinutes;
+  return (
+    <div className="followup-timing">
+      <p className="eyebrow">MOMENTO DE ENVÍO</p>
+      <div className="followup-timing-row">
+        <span>Enviar</span>
+        <input
+          type="number"
+          min={0}
+          max={unit === "h" ? 720 : 43200}
+          step={1}
+          value={value}
+          onChange={(input) => setValue(input.target.value)}
+          aria-label="Cantidad"
+        />
+        <select value={unit} onChange={(input) => setUnit(input.target.value as "min" | "h")} aria-label="Unidad">
+          <option value="min">minutos</option>
+          <option value="h">horas</option>
+        </select>
+        <span>después de que termine el evento</span>
+        <button type="button" className="secondary-button" disabled={saving || !changed} onClick={() => onSave(minutes)}>
+          {saving ? "Guardando…" : "Guardar momento"}
+        </button>
+      </div>
+      <small>Ahora: {describeFollowUpOffset(offsetMinutes)}. Las entregas ya programadas se mueven al nuevo momento.</small>
+    </div>
   );
 }
