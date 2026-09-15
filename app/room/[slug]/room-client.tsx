@@ -434,7 +434,7 @@ export default function RoomClient({
 
           {roomModules.reactions && (
             <div className="room-reaction-bar" aria-label="Reacciones rápidas">
-              <p><b>Reacciona</b><small>sin saturar el chat</small></p>
+              <p><b>Reacciona</b><small>Comparte cómo lo vives</small></p>
               {REACTIONS.map((reaction) => (
                 <button
                   aria-label={`Enviar reacción ${reaction}`}

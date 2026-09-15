@@ -214,6 +214,37 @@ export async function pendingDeliveriesCount(eventId?: string): Promise<number> 
   return row?.total ?? 0;
 }
 
+// Vuelve a poner en cola las entregas fallidas de un evento (o de todos).
+// Se usa cuando la causa del fallo ya se corrigió, por ejemplo al cambiar el
+// proveedor de correo en Integraciones: el organizador pulsa "Reintentar con
+// error" y las confirmaciones salen sin volver a inscribir a nadie.
+export async function requeueFailedDeliveries(eventId?: string): Promise<number> {
+  const db = getDb();
+  const conditions = [eq(communicationDeliveries.status, "failed")];
+  if (eventId) conditions.push(eq(communicationDeliveries.eventId, eventId));
+  const rows = await db
+    .update(communicationDeliveries)
+    .set({
+      status: "queued",
+      attempts: 0,
+      error: null,
+      scheduledFor: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(and(...conditions))
+    .returning({ id: communicationDeliveries.id });
+  if (rows.length) {
+    await writeAuditLog({
+      action: "communications.deliveries.requeued",
+      resourceType: "communications",
+      resourceId: eventId ?? null,
+      summary: `${rows.length} entrega(s) con error vueltas a la cola.`,
+      details: { count: rows.length },
+    });
+  }
+  return rows.length;
+}
+
 // Disparo en segundo plano (tras responder una petición): no bloquea ni
 // propaga errores; el planificador periódico reintenta lo que quede.
 export function triggerDeliveries(eventId?: string): void {

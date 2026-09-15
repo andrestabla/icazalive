@@ -20,6 +20,7 @@ R = {
   "app/room/[slug]/room-client.tsx": [
     ('"Lista localmente"', '"Lista"'),
     ("Interacción sincronizada cada 2 segundos", "Interacción en tiempo real"),
+    ("<small>sin saturar el chat</small>", "<small>Comparte cómo lo vives</small>"),
   ],
   "app/events/[slug]/studio/studio-client.tsx": [
     ('ready: "Lista localmente"', 'ready: "Lista"'),
