@@ -74,41 +74,47 @@ patch("app/api/events/[slug]/communications/process/route.ts", [
   });'''),
 ], "retryFailed")
 
-# 3. Botón en Comunicaciones
-patch("app/events/[slug]/event-detail.tsx", [(
-'''              Procesar cola ahora ⟳
-            </button>
-          </div>''',
-'''              Procesar cola ahora ⟳
-            </button>
-            {deliveryTotal("failed") > 0 && (
-              <button
-                className="worker-run-button worker-retry-button"
-                disabled={saving}
-                onClick={() => {
-                  void fetch(`/api/events/${event.slug}/communications/process`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ retryFailed: true }),
-                  })
-                    .then((response) => response.json())
-                    .then((payload: { data?: { sent: number; retried: number; failed: number; requeued: number; provider: string }; error?: string }) => {
-                      if (payload.data) {
-                        setMessage(
-                          `${payload.data.requeued} mensaje(s) con error vueltos a la cola: ${payload.data.sent} enviados, ${payload.data.retried} en reintento, ${payload.data.failed} fallidos de nuevo (proveedor ${payload.data.provider}).`,
-                        );
-                        void refreshCommunications();
-                      } else {
-                        setMessage(payload.error ?? "No fue posible reintentar los envíos.");
-                      }
-                    });
-                }}
-                title="Vuelve a enviar los mensajes que fallaron (por ejemplo, tras corregir el proveedor de correo en Integraciones)"
-              >
-                Reintentar con error ({deliveryTotal("failed")}) ↻
-              </button>
-            )}
-          </div>''')], "worker-retry-button")
+# 3. Botón en Comunicaciones (tolerante a sangría/espacios: busca el botón
+#    "Procesar cola ahora" y añade el de reintento justo después).
+import re
+ed = root / "app/events/[slug]/event-detail.tsx"; e = ed.read_text(encoding="utf-8")
+if "worker-retry-button" in e:
+    print("OK app/events/[slug]/event-detail.tsx: ya aplicado")
+else:
+    m = re.search(r"Procesar cola ahora[^\n]*\n(\s*)</button>\n", e)
+    if not m:
+        print("ERROR event-detail.tsx: no se encontró el botón 'Procesar cola ahora'"); sys.exit(1)
+    ind = m.group(1)  # sangría de </button>
+    block = """{IND}{deliveryTotal("failed") > 0 && (
+{IND}  <button
+{IND}    className="worker-run-button worker-retry-button"
+{IND}    disabled={saving}
+{IND}    onClick={() => {
+{IND}      void fetch(`/api/events/${event.slug}/communications/process`, {
+{IND}        method: "POST",
+{IND}        headers: { "Content-Type": "application/json" },
+{IND}        body: JSON.stringify({ retryFailed: true }),
+{IND}      })
+{IND}        .then((response) => response.json())
+{IND}        .then((payload: { data?: { sent: number; retried: number; failed: number; requeued: number; provider: string }; error?: string }) => {
+{IND}          if (payload.data) {
+{IND}            setMessage(
+{IND}              `${payload.data.requeued} mensaje(s) con error vueltos a la cola: ${payload.data.sent} enviados, ${payload.data.retried} en reintento, ${payload.data.failed} fallidos de nuevo (proveedor ${payload.data.provider}).`,
+{IND}            );
+{IND}            void refreshCommunications();
+{IND}          } else {
+{IND}            setMessage(payload.error ?? "No fue posible reintentar los envíos.");
+{IND}          }
+{IND}        });
+{IND}    }}
+{IND}    title="Vuelve a enviar los mensajes que fallaron (por ejemplo, tras corregir el proveedor de correo en Integraciones)"
+{IND}  >
+{IND}    Reintentar con error ({deliveryTotal("failed")}) ↻
+{IND}  </button>
+{IND})}
+""".replace("{IND}", ind)
+    e = e[: m.end()] + block + e[m.end():]
+    ed.write_text(e, encoding="utf-8"); print("OK app/events/[slug]/event-detail.tsx: aplicado")
 
 # 4. CSS
 css = root / "app/globals.css"; c = css.read_text(encoding="utf-8")
