@@ -1,3 +1,20 @@
 /* Sala sin módulos de interacción: el escenario ocupa todo el ancho. */
 .participant-room.no-interaction .room-body { grid-template-columns: minmax(0, 1fr); }
 .participant-room.no-interaction .room-main { max-width: 1180px; margin: 0 auto; width: 100%; }
+
+/* Escritorio (dos columnas): la sala cabe en la ventana; solo el panel de
+   interacción tiene su propio desplazamiento. */
+@media (min-width: 1051px) {
+  .participant-room { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  .room-topbar, .room-preview-banner { flex: none; }
+  .room-body { flex: 1; min-height: 0; height: auto; }
+  .room-main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .room-stage { flex: 1; min-height: 0; }
+  .room-session-info { display: none; }
+  .room-reaction-bar { flex: none; }
+  .room-interaction { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .room-interaction > * { flex: none; }
+  .room-interaction > div:last-child { flex: 1; min-height: 0; overflow-y: auto; }
+  .room-interaction > .room-chat-panel { min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+  .room-interaction > .room-chat-panel .room-chat-list { max-height: none; min-height: 0; overflow-y: auto; }
+}

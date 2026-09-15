@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { HelpLocale } from "@/lib/help-content";
 
@@ -54,6 +55,15 @@ export default function HelpWidget({
   const [open, setOpen] = useState(false);
   const [locale, setLocale] = useState<HelpLocale>("es");
   const labels = text[locale];
+  // En las pantallas del participante (sala, registro, autogestión) el widget
+  // solo ofrece soporte: las guías del Centro de ayuda son para el equipo.
+  const pathname = usePathname() ?? "";
+  const participantContext = /^\/(room|register|manage-registration|privacy)(\/|$)/.test(pathname);
+  const participantIntro: Record<HelpLocale, string> = {
+    es: "¿Tienes un problema con el evento? Escríbenos y te ayudamos.",
+    en: "Having trouble with the event? Write to us and we will help.",
+    fr: "Un problème avec l’événement ? Écrivez-nous et nous vous aiderons.",
+  };
 
   return (
     <aside className="global-help-widget" aria-label={labels.title}>
@@ -69,9 +79,9 @@ export default function HelpWidget({
               ×
             </button>
           </header>
-          <p>{labels.intro}</p>
+          <p>{participantContext ? participantIntro[locale] : labels.intro}</p>
           <div className="global-help-actions">
-            {guideLinks.map((guide) => (
+            {!participantContext && guideLinks.map((guide) => (
               <Link
                 key={guide.slug}
                 href={`/help?lang=${locale}&article=${guide.slug}`}
@@ -82,11 +92,13 @@ export default function HelpWidget({
                 <i>→</i>
               </Link>
             ))}
+            {!participantContext && (
             <Link href={`/help?lang=${locale}`} onClick={() => setOpen(false)}>
               <span>⌕</span>
               {labels.center}
               <i>→</i>
             </Link>
+            )}
             <Link
               href={`/help?lang=${locale}&contact=1`}
               onClick={() => setOpen(false)}

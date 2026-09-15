@@ -347,6 +347,9 @@ export default function HelpCenterClient({
     initialArticle ? articleBySlug(initialArticle) ?? null : null,
   );
   const [contactOpen, setContactOpen] = useState(initialContactOpen);
+  // Las guías son para el equipo. Un participante (o un visitante sin sesión)
+  // solo ve el canal de soporte.
+  const restricted = !viewer || viewer.role === "participant";
   const [sending, setSending] = useState(false);
   const [contactError, setContactError] = useState("");
   const [createdRequest, setCreatedRequest] = useState<{
@@ -424,7 +427,7 @@ export default function HelpCenterClient({
         </Link>
         <nav>
           {viewer && <Link href="/">← {labels.panel}</Link>}
-          <a href={`mailto:${salesEmail}`}>{labels.sales}</a>
+          {!restricted && <a href={`mailto:${salesEmail}`}>{labels.sales}</a>}
           <button onClick={() => setContactOpen(true)}>
             {labels.contact}
           </button>
@@ -445,7 +448,23 @@ export default function HelpCenterClient({
         </nav>
       </header>
 
-      {selectedArticle ? (
+      {restricted ? (
+        <section
+          className="help-hero help-hero-support"
+          style={{
+            background: `radial-gradient(circle at 75% 20%, ${brand.accentColor}55, transparent 36%), linear-gradient(135deg, ${brand.primaryColor}, color-mix(in srgb, ${brand.primaryColor} 72%, #6946e8))`,
+          }}
+        >
+          <p className="eyebrow">{labels.supportEyebrow}</p>
+          <h1>{labels.contactTitle}</h1>
+          <p>{labels.contactIntro}</p>
+          <div className="help-support-actions">
+            <button onClick={() => setContactOpen(true)}>{labels.contact}</button>
+            <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
+          </div>
+          <small>{supportHours}</small>
+        </section>
+      ) : selectedArticle ? (
         <article className="help-article-view">
           <button
             className="help-back"

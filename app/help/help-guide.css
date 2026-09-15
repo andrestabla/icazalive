@@ -51,3 +51,9 @@
   .help-guide-step { grid-template-columns: 28px 1fr; gap: 10px; }
   .help-guide-step > i { width: 26px; height: 26px; font-size: 12px; }
 }
+
+/* Vista de soporte para participantes y visitantes sin sesión. */
+.help-hero-support { min-height: 0; padding: 56px 30px 44px; }
+.help-support-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin: 24px 0 14px; }
+.help-support-actions button { border: 0; border-radius: 10px; background: #fff; color: #3b2a8a; padding: 12px 18px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.help-support-actions a { color: #e9e2ff; font-size: 14px; font-weight: 650; }
