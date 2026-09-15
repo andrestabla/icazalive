@@ -37,7 +37,8 @@ export async function ensureIvsChannelForEvent(eventId: string, options: Options
 
   const creation = await createEventChannel(credentials, {
     name: `icaza-${event.slug}`,
-    recordingConfigurationArn: process.env.AWS_IVS_RECORDING_CONFIGURATION_ARN || undefined,
+    // Solo graba si la sesión tiene marcado "Grabar la sesión".
+    recordingConfigurationArn: session.recordingEnabled ? process.env.AWS_IVS_RECORDING_CONFIGURATION_ARN || undefined : undefined,
   });
 
   if (!creation.ok) {

@@ -56,9 +56,11 @@
   .room-viewer p { display: none; }
   .room-preview-banner { flex: 0 0 auto; font-size: 10px; padding: 6px 10px; }
 
-  /* El widget de ayuda no debe tapar el botón de enviar del chat. */
-  body:has(.participant-room) .global-help-widget { right: 8px; bottom: auto; top: 8px; }
-  body:has(.participant-room) .global-help-trigger { width: 34px; height: 34px; opacity: .85; }
+  /* Widget de ayuda: abajo a la derecha, por encima del cuadro de mensaje,
+     y con el panel visible dentro de la pantalla. */
+  body:has(.participant-room) .global-help-widget { right: 10px; bottom: 74px; top: auto; z-index: 60; }
+  body:has(.participant-room) .global-help-trigger { width: 42px; height: 42px; opacity: .95; }
+  body:has(.participant-room) .global-help-popover { bottom: 52px; max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px); overflow-y: auto; }
 }
 
 @media (max-width: 760px) and (orientation: landscape) {
