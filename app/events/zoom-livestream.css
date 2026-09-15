@@ -36,7 +36,8 @@
 }
 .zoom-livestream-steps li {
   display: grid;
-  grid-template-columns: 22px 1fr auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   font-size: 12.5px;
@@ -72,7 +73,12 @@
 }
 .zoom-livestream-steps li button:disabled { opacity: .55; cursor: not-allowed; }
 
-.zoom-livestream-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.zoom-livestream-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.zoom-livestream-actions .go-live { max-width: 100%; white-space: normal; text-align: left; }
+@media (max-width: 600px) {
+  .zoom-livestream-steps li { grid-template-columns: 22px minmax(0, 1fr); }
+  .zoom-livestream-steps li button { grid-column: 2; justify-self: start; white-space: normal; }
+}
 .zoom-livestream-actions .go-live {
   border: 0;
   border-radius: 8px;
