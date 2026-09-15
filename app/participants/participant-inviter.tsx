@@ -1,5 +1,7 @@
 "use client";
 
+import "./csv-template.css";
+
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminIcon } from "@/app/components/admin-icon";
@@ -273,8 +275,7 @@ export default function ParticipantInviter({
             <p className="eyebrow">CRECIMIENTO DE AUDIENCIA</p>
             <h2 id="participant-invite-title">Invitar participantes</h2>
             <p className="participant-invite-intro">
-              Crea accesos personales y prepara las comunicaciones en la cola
-              local.
+              Crea accesos personales y programa las comunicaciones del evento.
             </p>
 
             <div className="participant-invite-tabs">
@@ -373,6 +374,15 @@ export default function ParticipantInviter({
                       <span>Seleccionar archivo CSV</span>
                       <small>Máximo 2 MB · hasta 500 filas</small>
                     </label>
+                    <div className="csv-template-hint">
+                      <a href="/plantilla-participantes.csv" download="plantilla-participantes.csv">
+                        ↓ Descargar plantilla de ejemplo (CSV)
+                      </a>
+                      <small>
+                        Columnas: <code>nombre</code>, <code>correo</code>, <code>empresa</code>, <code>cargo</code>, <code>telefono</code>.
+                        Solo <b>nombre</b> y <b>correo</b> son obligatorios; las demás pueden quedar vacías. Guárdala como CSV UTF-8 (separado por comas o punto y coma).
+                      </small>
+                    </div>
                     <label>
                       O pega aquí el contenido
                       <textarea
