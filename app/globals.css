@@ -1146,3 +1146,7 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 .event-registrants-modal { max-width: 720px; }
 .event-registrants-search { width: 100%; margin: 10px 0 12px; padding: 9px 11px; border: 1px solid #dfdce5; border-radius: 9px; font-size: 13px; }
 @media (max-width: 640px) { .event-registrants-list li { grid-template-columns: 34px 1fr; } .event-registrants-list li time { display: none; } }
+
+/* Comunicaciones: botón para reenviar los mensajes con error. */
+.worker-retry-button { border-color: #d98b86 !important; color: #a8322c !important; }
+.worker-retry-button:hover { background: #fdf1f0 !important; }

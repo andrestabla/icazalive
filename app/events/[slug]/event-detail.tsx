@@ -1314,6 +1314,33 @@ export default function EventDetail({
             >
               <AdminIcon name="refresh" /> Procesar cola ahora
             </button>
+            {deliveryTotal("failed") > 0 && (
+              <button
+                className="worker-run-button worker-retry-button"
+                disabled={saving}
+                onClick={() => {
+                  void fetch(`/api/events/${event.slug}/communications/process`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ retryFailed: true }),
+                  })
+                    .then((response) => response.json())
+                    .then((payload: { data?: { sent: number; retried: number; failed: number; requeued: number; provider: string }; error?: string }) => {
+                      if (payload.data) {
+                        setMessage(
+                          `${payload.data.requeued} mensaje(s) con error vueltos a la cola: ${payload.data.sent} enviados, ${payload.data.retried} en reintento, ${payload.data.failed} fallidos de nuevo (proveedor ${payload.data.provider}).`,
+                        );
+                        void refreshCommunications();
+                      } else {
+                        setMessage(payload.error ?? "No fue posible reintentar los envíos.");
+                      }
+                    });
+                }}
+                title="Vuelve a enviar los mensajes que fallaron (por ejemplo, tras corregir el proveedor de correo en Integraciones)"
+              >
+                Reintentar con error ({deliveryTotal("failed")}) ↻
+              </button>
+            )}
           </div>
           <div className="communications-grid">
             <section className="panel communication-list-panel">
