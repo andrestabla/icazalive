@@ -83,7 +83,7 @@ if "scheduling-link" not in s:
 {m.group(2)}  <div className="scheduling-link-box">
 {m.group(2)}    <p className="eyebrow">AGENDAMIENTO · CALENDLY</p>
 {m.group(2)}    <p>
-{m.group(2)}      El seguimiento incluye el botón “Agendar una reunión” con el enlace del propietario del evento
+{m.group(2)}      El seguimiento incluye el botón “Agendar una reunión” con el enlace del propietario del evento{{" "}}
 {m.group(2)}      {{schedulingLink?.ownerName ? `(${{schedulingLink.ownerName}})` : ""}}. Cada organizador guarda el suyo aquí; usa{{" "}}
 {m.group(2)}      <code>{{"{{{{schedule_link}}}}"}}</code> en el mensaje para ubicarlo.
 {m.group(2)}    </p>

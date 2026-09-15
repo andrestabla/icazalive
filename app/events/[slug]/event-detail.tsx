@@ -1332,7 +1332,7 @@ export default function EventDetail({
                     <div className="scheduling-link-box">
                       <p className="eyebrow">AGENDAMIENTO · CALENDLY</p>
                       <p>
-                        El seguimiento incluye el botón “Agendar una reunión” con el enlace del propietario del evento
+                        El seguimiento incluye el botón “Agendar una reunión” con el enlace del propietario del evento{" "}
                         {schedulingLink?.ownerName ? `(${schedulingLink.ownerName})` : ""}. Cada organizador guarda el suyo aquí; usa{" "}
                         <code>{"{{schedule_link}}"}</code> en el mensaje para ubicarlo.
                       </p>
