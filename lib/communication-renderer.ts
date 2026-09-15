@@ -11,7 +11,7 @@ export function createParticipantUrls({
   return {
     accessUrl: `${origin}/room/${eventSlug}?access=${token}`,
     manageUrl: `${origin}/manage-registration/${eventSlug}?access=${token}`,
-    calendarUrl: `${origin}/api/public/events/${eventSlug}/calendar?access=${token}`,
+    calendarUrl: `${origin}/calendar/${eventSlug}?access=${token}`,
   };
 }
 

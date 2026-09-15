@@ -31,6 +31,7 @@ import {
 } from "@/lib/registration-access";
 import { notifyRoomActivity } from "@/lib/room-events";
 import { nudgeRoom } from "@/lib/room-stream";
+import { closeAttendance, markAttendance } from "@/lib/attendance";
 
 export const runtime = "nodejs";
 
@@ -98,6 +99,12 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
 
+  // Asistencia automática: entrar a la sala con el enlace personal mientras
+  // el evento está EN VIVO marca al inscrito como "Asistió".
+  if (viewer.kind === "participant" && record.event.status === "live") {
+    after(() => markAttendance(viewer.access.registrationId));
+  }
+
   // Automatización de eventos simulados: al llegar la hora de inicio la sala
   // pasa a EN VIVO y, al terminar el video, el evento queda completado.
   const simulatedReady =
@@ -133,6 +140,8 @@ export async function GET(request: Request, context: RouteContext) {
       record.event.status = automatedStatus;
       if (automatedStatus === "live") {
         after(() => notifyEventLive(record.event.id));
+      } else {
+        after(() => closeAttendance(record.event.id));
       }
       await writeAuditLog({
         action: `event.simulated.${automatedStatus === "live" ? "started" : "ended"}`,

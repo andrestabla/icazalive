@@ -131,6 +131,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     enabled?: boolean;
     subject?: string;
     body?: string;
+    offsetMinutes?: number;
   };
 
   if (!body.messageId) {
@@ -157,10 +158,23 @@ export async function PATCH(request: Request, context: RouteContext) {
       { status: 400 },
     );
   }
+  // Momento de envío: minutos respecto al fin del evento (seguimiento) o al
+  // inicio (recordatorios, en negativo). Máximo 30 días.
+  const MAX_OFFSET = 30 * 24 * 60;
+  if (
+    body.offsetMinutes !== undefined &&
+    (!Number.isInteger(body.offsetMinutes) || Math.abs(body.offsetMinutes) > MAX_OFFSET)
+  ) {
+    return NextResponse.json(
+      { error: "El momento de envío no es válido (máximo 30 días)." },
+      { status: 400 },
+    );
+  }
   if (
     body.enabled === undefined &&
     body.subject === undefined &&
-    body.body === undefined
+    body.body === undefined &&
+    body.offsetMinutes === undefined
   ) {
     return NextResponse.json(
       { error: "No hay cambios para guardar." },
@@ -170,7 +184,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const db = getDb();
   const [event] = await db
-    .select({ id: events.id })
+    .select({ id: events.id, startsAt: events.startsAt, endsAt: events.endsAt })
     .from(events)
     .where(eq(events.slug, slug))
     .limit(1);
@@ -182,11 +196,43 @@ export async function PATCH(request: Request, context: RouteContext) {
     enabled?: boolean;
     subject?: string;
     body?: string;
+    offsetMinutes?: number;
     updatedAt: Date;
   } = { updatedAt: new Date() };
   if (body.enabled !== undefined) changes.enabled = body.enabled;
   if (subject) changes.subject = subject;
   if (messageBody) changes.body = messageBody;
+  if (body.offsetMinutes !== undefined) {
+    const [target] = await db
+      .select({ type: communicationMessages.type })
+      .from(communicationMessages)
+      .where(and(eq(communicationMessages.id, body.messageId), eq(communicationMessages.eventId, event.id)))
+      .limit(1);
+    if (!target) {
+      return NextResponse.json({ error: "Comunicación no encontrada." }, { status: 404 });
+    }
+    if (target.type === "post_event" && body.offsetMinutes < 0) {
+      return NextResponse.json({ error: "El seguimiento se envía después del evento: usa un valor de 0 o más." }, { status: 400 });
+    }
+    if ((target.type === "reminder_24h" || target.type === "reminder_1h") && body.offsetMinutes >= 0) {
+      return NextResponse.json({ error: "Los recordatorios se envían antes del evento: usa minutos en negativo." }, { status: 400 });
+    }
+    if (target.type === "registration_confirmation" || target.type === "live_now") {
+      return NextResponse.json({ error: "Este mensaje no admite cambiar el momento de envío." }, { status: 400 });
+    }
+    changes.offsetMinutes = body.offsetMinutes;
+    // Las entregas ya programadas de este mensaje se mueven al nuevo momento.
+    const base = target.type === "post_event" ? event.endsAt : event.startsAt;
+    await db
+      .update(communicationDeliveries)
+      .set({ scheduledFor: new Date(base.getTime() + body.offsetMinutes * 60_000), updatedAt: new Date() })
+      .where(
+        and(
+          eq(communicationDeliveries.messageId, body.messageId),
+          eq(communicationDeliveries.status, "scheduled"),
+        ),
+      );
+  }
 
   const [updated] = await db
     .update(communicationMessages)
