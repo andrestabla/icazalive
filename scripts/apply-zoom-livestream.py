@@ -15,7 +15,21 @@ def sub(text, pattern, repl, etiqueta):
 #    privada que ya hace las llamadas autenticadas (nombre variable por entorno).
 p = root / "lib/zoom.ts"
 s = p.read_text()
-if "export async function zoomApiRequest" not in s:
+if "export async function zoomApiRequest" not in s and 'connectors.proxy("zoom"' in s:
+    # Variante de Replit: conector administrado (ReplitConnectors.proxy). El
+    # proxy serializa el body como JSON, así que se le entrega el objeto.
+    s = s.rstrip("\n") + '''
+
+// Acceso genérico a la API v2 de Zoom a través del conector administrado de Replit.
+export async function zoomApiRequest(path: string, init: RequestInit = {}): Promise<Response> {
+  const connectors = new ReplitConnectors();
+  const body = typeof init.body === "string" ? JSON.parse(init.body) : init.body;
+  return connectors.proxy("zoom", path, { method: init.method ?? "GET", body });
+}
+'''
+    p.write_text(s)
+    print("OK lib/zoom.ts: zoomApiRequest → ReplitConnectors.proxy")
+elif "export async function zoomApiRequest" not in s:
     m = re.search(r'async function (\w+)(?:<[^>]*>)?\(\s*(?:path|endpoint|url)\s*:\s*string\s*,\s*(\w+)\s*(\?)?\s*:\s*RequestInit', s)
     if not m:
         print("ANCLA NO ENCONTRADA: función de petición a Zoom en lib/zoom.ts (revisa las firmas impresas arriba)")
