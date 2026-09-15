@@ -114,7 +114,7 @@ export default function SimulatedPlayer({
       <div className="room-video-ready simulated-ended">
         <span>✓</span>
         <h2>El evento finalizó</h2>
-        <p>Gracias por acompañarnos. La transmisión pregrabada terminó.</p>
+        <p>Gracias por acompañarnos. La transmisión ha terminado.</p>
         {playback.postEventRedirectUrl && (
           <a href={playback.postEventRedirectUrl}>
             {isParticipant && redirectSeconds > 0

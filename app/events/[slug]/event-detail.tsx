@@ -4,6 +4,8 @@ import "../broadcast-details.css";
 import RoomModulesPanel from "./room-modules-panel";
 import "../scheduling-link.css";
 import ZoomLivestreamPanel from "./zoom-livestream-panel";
+import ShareRegistration from "./share-registration";
+import RegistrationBackgroundPanel from "./registration-background-panel";
 
 import Link from "next/link";
 import type { FormEvent } from "react";
@@ -1190,6 +1192,7 @@ export default function EventDetail({
               <h2>{event.registrationOpen ? "El registro está abierto" : "El registro está cerrado"}</h2>
               <p>Comparte el enlace público para que los asistentes completen sus datos y queden asociados automáticamente a este evento.</p>
               <div className="public-link-box"><code>/register/{event.slug}</code><Link href={`/register/${event.slug}`} target="_blank">Abrir página <AdminIcon name="arrow-right" /></Link></div>
+              <ShareRegistration slug={event.slug} title={event.title} />
               <button className="primary-button" disabled={saving} onClick={() => void patchEvent({ registrationOpen: !event.registrationOpen })}>{event.registrationOpen ? "Cerrar inscripciones" : "Abrir inscripciones"}</button>
               <label className="self-service-cutoff">
                 Plazo de autogestión del asistente
@@ -1280,6 +1283,7 @@ export default function EventDetail({
                 </label>
               ))}
             </div>
+            <RegistrationBackgroundPanel slug={event.slug} />
           </section>
           <RegistrationFieldsManager eventSlug={event.slug} />
         </div>

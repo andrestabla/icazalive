@@ -311,6 +311,12 @@ export const events = pgTable("events", {
     .default(0),
   postRegistrationUrl: text("post_registration_url"),
   feedbackEnabled: boolean("feedback_enabled").notNull().default(true),
+  baseFields: jsonb("base_fields").$type<{
+    company: { label: string; required: boolean; active: boolean };
+    jobTitle: { label: string; required: boolean; active: boolean };
+    phone: { label: string; required: boolean; active: boolean };
+  }>(),
+  registrationBackground: text("registration_background"),
   roomModules: jsonb("room_modules")
     .$type<{ chat: boolean; questions: boolean; polls: boolean; resources: boolean; reactions: boolean }>()
     .notNull()
