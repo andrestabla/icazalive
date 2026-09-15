@@ -1,3 +1,5 @@
+import { helpGuides } from "@/lib/help-guides";
+
 export type HelpLocale = "es" | "en" | "fr";
 export type LocalizedText = Record<HelpLocale, string>;
 
@@ -9,6 +11,24 @@ export type HelpCategory = {
   subcategories?: { id: string; label: LocalizedText }[];
 };
 
+// Guía paso a paso: secciones con pasos numerados, capturas de pantalla y
+// avisos. Los artículos con `sections` se renderizan como guía; el resto como
+// texto corrido.
+export type HelpGuideStep = {
+  text: LocalizedText;
+  image?: string;
+  caption?: LocalizedText;
+  tip?: LocalizedText;
+  warning?: LocalizedText;
+};
+
+export type HelpGuideSection = {
+  id: string;
+  title: LocalizedText;
+  intro?: LocalizedText;
+  steps: HelpGuideStep[];
+};
+
 export type HelpArticle = {
   slug: string;
   category: string;
@@ -18,6 +38,8 @@ export type HelpArticle = {
   content: LocalizedText;
   keywords: Record<HelpLocale, string[]>;
   featured?: boolean;
+  sections?: HelpGuideSection[];
+  related?: string[];
 };
 
 const text = (es: string, en: string, fr: string): LocalizedText => ({
@@ -133,7 +155,7 @@ export const helpCategories: HelpCategory[] = [
   },
 ];
 
-export const helpArticles: HelpArticle[] = [
+const baseHelpArticles: HelpArticle[] = [
   {
     slug: "configure-your-workspace",
     category: "getting-started",
@@ -435,6 +457,9 @@ export const helpArticles: HelpArticle[] = [
     featured: true,
   },
 ];
+
+// Las guías paso a paso van primero: son las más consultadas por el organizador.
+export const helpArticles: HelpArticle[] = [...helpGuides, ...baseHelpArticles];
 
 export function categoryById(id: string) {
   return helpCategories.find((category) => category.id === id);
