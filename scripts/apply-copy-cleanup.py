@@ -8,6 +8,8 @@ root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
 
 R = {
   "app/dashboard-client.tsx": [
+    ('"Entorno local"', '"Canales de transmisión en AWS"'),
+    ('local: "Local"', 'local: "Sin conectar"'),
     ("Este es el estado real de tus eventos y operaciones locales.", "Este es el estado actual de tus eventos y operaciones."),
     ("<small>Base local</small>", "<small>Total</small>"),
     ("Movimientos derivados de los datos locales.", "Últimos movimientos registrados en la plataforma."),
@@ -24,6 +26,9 @@ R = {
     ("Estado de la sesión en este equipo", "Estado de la sesión"),
   ],
   "app/events/[slug]/event-detail.tsx": [
+    ('"Lista localmente"', '"Lista"'),
+    ('"Entorno local"', '"Canales de transmisión en AWS"'),
+    ('local: "Local"', 'local: "Sin conectar"'),
     ('"Configuración técnica validada localmente."', '"Configuración técnica validada."'),
     ('ready: "Lista localmente"', 'ready: "Lista"'),
     ("<span>Al buzón local o al proveedor</span>", "<span>Entregados al proveedor de correo</span>"),

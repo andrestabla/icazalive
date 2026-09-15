@@ -5,6 +5,8 @@ import { getDb } from "@/db";
 import { eventRegistrationFields, events } from "@/db/schema";
 import { getBrandSettings } from "@/lib/brand";
 import { applyEventBrand } from "@/lib/brand-config";
+import { normalizeBaseFields } from "@/lib/registration-base-fields";
+import { fileUrl } from "@/lib/uploads";
 import {
   REGISTRATION_PREFILL_COOKIE,
   decodePrefill,
@@ -39,6 +41,8 @@ export default async function PublicRegistrationPage({
         brandPrimaryColor: events.brandPrimaryColor,
         brandAccentColor: events.brandAccentColor,
         brandBackgroundColor: events.brandBackgroundColor,
+        baseFields: events.baseFields,
+        registrationBackground: events.registrationBackground,
       })
       .from(events)
       .where(eq(events.slug, slug))
@@ -79,6 +83,8 @@ export default async function PublicRegistrationPage({
       }}
       brand={applyEventBrand(brand, event)}
       fields={fields}
+      baseFields={normalizeBaseFields(event.baseFields)}
+      backgroundUrl={event.registrationBackground ? (/^https?:\/\//i.test(event.registrationBackground) ? event.registrationBackground : fileUrl(event.registrationBackground)) : null}
       googleEnabled={isSsoUsable(googleSso)}
       googlePrefill={googlePrefill ? { name: googlePrefill.name, email: googlePrefill.email } : null}
       legalDocuments={{

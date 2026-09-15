@@ -6,6 +6,7 @@ import Link from "next/link";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import type { PublicBrand } from "@/lib/brand-config";
 import type { RegistrationFieldDefinition } from "@/lib/registration-fields";
+import { DEFAULT_BASE_FIELDS, type BaseFieldsConfig } from "@/lib/registration-base-fields";
 
 type PublicEvent = {
   title: string;
@@ -42,8 +43,12 @@ export default function RegistrationForm({
   googleEnabled = false,
   googlePrefill = null,
   legalDocuments,
+  baseFields = DEFAULT_BASE_FIELDS,
+  backgroundUrl = null,
 }: {
   event: PublicEvent;
+  baseFields?: BaseFieldsConfig;
+  backgroundUrl?: string | null;
   brand: PublicBrand;
   fields: RegistrationFieldDefinition[];
   googleEnabled?: boolean;
@@ -141,11 +146,22 @@ export default function RegistrationForm({
         "--brand-background": brand.backgroundColor,
       } as CSSProperties}
     >
-      <section className={`registration-hero ${event.format}`}>
+      <section
+        className={`registration-hero ${event.format}${backgroundUrl ? " with-background" : ""}`}
+        style={
+          backgroundUrl
+            ? {
+                backgroundImage: `linear-gradient(145deg, color-mix(in srgb, var(--brand-primary) 78%, transparent), color-mix(in srgb, var(--brand-accent) 62%, transparent)), url("${backgroundUrl.replace(/"/g, "%22")}")`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
         <PublicBrandIdentity brand={brand} />
         <div className="registration-event">
           <div className="public-badges">
-            <span>{event.format === "live" ? "EVENTO EN VIVO" : event.format === "hybrid" ? "EVENTO HÍBRIDO" : "EVENTO SIMULADO"}</span>
+            <span>EVENTO EN VIVO</span>
             <i>Acceso online</i>
           </div>
           <h1>{event.title}</h1>
@@ -219,11 +235,19 @@ export default function RegistrationForm({
               <form className="public-form" onSubmit={submit}>
                 <label>Nombre completo *<input name="name" required minLength={2} maxLength={100} autoComplete="name" placeholder="Tu nombre y apellido" defaultValue={googlePrefill?.name ?? ""} /></label>
                 <label>Correo electrónico *<input name="email" type="email" required maxLength={254} autoComplete="email" placeholder="nombre@empresa.com" defaultValue={googlePrefill?.email ?? ""} /></label>
-                <div className="public-form-row">
-                  <label>Empresa<input name="company" maxLength={150} autoComplete="organization" placeholder="Nombre de la empresa" /></label>
-                  <label>Cargo<input name="jobTitle" maxLength={150} autoComplete="organization-title" placeholder="Tu cargo" /></label>
-                </div>
-                <label>Teléfono<input name="phone" type="tel" maxLength={40} autoComplete="tel" placeholder="+57 300 000 0000" /></label>
+                {(baseFields.company.active || baseFields.jobTitle.active) && (
+                  <div className="public-form-row">
+                    {baseFields.company.active && (
+                      <label>{baseFields.company.label}{baseFields.company.required ? " *" : ""}<input name="company" required={baseFields.company.required} maxLength={150} autoComplete="organization" placeholder={baseFields.company.label} /></label>
+                    )}
+                    {baseFields.jobTitle.active && (
+                      <label>{baseFields.jobTitle.label}{baseFields.jobTitle.required ? " *" : ""}<input name="jobTitle" required={baseFields.jobTitle.required} maxLength={150} autoComplete="organization-title" placeholder={baseFields.jobTitle.label} /></label>
+                    )}
+                  </div>
+                )}
+                {baseFields.phone.active && (
+                  <label>{baseFields.phone.label}{baseFields.phone.required ? " *" : ""}<input name="phone" type="tel" required={baseFields.phone.required} maxLength={40} autoComplete="tel" placeholder="+57 300 000 0000" /></label>
+                )}
                 {fields.length > 0 && (
                   <div className="custom-registration-fields">
                     <p>INFORMACIÓN ADICIONAL</p>

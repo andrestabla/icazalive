@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import "../registration-tools.css";
 import { useEffect, useState } from "react";
 
 type Asset = { id: string; title: string; s3Key: string; durationSeconds: number | null };
@@ -128,32 +129,34 @@ export default function SimulatedContentPanel({
       </div>
 
       <div className="recorded-video-body">
-        <label className="post-registration-field">
-          Contenido de la biblioteca
+        <div className={`sim-content-hero${selected ? "" : " missing"}`}>
+          <span>{selected ? "▶" : "!"}</span>
           <div>
+            <h3>{selected ? `Video del evento: ${selected.title}` : "Elige el video que se emitirá"}</h3>
+            <p>
+              {selected
+                ? `${selected.durationSeconds ? `${formatDuration(selected.durationSeconds)} · ` : ""}Se emite por Amazon IVS a la hora del evento. Puedes cambiarlo hasta que empiece.`
+                : assets.length === 0
+                  ? "La biblioteca está vacía: sube y procesa el video en Contenidos y vuelve aquí para asignarlo. Sin video, el evento no tendrá señal."
+                  : "Sin video asignado el evento no tendrá señal. Selecciónalo de la biblioteca."}
+            </p>
+          </div>
+          <div className="sim-content-select">
             <select
               value={config?.contentAssetId ?? ""}
               disabled={busy || running}
               onChange={(e) => void saveConfig({ contentAssetId: e.target.value || null })}
             >
-              <option value="">Selecciona un contenido…</option>
+              <option value="">Selecciona el video de la biblioteca…</option>
               {assets.map((asset) => (
                 <option key={asset.id} value={asset.id}>
                   {asset.title}{asset.durationSeconds ? ` · ${formatDuration(asset.durationSeconds)}` : ""}
                 </option>
               ))}
             </select>
+            <Link href="/content">Gestionar biblioteca ↗</Link>
           </div>
-          <small>
-            {assets.length === 0 ? (
-              <>La biblioteca está vacía. Sube y procesa el video en <Link href="/content">Contenidos</Link> y vuelve aquí para seleccionarlo.</>
-            ) : selected ? (
-              <>Seleccionado: <b>{selected.title}</b>{selected.durationSeconds ? ` (${formatDuration(selected.durationSeconds)})` : ""}. Los videos se cargan y procesan en Contenidos; aquí solo se asignan.</>
-            ) : (
-              <>Los videos se cargan y procesan en Contenidos; aquí solo se asignan al evento.</>
-            )}
-          </small>
-        </label>
+        </div>
 
         <div className="sim-delivery-fixed">
           <span className="service-logo ivs">IVS</span>

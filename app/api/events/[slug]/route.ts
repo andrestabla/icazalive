@@ -9,6 +9,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { normalizeRoomModules } from "@/lib/room-modules";
+import { normalizeBaseFields, normalizeRegistrationBackground } from "@/lib/registration-base-fields";
 import { requireApiUser } from "@/lib/auth";
 import { requireApiPermission } from "@/lib/api-guards";
 import { canManageEvent } from "@/lib/event-permissions";
@@ -103,6 +104,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const body = (await request.json()) as {
     roomModules?: Partial<Record<"chat" | "questions" | "polls" | "resources" | "reactions", boolean>>;
+    baseFields?: Partial<Record<"company" | "jobTitle" | "phone", Partial<{ label: string; required: boolean; active: boolean }>>>;
+    registrationBackground?: string | null;
     status?: string;
     startsAt?: string;
     endsAt?: string;
@@ -236,7 +239,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const db = getDb();
   const [current] = await db
-    .select({ id: events.id, status: events.status, startsAt: events.startsAt, endsAt: events.endsAt, roomModules: events.roomModules })
+    .select({ id: events.id, status: events.status, startsAt: events.startsAt, endsAt: events.endsAt, roomModules: events.roomModules, baseFields: events.baseFields })
     .from(events)
     .where(eq(events.slug, slug))
     .limit(1);
@@ -278,6 +281,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
     roomModules?: ReturnType<typeof normalizeRoomModules>;
+    baseFields?: ReturnType<typeof normalizeBaseFields>;
+    registrationBackground?: string | null;
     brandPrimaryColor?: string | null;
     brandAccentColor?: string | null;
     brandBackgroundColor?: string | null;
@@ -302,6 +307,23 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (body.feedbackQuestion !== undefined) {
     changes.feedbackQuestion = body.feedbackQuestion?.trim() || null;
+  }
+  // Campos base del registro y fondo de la página pública.
+  if (body.baseFields !== undefined) {
+    if (!body.baseFields || typeof body.baseFields !== "object") {
+      return NextResponse.json({ error: "La configuración de campos no es válida." }, { status: 400 });
+    }
+    changes.baseFields = normalizeBaseFields(body.baseFields, normalizeBaseFields(current.baseFields));
+  }
+  if (body.registrationBackground !== undefined) {
+    const background = normalizeRegistrationBackground(body.registrationBackground);
+    if (background === "invalid") {
+      return NextResponse.json(
+        { error: "El fondo debe ser una imagen subida a la plataforma o una URL https válida." },
+        { status: 400 },
+      );
+    }
+    changes.registrationBackground = background;
   }
   // Módulos de la sala: se pueden cambiar en cualquier estado, incluso en vivo.
   if (body.roomModules !== undefined) {

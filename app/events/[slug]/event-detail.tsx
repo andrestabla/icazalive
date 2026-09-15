@@ -4,6 +4,8 @@ import "../broadcast-details.css";
 import RoomModulesPanel from "./room-modules-panel";
 import "../scheduling-link.css";
 import ZoomLivestreamPanel from "./zoom-livestream-panel";
+import ShareRegistration from "./share-registration";
+import RegistrationBackgroundPanel from "./registration-background-panel";
 
 import Link from "next/link";
 import type { FormEvent } from "react";
@@ -1087,7 +1089,7 @@ export default function EventDetail({
               <div className="readiness-list">
                 <div className="ready"><span>✓</span><div><b>Información principal</b><p>Fecha, formato y capacidad definidos.</p></div><small>Completo</small></div>
                 <div className={event.registrationOpen ? "ready" : ""}><span>{event.registrationOpen ? "✓" : "2"}</span><div><b>Página de registro</b><p>Configura campos, marca y mensajes.</p></div><small>{event.registrationOpen ? "Activa" : "Pendiente"}</small></div>
-                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? "✓" : "3"}</span><div><b>Transmisión</b><p>{event.format === "simulated" ? "Elige el contenido pregrabado y prepara el canal de IVS." : event.format === "hybrid" ? "Configura Zoom, el contenido simulado y el canal de IVS." : "Configura Zoom y prepara el canal de IVS."}</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista localmente" : "Pendiente"}</small></div>
+                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? "✓" : "3"}</span><div><b>Transmisión</b><p>{event.format === "simulated" ? "Elige el contenido pregrabado y prepara el canal de IVS." : event.format === "hybrid" ? "Configura Zoom, el contenido simulado y el canal de IVS." : "Configura Zoom y prepara el canal de IVS."}</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista" : "Pendiente"}</small></div>
               </div>
             </section>
           </div>
@@ -1100,7 +1102,7 @@ export default function EventDetail({
             <section className="panel transmission-card">
               <div className="panel-heading"><div><h2>Transmisión</h2><p>Servicios del evento.</p></div></div>
               <div className="transmission-service"><span className="service-logo zoom">zoom</span><div><b>Zoom</b><small>{zoom?.accountLabel ?? "Sin cuenta"}</small></div><i className={zoom?.status ?? "pending"}>{zoom?.status === "connected" ? "Conectado" : "Pendiente"}</i></div>
-              <div className="transmission-service"><span className="service-logo aws">aws</span><div><b>Amazon IVS</b><small>{ivs?.accountLabel ?? "Entorno local"}</small></div><i className={ivs?.status ?? "disconnected"}>{ivs?.status === "connected" ? "Conectado" : "Local"}</i></div>
+              <div className="transmission-service"><span className="service-logo aws">aws</span><div><b>Amazon IVS</b><small>{ivs?.accountLabel ?? "Canales de transmisión en AWS"}</small></div><i className={ivs?.status ?? "disconnected"}>{ivs?.status === "connected" ? "Conectado" : "Pendiente"}</i></div>
               <button onClick={() => setActiveTab("Transmisión")} className="secondary-button">Configurar transmisión</button>
             </section>
             <OrganizersPanel eventSlug={event.slug} />
@@ -1115,6 +1117,7 @@ export default function EventDetail({
               <h2>{event.registrationOpen ? "El registro está abierto" : "El registro está cerrado"}</h2>
               <p>Comparte el enlace público para que los asistentes completen sus datos y queden asociados automáticamente a este evento.</p>
               <div className="public-link-box"><code>/register/{event.slug}</code><Link href={`/register/${event.slug}`} target="_blank">Abrir página ↗</Link></div>
+              <ShareRegistration slug={event.slug} title={event.title} />
               <button className="primary-button" disabled={saving} onClick={() => void patchEvent({ registrationOpen: !event.registrationOpen })}>{event.registrationOpen ? "Cerrar inscripciones" : "Abrir inscripciones"}</button>
               <label className="self-service-cutoff">
                 Plazo de autogestión del asistente
@@ -1205,6 +1208,7 @@ export default function EventDetail({
                 </label>
               ))}
             </div>
+            <RegistrationBackgroundPanel slug={event.slug} />
           </section>
           <RegistrationFieldsManager eventSlug={event.slug} />
         </div>

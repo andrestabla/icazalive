@@ -6,6 +6,14 @@ import type {
   RegistrationFieldDefinition,
   RegistrationFieldType,
 } from "@/lib/registration-fields";
+import {
+  BASE_FIELD_HINTS,
+  BASE_FIELD_KEYS,
+  DEFAULT_BASE_FIELDS,
+  type BaseFieldKey,
+  type BaseFieldsConfig,
+} from "@/lib/registration-base-fields";
+import "../registration-tools.css";
 
 const fieldTypeLabels: Record<RegistrationFieldType, string> = {
   text: "Texto corto",
@@ -26,6 +34,55 @@ export default function RegistrationFieldsManager({
   const [notice, setNotice] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [type, setType] = useState<RegistrationFieldType>("text");
+  // Campos base (empresa, cargo, teléfono): se guardan en el evento.
+  const [baseFields, setBaseFields] = useState<BaseFieldsConfig>(DEFAULT_BASE_FIELDS);
+  const [baseLabels, setBaseLabels] = useState<Record<BaseFieldKey, string>>({
+    company: DEFAULT_BASE_FIELDS.company.label,
+    jobTitle: DEFAULT_BASE_FIELDS.jobTitle.label,
+    phone: DEFAULT_BASE_FIELDS.phone.label,
+  });
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/events/${eventSlug}`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { data?: { baseFields?: Partial<BaseFieldsConfig> | null; event?: { baseFields?: Partial<BaseFieldsConfig> | null } } } | null) => {
+        if (cancelled) return;
+        const stored = payload?.data?.event?.baseFields ?? payload?.data?.baseFields ?? null;
+        const merged: BaseFieldsConfig = {
+          company: { ...DEFAULT_BASE_FIELDS.company, ...(stored?.company ?? {}) },
+          jobTitle: { ...DEFAULT_BASE_FIELDS.jobTitle, ...(stored?.jobTitle ?? {}) },
+          phone: { ...DEFAULT_BASE_FIELDS.phone, ...(stored?.phone ?? {}) },
+        };
+        setBaseFields(merged);
+        setBaseLabels({ company: merged.company.label, jobTitle: merged.jobTitle.label, phone: merged.phone.label });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [eventSlug]);
+  const patchBaseField = async (key: BaseFieldKey, changes: Partial<BaseFieldsConfig[BaseFieldKey]>) => {
+    setSaving(`base-${key}`);
+    setError("");
+    setNotice("");
+    const response = await fetch(`/api/events/${eventSlug}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ baseFields: { [key]: changes } }),
+    });
+    const payload = (await response.json()) as { error?: string };
+    if (response.ok) {
+      setBaseFields((current) => {
+        const next = { ...current, [key]: { ...current[key], ...changes } };
+        if (!next[key].active) next[key].required = false;
+        return next;
+      });
+      setNotice(`Campo “${changes.label ?? baseFields[key].label}” actualizado.`);
+    } else {
+      setError(payload.error ?? "No fue posible actualizar el campo.");
+    }
+    setSaving("");
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -167,8 +224,8 @@ export default function RegistrationFieldsManager({
           <p className="eyebrow">FORMULARIO</p>
           <h2>Campos de inscripción</h2>
           <p>
-            Nombre, correo, empresa, cargo y teléfono ya están incluidos. Agrega
-            preguntas propias para segmentar a la audiencia.
+            Nombre y correo son fijos. Empresa, cargo y teléfono se pueden renombrar,
+            hacer obligatorios o quitar. Agrega preguntas propias para segmentar a la audiencia.
           </p>
         </div>
         <button
@@ -242,16 +299,45 @@ export default function RegistrationFieldsManager({
         </form>
       )}
 
-      <div className="registration-base-fields">
-        {["Nombre completo", "Correo electrónico", "Empresa", "Cargo", "Teléfono"].map(
-          (label, index) => (
-            <span key={label}>
-              <i>{index < 2 ? "Obligatorio" : "Base"}</i>
-              {label}
-              <small>Incluido</small>
+      <div className="registration-base-fields editable">
+        {(["Nombre completo", "Correo electrónico"] as const).map((label) => (
+          <span className="base-field-card" key={label}>
+            <i>Obligatorio</i>
+            <b>{label}</b>
+            <small>Siempre se solicita: identifica al asistente y recibe su enlace de acceso.</small>
+          </span>
+        ))}
+        {BASE_FIELD_KEYS.map((key) => {
+          const field = baseFields[key];
+          const busy = saving === `base-${key}`;
+          return (
+            <span className={`base-field-card${field.active ? "" : " inactive"}`} key={key}>
+              <i>{!field.active ? "Retirado" : field.required ? "Obligatorio" : "Opcional"}</i>
+              <input
+                type="text"
+                aria-label={`Etiqueta del campo ${DEFAULT_BASE_FIELDS[key].label}`}
+                value={baseLabels[key]}
+                maxLength={60}
+                disabled={busy || !field.active}
+                onChange={(input) => setBaseLabels((current) => ({ ...current, [key]: input.target.value }))}
+                onBlur={() => {
+                  const label = baseLabels[key].trim();
+                  if (label.length >= 2 && label !== field.label) void patchBaseField(key, { label });
+                  else setBaseLabels((current) => ({ ...current, [key]: field.label }));
+                }}
+              />
+              <small>{BASE_FIELD_HINTS[key]}</small>
+              <span className="base-field-actions">
+                <button type="button" disabled={busy || !field.active} onClick={() => void patchBaseField(key, { required: !field.required })}>
+                  {field.required ? "Hacer opcional" : "Hacer obligatorio"}
+                </button>
+                <button type="button" className={field.active ? "danger" : ""} disabled={busy} onClick={() => void patchBaseField(key, { active: !field.active })}>
+                  {field.active ? "Quitar del formulario" : "Volver a incluir"}
+                </button>
+              </span>
             </span>
-          ),
-        )}
+          );
+        })}
       </div>
 
       {loading ? (

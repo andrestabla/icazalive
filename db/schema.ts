@@ -317,6 +317,15 @@ export const events = pgTable("events", {
     .default(0),
   postRegistrationUrl: text("post_registration_url"),
   feedbackEnabled: boolean("feedback_enabled").notNull().default(true),
+  // Campos base del registro (empresa, cargo, teléfono) configurables por
+  // evento; null = configuración base. Fondo de la página de registro: clave
+  // pública en S3 o URL absoluta.
+  baseFields: jsonb("base_fields").$type<{
+    company: { label: string; required: boolean; active: boolean };
+    jobTitle: { label: string; required: boolean; active: boolean };
+    phone: { label: string; required: boolean; active: boolean };
+  }>(),
+  registrationBackground: text("registration_background"),
   // Módulos de la sala del participante (chat, preguntas, encuestas,
   // recursos, reacciones). Se definen al configurar y se pueden apagar o
   // encender durante la transmisión.

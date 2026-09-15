@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { and, asc, count, eq, ne } from "drizzle-orm";
 import { NextResponse, after } from "next/server";
+import { normalizeBaseFields } from "@/lib/registration-base-fields";
 import { getDb } from "@/db";
 import {
   communicationDeliveries,
@@ -69,6 +70,22 @@ export async function POST(request: Request, context: RouteContext) {
 
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+
+  // Campos base configurados por el organizador (empresa, cargo, teléfono).
+  const baseFields = normalizeBaseFields(event.baseFields);
+  const missingBase = (
+    [
+      ["company", body.company],
+      ["jobTitle", body.jobTitle],
+      ["phone", body.phone],
+    ] as const
+  ).find(([key, value]) => baseFields[key].active && baseFields[key].required && !(value ?? "").trim());
+  if (missingBase) {
+    return NextResponse.json(
+      { error: `El campo “${baseFields[missingBase[0]].label}” es obligatorio.` },
+      { status: 400 },
+    );
   }
   if (
     !event.registrationOpen ||
