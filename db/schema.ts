@@ -221,6 +221,9 @@ export const users = pgTable("users", {
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
   timezone: text("timezone"),
+  // Enlace de agendamiento (Calendly u otro) del organizador; se usa como
+  // botón en el correo de seguimiento posterior de sus eventos.
+  schedulingUrl: text("scheduling_url"),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
   mfaSecret: text("mfa_secret"),
   mfaEnrolledAt: timestamp("mfa_enrolled_at", { withTimezone: true }),

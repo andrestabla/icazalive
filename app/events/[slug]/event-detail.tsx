@@ -1,11 +1,12 @@
 "use client";
 
 import "../broadcast-details.css";
+import "../scheduling-link.css";
 import ZoomLivestreamPanel from "./zoom-livestream-panel";
 
 import Link from "next/link";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
 import {
   confirmableTransitions,
@@ -312,6 +313,52 @@ export default function EventDetail({
   } | null>(null);
   const [broadcastLoading, setBroadcastLoading] = useState(false);
   const [broadcastRevealed, setBroadcastRevealed] = useState(false);
+  // Enlace de agendamiento (Calendly): el del evento (propietario) y el propio.
+  const [schedulingLink, setSchedulingLink] = useState<{
+    eventUrl: string | null;
+    ownerName: string | null;
+    mine: string | null;
+  } | null>(null);
+  const [mySchedulingUrl, setMySchedulingUrl] = useState("");
+  const [schedulingNotice, setSchedulingNotice] = useState<{ text: string; error: boolean } | null>(null);
+  const [schedulingSaving, setSchedulingSaving] = useState(false);
+  const loadSchedulingLink = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/events/${event.slug}/scheduling-link`, { cache: "no-store" });
+      const payload = (await response.json()) as { data?: { eventUrl: string | null; ownerName: string | null; mine: string | null } };
+      if (response.ok && payload.data) {
+        setSchedulingLink(payload.data);
+        setMySchedulingUrl(payload.data.mine ?? "");
+      }
+    } catch {
+      // Se reintenta al guardar.
+    }
+  }, [event.slug]);
+  useEffect(() => {
+    void loadSchedulingLink();
+  }, [loadSchedulingLink]);
+  const saveSchedulingUrl = async () => {
+    setSchedulingSaving(true);
+    setSchedulingNotice(null);
+    try {
+      const response = await fetch("/api/auth/preferences", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ schedulingUrl: mySchedulingUrl.trim() || null }),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setSchedulingNotice({ text: payload.error ?? "No fue posible guardar el enlace.", error: true });
+      } else {
+        setSchedulingNotice({ text: mySchedulingUrl.trim() ? "Enlace guardado en tu perfil." : "Enlace retirado.", error: false });
+        await loadSchedulingLink();
+      }
+    } catch {
+      setSchedulingNotice({ text: "No fue posible contactar al servidor.", error: true });
+    } finally {
+      setSchedulingSaving(false);
+    }
+  };
   const [sessionEditor, setSessionEditor] = useState<
     SessionData | "new" | null
   >(null);
@@ -901,6 +948,10 @@ export default function EventDetail({
       .replaceAll(
         "{{calendar_link}}",
         `http://localhost:3000/api/public/events/${event.slug}/calendar?access=enlace-personal`,
+      )
+      .replaceAll(
+        "{{schedule_link}}",
+        schedulingLink?.eventUrl ?? "https://calendly.com/tu-equipo/entrevista",
       );
 
   return (
@@ -1277,6 +1328,39 @@ export default function EventDetail({
                       }
                     />
                   </label>
+                  {selectedCommunication.type === "post_event" && (
+                    <div className="scheduling-link-box">
+                      <p className="eyebrow">AGENDAMIENTO · CALENDLY</p>
+                      <p>
+                        El seguimiento incluye el botón “Agendar una reunión” con el enlace del propietario del evento
+                        {schedulingLink?.ownerName ? `(${schedulingLink.ownerName})` : ""}. Cada organizador guarda el suyo aquí; usa{" "}
+                        <code>{"{{schedule_link}}"}</code> en el mensaje para ubicarlo.
+                      </p>
+                      <label>
+                        Tu enlace de Calendly
+                        <input
+                          type="url"
+                          value={mySchedulingUrl}
+                          onChange={(input) => setMySchedulingUrl(input.target.value)}
+                          placeholder="https://calendly.com/tu-usuario/entrevista"
+                        />
+                      </label>
+                      <div className="scheduling-link-actions">
+                        <button type="button" disabled={schedulingSaving} onClick={() => void saveSchedulingUrl()}>
+                          {schedulingSaving ? "Guardando…" : "Guardar mi enlace"}
+                        </button>
+                        {schedulingNotice ? (
+                          <small className={schedulingNotice.error ? "error" : "ok"} role="status">{schedulingNotice.text}</small>
+                        ) : (
+                          <small>
+                            {schedulingLink?.eventUrl
+                              ? `Este evento usará: ${schedulingLink.eventUrl}`
+                              : "Este evento aún no tiene enlace: el botón no aparecerá hasta que el propietario guarde el suyo."}
+                          </small>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="template-tags">
                     <span>{"{{participant_name}}"}</span>
                     <span>{"{{event_title}}"}</span>
@@ -1284,6 +1368,7 @@ export default function EventDetail({
                     <span>{"{{access_link}}"}</span>
                     <span>{"{{manage_link}}"}</span>
                     <span>{"{{calendar_link}}"}</span>
+                    <span>{"{{schedule_link}}"}</span>
                   </div>
                   <button
                     className="primary-button"
