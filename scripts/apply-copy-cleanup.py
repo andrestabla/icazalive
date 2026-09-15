@@ -14,6 +14,9 @@ R = {
     ("<small>Base local</small>", "<small>Total</small>"),
     ("Movimientos derivados de los datos locales.", "Últimos movimientos registrados en la plataforma."),
   ],
+  "app/room/[slug]/ivs-player.tsx": [
+    ('? "Señal en vivo desde Amazon IVS"', '? "Señal en vivo"'),
+  ],
   "app/room/[slug]/room-client.tsx": [
     ('"Lista localmente"', '"Lista"'),
     ("Interacción sincronizada cada 2 segundos", "Interacción en tiempo real"),
