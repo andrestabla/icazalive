@@ -5,7 +5,6 @@ set -euo pipefail
 SRC=/tmp/icazalive-feat-aws-ivs-s3
 copy() { mkdir -p "$(dirname "$1")"; cp "$SRC/$1" "$1"; echo "copiado $1"; }
 declare -A PREV=(
-  ["app/participants/participant-inviter.tsx"]="f91d78199627e39fa8a0b5bc002da0dd"
   ["lib/help-guides.ts"]="c8fec65aededcf1d3e4130b4cfc7efe8"
 )
 for rel in "${!PREV[@]}"; do
@@ -16,6 +15,8 @@ for rel in "${!PREV[@]}"; do
   copy "$rel"
 done
 copy app/participants/csv-template.css
+# El modal de invitación en Replit tiene su propia versión (iconos): se parchea, no se copia.
+python3 "$SRC/scripts/apply-csv-template.py" .
 copy public/plantilla-participantes.csv
 npx tsc --noEmit -p . && echo TSC_OK
 npm run build 2>&1 | tail -3
