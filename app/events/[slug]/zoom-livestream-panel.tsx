@@ -103,9 +103,17 @@ export default function ZoomLivestreamPanel({
               : status.capability?.detail ?? "Comprobando la cuenta de Zoom…"}
           </span>
           {!settingOk && (
-            <button disabled={busy !== null} onClick={() => void act("enable_setting")}>
-              {busy === "enable_setting" ? "Habilitando…" : "Habilitar en Zoom"}
-            </button>
+            <span className="zoom-livestream-step-actions">
+              <a href="https://zoom.us/profile/setting?tab=meeting" target="_blank" rel="noreferrer">
+                Abrir ajustes de Zoom ↗
+              </a>
+              <button disabled={busy !== null} onClick={() => void act("enable_setting")}>
+                {busy === "enable_setting" ? "Habilitando…" : "Intentar por API"}
+              </button>
+              <button disabled={busy !== null} onClick={() => { setNotice(null); void refresh(); }}>
+                Volver a comprobar
+              </button>
+            </span>
           )}
         </li>
         <li className={status.meetingId && status.channelReady ? "done" : ""}>

@@ -1,6 +1,8 @@
 /* Panel Zoom → Amazon IVS gestionado desde la plataforma. */
 
 .zoom-livestream {
+  grid-column: 1 / -1;
+  width: auto;
   display: grid;
   gap: 12px;
   margin: 16px 20px 20px;
@@ -34,7 +36,8 @@
 }
 .zoom-livestream-steps li {
   display: grid;
-  grid-template-columns: 22px 1fr auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   font-size: 12.5px;
@@ -69,8 +72,16 @@
   white-space: nowrap;
 }
 .zoom-livestream-steps li button:disabled { opacity: .55; cursor: not-allowed; }
+.zoom-livestream-step-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.zoom-livestream-step-actions a { border: 1px solid #6946df; border-radius: 8px; background: #6946df; color: #fff; padding: 6px 12px; font-size: 12px; font-weight: 650; text-decoration: none; white-space: nowrap; }
+.zoom-livestream.compact .zoom-livestream-step-actions a { color: #fff; }
 
-.zoom-livestream-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.zoom-livestream-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.zoom-livestream-actions .go-live { max-width: 100%; white-space: normal; text-align: left; }
+@media (max-width: 600px) {
+  .zoom-livestream-steps li { grid-template-columns: 22px minmax(0, 1fr); }
+  .zoom-livestream-steps li button, .zoom-livestream-steps li .zoom-livestream-step-actions { grid-column: 2; justify-self: start; justify-content: flex-start; white-space: normal; }
+}
 .zoom-livestream-actions .go-live {
   border: 0;
   border-radius: 8px;

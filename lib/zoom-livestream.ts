@@ -20,11 +20,18 @@ export type ZoomLivestreamConfig = {
 
 type ZoomError = { code?: number; message?: string };
 
+// Ruta manual en Zoom para el ajuste de cuenta que el conector no puede cambiar.
+export const ZOOM_MANUAL_SETTING_PATH =
+  "En zoom.us → Configuración → En la reunión (Avanzado) → “Permitir la transmisión en vivo de reuniones” → activar y marcar “Servicio de transmisión en vivo personalizado”.";
+
 async function readError(response: Response, fallback: string): Promise<string> {
   const payload = (await response.json().catch(() => null)) as ZoomError | null;
   const message = payload?.message ?? "";
+  if (/user:update:settings/i.test(message)) {
+    return `El conector de Zoom no tiene permiso para cambiar ajustes de la cuenta. Actívalo a mano una sola vez: ${ZOOM_MANUAL_SETTING_PATH}`;
+  }
   if (/scopes?:?\s*\[/i.test(message) || payload?.code === 104 || response.status === 401) {
-    return `El conector de Zoom no tiene permiso para esta operación (${message || "token sin alcance"}). Vuelve a conectar Zoom en Integraciones concediendo permisos de reunión y usuario.`;
+    return `El conector de Zoom no tiene permiso para esta operación (${message || "token sin alcance"}). Vuelve a conectar Zoom en Integraciones.`;
   }
   if (response.status === 404 || payload?.code === 3001) {
     return "Zoom no encuentra la reunión del evento. Verifica el ID de reunión en la configuración de transmisión.";
@@ -57,7 +64,7 @@ export async function readZoomLivestreamCapability(): Promise<ZoomLivestreamCapa
       detail:
         allow && custom
           ? "Zoom permite transmitir reuniones a un servicio personalizado."
-          : "Zoom todavía no permite la transmisión a un servicio personalizado en esta cuenta.",
+          : `Zoom todavía no permite la transmisión a un servicio personalizado en esta cuenta. ${ZOOM_MANUAL_SETTING_PATH}`,
     };
   } catch (error) {
     return {
