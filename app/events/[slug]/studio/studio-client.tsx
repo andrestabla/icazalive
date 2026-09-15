@@ -42,7 +42,7 @@ export default function StudioClient({
   const statusLabels = {
     not_configured: "Configuración incompleta",
     configured: "Configurada",
-    ready: "Lista localmente",
+    ready: "Lista",
     live: "En vivo",
     ended: "Finalizada",
     error: "Con error",
@@ -89,9 +89,9 @@ export default function StudioClient({
       </div>
       <header className="studio-header">
         <div>
-          <p className="eyebrow">SALA TÉCNICA LOCAL</p>
+          <p className="eyebrow">SALA TÉCNICA</p>
           <h1>{session.title}</h1>
-          <p>Prepara la señal y revisa el recorrido antes de conectar los proveedores.</p>
+          <p>Prepara la señal y revisa el recorrido antes de salir al aire.</p>
         </div>
         <div className="studio-header-actions">
           <span className={`studio-status ${session.streamingStatus}`}>
@@ -117,7 +117,7 @@ export default function StudioClient({
 
         <aside className="panel studio-check-panel">
           <div className="panel-heading">
-            <div><p className="eyebrow">CONTROL PREVIO</p><h2>Revisión técnica</h2><p>Estado de la sesión en este equipo.</p></div>
+            <div><p className="eyebrow">CONTROL PREVIO</p><h2>Revisión técnica</h2><p>Estado de la sesión.</p></div>
           </div>
           <div className="technical-check-list">
             {checks.map((check) => (

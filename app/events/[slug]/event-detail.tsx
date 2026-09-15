@@ -1,6 +1,7 @@
 "use client";
 
 import "../broadcast-details.css";
+import RoomModulesPanel from "./room-modules-panel";
 import "../scheduling-link.css";
 import ZoomLivestreamPanel from "./zoom-livestream-panel";
 
@@ -674,7 +675,7 @@ export default function EventDetail({
         action === "run_check"
           ? payload.data.checks.some((check) => check.status === "fail")
             ? "La revisión encontró elementos pendientes."
-            : "Configuración técnica validada localmente."
+            : "Configuración técnica validada."
           : action === "sync_zoom"
             ? "Horario y título de la reunión actualizados en Zoom."
             : "Configuración de transmisión guardada.",
@@ -918,7 +919,7 @@ export default function EventDetail({
   > = {
     not_configured: "Pendiente",
     configured: "Configurada",
-    ready: "Lista localmente",
+    ready: "Lista",
     live: "En vivo",
     ended: "Finalizada",
     error: "Con error",
@@ -1287,7 +1288,7 @@ export default function EventDetail({
           <div className="communication-stats">
             <div><small>EN COLA</small><strong>{deliveryTotal("queued")}</strong><span>Listos para enviar</span></div>
             <div><small>PROGRAMADOS</small><strong>{deliveryTotal("scheduled")}</strong><span>Según la fecha del evento</span></div>
-            <div><small>ENVIADOS</small><strong>{deliveryTotal("sent")}</strong><span>Al buzón local o al proveedor</span></div>
+            <div><small>ENVIADOS</small><strong>{deliveryTotal("sent")}</strong><span>Entregados al proveedor de correo</span></div>
             <div><small>CON ERROR</small><strong>{deliveryTotal("failed")}</strong><span>Reintentos agotados</span></div>
             <button
               className="worker-run-button"
@@ -1354,7 +1355,7 @@ export default function EventDetail({
               </div>
               <div className="local-queue-note">
                         <span><AdminIcon name="mail" /></span>
-                <p><b>Modo local</b> Las entregas quedan registradas en la base de datos. Ningún correo saldrá hasta conectar Amazon SES u otro proveedor.</p>
+                <p><b>Registro de entregas</b> Cada correo queda registrado con su estado. Los envíos salen por el proveedor configurado en Integraciones.</p>
               </div>
             </section>
 
@@ -1501,6 +1502,7 @@ export default function EventDetail({
           </section>
         ) : (
           <div className="interaction-section">
+            <RoomModulesPanel slug={event.slug} />
             <div className="interaction-stats">
               <article><span><AdminIcon name="question" /></span><div><strong>{pendingQuestions}</strong><p>preguntas pendientes</p></div></article>
               <article><span><AdminIcon name="event-live" /></span><div><strong>{openPolls}</strong><p>encuestas abiertas</p></div></article>
@@ -1900,7 +1902,7 @@ export default function EventDetail({
 
             <div className="local-interaction-note">
               <span><AdminIcon name="activity" /></span>
-              <p><b>Consola local sincronizada</b> La sala y esta vista consultan cambios cada 2 segundos. La infraestructura WebSocket/SSE y escalamiento horizontal se activarán al desplegar.</p>
+              <p><b>Sincronización en tiempo real</b> La sala y esta vista se actualizan al instante: lo que apruebes, publiques o retires llega a los participantes sin recargar.</p>
               <Link href={`/room/${event.slug}`} target="_blank">Abrir vista previa <AdminIcon name="arrow-right" /></Link>
             </div>
           </div>
@@ -1938,7 +1940,7 @@ export default function EventDetail({
               <div>
                 <p className="eyebrow">ESTADO TÉCNICO</p>
                 <h2>{streamingStatusLabels[streamingSession.streamingStatus]}</h2>
-                <p>{streamingProgress}% de la configuración local preparada.</p>
+                <p>{streamingProgress}% de la configuración preparada.</p>
               </div>
               <div className="streaming-progress">
                 <span style={{ width: `${streamingProgress}%` }} />
@@ -2175,7 +2177,7 @@ export default function EventDetail({
 
               <aside className="panel technical-checks">
                 <div className="panel-heading">
-                  <div><p className="eyebrow">LISTA TÉCNICA</p><h2>Preparación local</h2><p>Validaciones antes de conectar proveedores.</p></div>
+                  <div><p className="eyebrow">LISTA TÉCNICA</p><h2>Preparación técnica</h2><p>Validaciones de la sesión antes de transmitir.</p></div>
                 </div>
                 <div className="technical-check-list">
                   {technicalChecks.map((check) => (
@@ -2416,7 +2418,7 @@ export default function EventDetail({
             <p className="eyebrow">ELIMINAR SESIÓN</p>
             <h2 id="session-delete-title">¿Eliminar “{sessionToDelete.title}”?</h2>
             <p>
-              También se quitará su configuración local de Zoom y Amazon IVS.
+              También se quitará su configuración de Zoom y Amazon IVS.
               Esta acción no afecta las demás sesiones.
             </p>
             {sessionError && (

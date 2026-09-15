@@ -311,6 +311,10 @@ export const events = pgTable("events", {
     .default(0),
   postRegistrationUrl: text("post_registration_url"),
   feedbackEnabled: boolean("feedback_enabled").notNull().default(true),
+  roomModules: jsonb("room_modules")
+    .$type<{ chat: boolean; questions: boolean; polls: boolean; resources: boolean; reactions: boolean }>()
+    .notNull()
+    .default({ chat: true, questions: true, polls: true, resources: true, reactions: true }),
   feedbackQuestion: text("feedback_question"),
   brandPrimaryColor: text("brand_primary_color"),
   brandAccentColor: text("brand_accent_color"),

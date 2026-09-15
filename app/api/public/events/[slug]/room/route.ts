@@ -1,5 +1,6 @@
 import { and, asc, count, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { NextResponse, after } from "next/server";
+import { ROOM_ACTION_MODULE, normalizeRoomModules } from "@/lib/room-modules";
 import { getDb } from "@/db";
 import {
   eventChatMessages,
@@ -327,6 +328,7 @@ export async function GET(request: Request, context: RouteContext) {
         zoomJoinUrl: record.session.zoomJoinUrl,
       },
       attendeeCount: attendeeSummary[0]?.total ?? 0,
+      modules: normalizeRoomModules(record.event.roomModules),
       technicalTest:
         viewer.kind === "preview" && record.session.emitterStatus === "running",
       simulatedPlayback: simulatedReady
@@ -398,6 +400,23 @@ export async function POST(request: Request, context: RouteContext) {
     body.action !== "question_vote"
   ) {
     return NextResponse.json({ error: participationError }, { status: 403 });
+  }
+
+  // Módulos apagados por el organizador: la acción se rechaza aunque el
+  // participante tenga una versión antigua de la sala abierta.
+  const moduleKey = body.action ? ROOM_ACTION_MODULE[body.action] : undefined;
+  if (moduleKey) {
+    const [eventModules] = await db
+      .select({ roomModules: events.roomModules })
+      .from(events)
+      .where(eq(events.id, access.eventId))
+      .limit(1);
+    if (eventModules && !normalizeRoomModules(eventModules.roomModules)[moduleKey]) {
+      return NextResponse.json(
+        { error: "Este módulo no está activo en este evento." },
+        { status: 403 },
+      );
+    }
   }
 
   if (body.action === "chat") {

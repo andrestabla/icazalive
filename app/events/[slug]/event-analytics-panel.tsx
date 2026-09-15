@@ -106,7 +106,7 @@ export default function EventAnalyticsPanel({
   return (
     <div className="event-analytics print-report">
       <div className="analytics-print-bar">
-        <p>Informe del evento generado localmente.</p>
+        <p>Informe del evento.</p>
         <button type="button" onClick={() => window.print()}>
           <AdminIcon name="download" /> Imprimir / guardar PDF
         </button>
@@ -185,7 +185,7 @@ export default function EventAnalyticsPanel({
             <div>
               <p className="eyebrow">INTERACCIÓN</p>
               <h2>Participación de la audiencia</h2>
-              <p>Preguntas y votaciones registradas localmente.</p>
+              <p>Preguntas y votaciones registradas en la sala.</p>
             </div>
           </div>
           <div className="analytics-engagement-body">

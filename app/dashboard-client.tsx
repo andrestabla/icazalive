@@ -260,7 +260,7 @@ export default function Dashboard({
             <h1>
               {greeting(data.generatedAt)}, {firstName}
             </h1>
-            <p>Este es el estado real de tus eventos y operaciones locales.</p>
+            <p>Este es el estado actual de tus eventos y operaciones.</p>
           </div>
           <div className="top-actions">
             <div className="notification-control">
@@ -358,7 +358,7 @@ export default function Dashboard({
           <article className="stat-card">
             <div className="stat-head">
               <span className="stat-icon purple"><AdminIcon name="events" /></span>
-              <small>Base local</small>
+              <small>Total</small>
             </div>
             <strong>{data.metrics.events}</strong>
             <p>Eventos totales</p>
@@ -505,7 +505,7 @@ export default function Dashboard({
           <div className="panel-heading">
             <div>
               <h2>Actividad reciente</h2>
-              <p>Movimientos derivados de los datos locales.</p>
+              <p>Últimos movimientos registrados en la plataforma.</p>
             </div>
             {data.activity.length > 3 && (
               <button

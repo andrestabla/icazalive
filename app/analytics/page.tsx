@@ -110,9 +110,9 @@ export default async function AnalyticsPage() {
         <div>
           <p className="eyebrow">VISIÓN GLOBAL</p>
           <h1>Analítica</h1>
-          <p>Resultados consolidados de tus eventos y operaciones locales.</p>
+          <p>Resultados consolidados de todos tus eventos.</p>
         </div>
-        <span>Base de datos local · actualización al abrir</span>
+        <span>Datos actualizados al abrir esta página</span>
       </header>
 
       <section className="analytics-kpis global" aria-label="Indicadores globales">
@@ -167,7 +167,7 @@ export default async function AnalyticsPage() {
             <div>
               <p className="eyebrow">PREPARACIÓN TÉCNICA</p>
               <h2>Sesiones de streaming</h2>
-              <p>Disponibilidad antes de conectar Zoom y AWS.</p>
+              <p>Sesiones listas para transmitir.</p>
             </div>
           </div>
           <div className="global-readiness-content">

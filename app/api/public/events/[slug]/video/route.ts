@@ -63,7 +63,7 @@ export async function GET(request: Request, context: RouteContext) {
   const stats = await recordedVideoStats(event.recordedVideoPath);
   if (!stats) {
     return NextResponse.json(
-      { error: "El archivo de video no está disponible en este equipo." },
+      { error: "El archivo de video no está disponible." },
       { status: 404 },
     );
   }

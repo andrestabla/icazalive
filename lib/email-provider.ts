@@ -35,7 +35,7 @@ export const providerLabels: Record<EmailProviderName, string> = {
   sendgrid: "SendGrid",
   ses: "Amazon SES",
   resend: "Resend",
-  local: "Buzón local de vista previa",
+  local: "Registro interno (sin envío)",
 };
 
 export async function sendEmail(email: OutgoingEmail): Promise<EmailResult> {
