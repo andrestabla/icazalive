@@ -114,13 +114,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .from(events)
     .where(eq(events.slug, slug))
     .limit(1);
-  if (!event) return { title: "Evento no encontrado" };
+  if (!event) return { title: "Evento no encontrado", metadataBase: new URL(getPublicOriginFromEnv()) };
   const brand = await getBrandSettings();
   const when = new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: event.timezone }).format(event.startsAt);
   const description = event.description?.trim() || `Regístrate y recibe tu acceso personal. ${when} (hora de Miami).`;
   const origin = getPublicOriginFromEnv();
   const url = `${origin}/register/${slug}`;
   return {
+    metadataBase: new URL(origin),
     title: `${event.title} · ${brand.organizationName}`,
     description,
     openGraph: {
