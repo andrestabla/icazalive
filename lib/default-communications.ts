@@ -33,7 +33,7 @@ export const DEFAULT_COMMUNICATIONS = [
   {
     type: "post_event" as const,
     subject: "Gracias por acompañarnos en {{event_title}}",
-    body: "Hola {{participant_name}},\n\nGracias por participar en {{event_title}}. Muy pronto compartiremos los recursos y la grabación.\n\nEquipo Icaza Jammoul Live",
+    body: "Hola {{participant_name}},\n\nGracias por participar en {{event_title}}. Muy pronto compartiremos los recursos y la grabación.\n\n¿Quieres continuar la conversación? Agendar una reunión con nuestro equipo: {{schedule_link}}\n\nEquipo Icaza Jammoul Live",
     enabled: false,
     offsetMinutes: 60,
   },

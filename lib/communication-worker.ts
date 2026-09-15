@@ -8,6 +8,11 @@ import {
   type EmailProviderName,
 } from "@/lib/email-provider";
 import { renderBrandedEmail } from "@/lib/email-branding";
+import {
+  SCHEDULE_LINK_TAG,
+  applySchedulingLink,
+  resolveEventSchedulingUrl,
+} from "@/lib/scheduling-link";
 import { getBrandSettings } from "@/lib/brand";
 import { runSimulatedAutomation } from "@/lib/simulated-emitter";
 
@@ -126,11 +131,18 @@ export async function processDueDeliveries(
       continue;
     }
 
+    // El enlace de agendamiento se resuelve aquí, con el valor actual del
+    // organizador, aunque el mensaje se haya renderizado al inscribirse.
+    let bodyToSend = delivery.body;
+    if (bodyToSend.includes(SCHEDULE_LINK_TAG)) {
+      const scheduling = await resolveEventSchedulingUrl(delivery.eventId).catch(() => ({ url: null }));
+      bodyToSend = applySchedulingLink(bodyToSend, scheduling.url);
+    }
     const result = await sendEmail({
       to: delivery.recipientEmail,
-      subject: delivery.subject,
-      body: delivery.body,
-      html: renderBrandedEmail({ bodyText: delivery.body, brand }),
+      subject: applySchedulingLink(delivery.subject, null),
+      body: bodyToSend,
+      html: renderBrandedEmail({ bodyText: bodyToSend, brand }),
     });
 
     if (result.ok) {

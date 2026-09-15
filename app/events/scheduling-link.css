@@ -1,0 +1,39 @@
+/* Enlace de agendamiento (Calendly) dentro del editor del seguimiento posterior. */
+.scheduling-link-box {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 14px;
+  padding: 14px 16px;
+  border: 1px solid #dcd4f8;
+  border-radius: 10px;
+  background: #f7f5ff;
+}
+.scheduling-link-box > p:not(.eyebrow) { margin: 0; color: #5b4bb0; font-size: 12.5px; line-height: 1.55; }
+.scheduling-link-box label { display: grid; gap: 6px; font-size: 12px; font-weight: 650; color: #575263; }
+.scheduling-link-box input {
+  width: 100%;
+  border: 1px solid #d5cff0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink, #201c2a);
+}
+.scheduling-link-box input:focus { outline: 0; border-color: #8064e5; box-shadow: 0 0 0 3px #6946df14; }
+.scheduling-link-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.scheduling-link-actions button {
+  border: 1px solid #cfc4f2;
+  border-radius: 8px;
+  background: #fff;
+  color: #5b3bd1;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.scheduling-link-actions button:disabled { opacity: .55; cursor: not-allowed; }
+.scheduling-link-actions small { color: #6b6578; font-size: 12px; line-height: 1.5; }
+.scheduling-link-actions small.ok { color: #1a7565; }
+.scheduling-link-actions small.error { color: #b3374a; }

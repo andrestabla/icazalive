@@ -16,10 +16,15 @@ function escapeHtml(value: string): string {
 
 const URL_PATTERN = /https?:\/\/[^\s<]+/g;
 
-function labelForLink(url: string): string | null {
+function labelForLink(url: string, before = ""): string | null {
   if (url.includes("/room/")) return "Entrar al evento";
   if (url.includes("/manage-registration/")) return "Gestionar mi inscripción";
   if (url.includes("/calendar")) return "Añadir al calendario";
+  // Enlaces de agendamiento: la etiqueta escrita antes de los dos puntos
+  // ("Agendar una reunión: https://…") se convierte en el texto del botón.
+  const prefix = before.match(/([^.\n]*\b(?:agend|reserv|programa)[^:]*):\s*$/iu);
+  if (prefix) return prefix[1].trim();
+  if (/calendly\.com|cal\.com|hubspot\.com\/meetings|zcal\.co/i.test(url)) return "Agendar una reunión";
   return null;
 }
 
@@ -55,7 +60,7 @@ export function renderBrandedEmail(options: {
       for (const url of urls) {
         const [before, ...rest] = remainder.split(url);
         remainder = rest.join(url);
-        const label = labelForLink(url);
+        const label = labelForLink(url, before);
         if (label) {
           // El texto previo tipo "Enlace de acceso:" sobra: el botón lo dice.
           const prefix = before.replace(/[\wáéíóúñÁÉÍÓÚÑ ]*:\s*$/u, "");

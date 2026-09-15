@@ -217,6 +217,7 @@ export const users = pgTable("users", {
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
   timezone: text("timezone"),
+  schedulingUrl: text("scheduling_url"),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
   mfaSecret: text("mfa_secret"),
   mfaEnrolledAt: timestamp("mfa_enrolled_at", { withTimezone: true }),
