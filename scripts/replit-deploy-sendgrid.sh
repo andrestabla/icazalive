@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# OBSOLETO (2026-09-14): ya aplicado en Replit y luego adaptado por su agente a la
+# conexión administrada (commit 1e7f101 en Replit). NO volver a ejecutar: pisaría
+# lib/sendgrid-sender.ts, lib/email-settings.ts, la ruta y el panel de correo.
+echo "OBSOLETO: no ejecutar; ver comentario en el script"; exit 1
 # SendGrid como proveedor de correo saliente en Integraciones. Uso en Replit:
 #   curl -sL https://codeload.github.com/andrestabla/icazalive/tar.gz/refs/heads/feat/aws-ivs-s3 | tar xz -C /tmp && bash /tmp/icazalive-feat-aws-ivs-s3/scripts/replit-deploy-sendgrid.sh
 set -euo pipefail
