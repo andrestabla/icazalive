@@ -117,7 +117,7 @@ export default function IvsPlayer({ playbackUrl }: { playbackUrl: string }) {
 
   const label =
     state === "live"
-      ? "Señal en vivo desde Amazon IVS"
+      ? "Señal en vivo"
       : state === "waiting"
         ? "Esperando la señal del organizador"
         : state === "error"

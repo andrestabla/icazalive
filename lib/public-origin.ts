@@ -11,3 +11,12 @@ export function getPublicOrigin(request: Request): string {
   }
   return new URL(request.url).origin;
 }
+
+// Origen público sin petición a mano (metadatos, tareas en segundo plano).
+export function getPublicOriginFromEnv(): string {
+  return (
+    process.env.APP_BASE_URL?.trim().replace(/\/+$/, "") ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "") ||
+    "https://liveicazajammoul.com"
+  );
+}

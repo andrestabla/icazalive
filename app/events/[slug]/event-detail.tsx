@@ -1164,7 +1164,7 @@ export default function EventDetail({
               <div className="readiness-list">
                 <div className="ready"><span><AdminIcon name="check" /></span><div><b>Información principal</b><p>Fecha, formato y capacidad definidos.</p></div><small>Completo</small></div>
                 <div className={event.registrationOpen ? "ready" : ""}><span>{event.registrationOpen ? <AdminIcon name="check" /> : "2"}</span><div><b>Página de registro</b><p>Configura campos, marca y mensajes.</p></div><small>{event.registrationOpen ? "Activa" : "Pendiente"}</small></div>
-                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? <AdminIcon name="check" /> : "3"}</span><div><b>Transmisión</b><p>{event.format === "simulated" ? "Elige el contenido pregrabado y prepara el canal de IVS." : event.format === "hybrid" ? "Configura Zoom, el contenido simulado y el canal de IVS." : "Configura Zoom y prepara el canal de IVS."}</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista localmente" : "Pendiente"}</small></div>
+                <div className={streamingSession?.streamingStatus === "ready" ? "ready" : ""}><span>{streamingSession?.streamingStatus === "ready" ? <AdminIcon name="check" /> : "3"}</span><div><b>Transmisión</b><p>{event.format === "simulated" ? "Elige el contenido pregrabado y prepara el canal de IVS." : event.format === "hybrid" ? "Configura Zoom, el contenido simulado y el canal de IVS." : "Configura Zoom y prepara el canal de IVS."}</p></div><small>{streamingSession?.streamingStatus === "ready" ? "Lista" : "Pendiente"}</small></div>
               </div>
             </section>
           </div>
@@ -1177,7 +1177,7 @@ export default function EventDetail({
             <section className="panel transmission-card">
               <div className="panel-heading"><div><h2>Transmisión</h2><p>Servicios del evento.</p></div></div>
               <div className="transmission-service"><ServiceLogo service="zoom" /><div><b>Zoom</b><small>{zoom?.accountLabel ?? "Sin cuenta"}</small></div><i className={zoom?.status ?? "pending"}>{zoom?.status === "connected" ? "Conectado" : "Pendiente"}</i></div>
-              <div className="transmission-service"><ServiceLogo service="amazon_ivs" /><div><b>Amazon IVS</b><small>{ivs?.accountLabel ?? "Entorno local"}</small></div><i className={ivs?.status ?? "disconnected"}>{ivs?.status === "connected" ? "Conectado" : "Local"}</i></div>
+              <div className="transmission-service"><ServiceLogo service="amazon_ivs" /><div><b>Amazon IVS</b><small>{ivs?.accountLabel ?? "Canales de transmisión en AWS"}</small></div><i className={ivs?.status ?? "disconnected"}>{ivs?.status === "connected" ? "Conectado" : "Local"}</i></div>
               <button onClick={() => setActiveTab("Transmisión")} className="secondary-button">Configurar transmisión</button>
             </section>
             <OrganizersPanel eventSlug={event.slug} />

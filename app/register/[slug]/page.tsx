@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { and, asc, eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -7,6 +8,7 @@ import { getBrandSettings } from "@/lib/brand";
 import { applyEventBrand } from "@/lib/brand-config";
 import { normalizeBaseFields } from "@/lib/registration-base-fields";
 import { fileUrl } from "@/lib/uploads";
+import { getPublicOriginFromEnv } from "@/lib/public-origin";
 import {
   REGISTRATION_PREFILL_COOKIE,
   decodePrefill,
@@ -101,4 +103,35 @@ export default async function PublicRegistrationPage({
       }}
     />
   );
+}
+
+// Vista previa del enlace en WhatsApp, LinkedIn, X e Instagram: título del
+// evento, fecha y miniatura (opengraph-image.tsx en esta misma carpeta).
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const [event] = await getDb()
+    .select({ title: events.title, description: events.description, startsAt: events.startsAt, timezone: events.timezone })
+    .from(events)
+    .where(eq(events.slug, slug))
+    .limit(1);
+  if (!event) return { title: "Evento no encontrado" };
+  const brand = await getBrandSettings();
+  const when = new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: event.timezone }).format(event.startsAt);
+  const description = event.description?.trim() || `Regístrate y recibe tu acceso personal. ${when} (hora de Miami).`;
+  const origin = getPublicOriginFromEnv();
+  const url = `${origin}/register/${slug}`;
+  return {
+    title: `${event.title} · ${brand.organizationName}`,
+    description,
+    openGraph: {
+      title: event.title,
+      description,
+      url,
+      siteName: brand.organizationName,
+      type: "website",
+      locale: "es_CO",
+      images: [{ url: `${url}/opengraph-image`, width: 1200, height: 630, alt: event.title }],
+    },
+    twitter: { card: "summary_large_image", title: event.title, description, images: [`${url}/opengraph-image`] },
+  };
 }
