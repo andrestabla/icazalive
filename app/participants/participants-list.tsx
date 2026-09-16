@@ -189,6 +189,61 @@ export default function ParticipantsList() {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [exportOpen, setExportOpen] = useState(false);
+  // Selección múltiple y envío manual de mensajes.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageMode, setMessageMode] = useState<"template" | "custom">("template");
+  const [messageTemplate, setMessageTemplate] = useState<string>("reminder_1h");
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageBody, setMessageBody] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const templateOptions: { value: string; label: string }[] = [
+    { value: "registration_confirmation", label: "Confirmación de registro" },
+    { value: "reminder_24h", label: "Recordatorio de 24 horas" },
+    { value: "reminder_1h", label: "Recordatorio de 1 hora" },
+    { value: "live_now", label: "Ya estamos en vivo" },
+    { value: "post_event", label: "Seguimiento posterior" },
+  ];
+  const toggleSelected = (ids: string[], on: boolean) =>
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      for (const id of ids) {
+        if (on) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  const sendManualMessage = async () => {
+    setSendingMessage(true);
+    setError("");
+    setMessage("");
+    const response = await fetch("/api/participants/message", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(
+        messageMode === "template"
+          ? { registrationIds: Array.from(selectedIds), templateType: messageTemplate }
+          : { registrationIds: Array.from(selectedIds), subject: messageSubject, body: messageBody },
+      ),
+    });
+    const payload = (await response.json().catch(() => ({}))) as {
+      data?: { sent: number; failed: number; skipped: number; provider: string; errors: string[] };
+      error?: string;
+    };
+    if (response.ok && payload.data) {
+      setMessageOpen(false);
+      setMessage(
+        `Mensaje enviado a ${payload.data.sent} participante${payload.data.sent === 1 ? "" : "s"}` +
+          (payload.data.failed ? `, ${payload.data.failed} con error` : "") +
+          (payload.data.skipped ? `, ${payload.data.skipped} omitido${payload.data.skipped === 1 ? "" : "s"} (cancelados o inactivos)` : "") +
+          ` (proveedor ${payload.data.provider}).` +
+          (payload.data.errors.length ? ` ${payload.data.errors.join(" · ")}` : ""),
+      );
+    } else {
+      setError(payload.error ?? "No fue posible enviar el mensaje.");
+    }
+    setSendingMessage(false);
+  };
   const [selectedColumns, setSelectedColumns] = useState<Set<string>>(
     () => new Set(exportColumns.map((column) => column.key)),
   );
@@ -357,6 +412,14 @@ export default function ParticipantsList() {
         </div>
         <div className="participant-header-actions">
           <button
+            className="secondary-action participant-message-button"
+            disabled={!selectedIds.size || loading}
+            title={selectedIds.size ? "Enviar un correo a los seleccionados" : "Selecciona participantes en la lista"}
+            onClick={() => setMessageOpen(true)}
+          >
+            ✉ Enviar mensaje{selectedIds.size ? ` (${selectedIds.size})` : ""}
+          </button>
+          <button
             className="secondary-action"
             disabled={!filtered.length || loading}
             onClick={() => setExportOpen(true)}
@@ -454,6 +517,16 @@ export default function ParticipantsList() {
 
       <section className="panel participants-table">
         <div className="participant-table-head">
+          <span className="participant-select-cell">
+            <input
+              type="checkbox"
+              aria-label="Seleccionar todos los participantes de la lista"
+              title="Seleccionar todos"
+              disabled={loading || !filtered.length}
+              checked={filtered.length > 0 && filtered.every((record) => selectedIds.has(record.id))}
+              onChange={(input) => toggleSelected(filtered.map((record) => record.id), input.target.checked)}
+            />
+          </span>
           <span>PARTICIPANTE</span>
           <span>EMPRESA / CARGO</span>
           <span>{grouped ? "EVENTOS" : "EVENTO"}</span>
@@ -470,6 +543,14 @@ export default function ParticipantsList() {
         ) : grouped ? (
           paginatedGroups.map((group) => (
             <div className="participant-row" key={group.email}>
+              <span className="participant-select-cell">
+                <input
+                  type="checkbox"
+                  aria-label={`Seleccionar a ${group.name}`}
+                  checked={group.records.every((record) => selectedIds.has(record.id))}
+                  onChange={(input) => toggleSelected(group.records.map((record) => record.id), input.target.checked)}
+                />
+              </span>
               <div className="participant-person">
                 <span>
                   {group.name
@@ -512,6 +593,14 @@ export default function ParticipantsList() {
         ) : (
           paginated.map((record) => (
             <div className="participant-row" key={record.id}>
+              <span className="participant-select-cell">
+                <input
+                  type="checkbox"
+                  aria-label={`Seleccionar a ${record.name}`}
+                  checked={selectedIds.has(record.id)}
+                  onChange={(input) => toggleSelected([record.id], input.target.checked)}
+                />
+              </span>
               <div className="participant-person">
                 <span>
                   {record.name
@@ -673,6 +762,90 @@ export default function ParticipantsList() {
               )}
               <button className="primary-button" disabled={saving} onClick={() => setHistoryEmail(null)}>
                 {saving ? "Guardando…" : "Listo"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {messageOpen && (
+        <div
+          className="modal-backdrop"
+          onMouseDown={() => {
+            if (!sendingMessage) setMessageOpen(false);
+          }}
+        >
+          <section
+            className="modal participant-modal participant-message-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="participant-message-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button className="modal-close" disabled={sendingMessage} onClick={() => setMessageOpen(false)} aria-label="Cerrar">
+              ×
+            </button>
+            <p className="eyebrow">MENSAJE A PARTICIPANTES</p>
+            <h2 id="participant-message-title">Enviar mensaje a {selectedIds.size} participante{selectedIds.size === 1 ? "" : "s"}</h2>
+            <p>Cada persona recibe el correo con la cabecera y el pie de la marca y con sus propios enlaces personales.</p>
+            <div className="participant-message-mode" role="radiogroup" aria-label="Tipo de mensaje">
+              <label className={messageMode === "template" ? "on" : ""}>
+                <input type="radio" name="message-mode" checked={messageMode === "template"} onChange={() => setMessageMode("template")} />
+                <span>Plantilla del evento</span>
+              </label>
+              <label className={messageMode === "custom" ? "on" : ""}>
+                <input type="radio" name="message-mode" checked={messageMode === "custom"} onChange={() => setMessageMode("custom")} />
+                <span>Mensaje nuevo</span>
+              </label>
+            </div>
+            {messageMode === "template" ? (
+              <label className="participant-message-field">
+                <span>Plantilla</span>
+                <select value={messageTemplate} onChange={(input) => setMessageTemplate(input.target.value)}>
+                  {templateOptions.map((option) => (
+                    <option value={option.value} key={option.value}>{option.label}</option>
+                  ))}
+                </select>
+                <small>Se usa la versión de la plantilla configurada en el evento de cada participante (pestaña Comunicaciones).</small>
+              </label>
+            ) : (
+              <>
+                <label className="participant-message-field">
+                  <span>Asunto</span>
+                  <input
+                    type="text"
+                    maxLength={180}
+                    value={messageSubject}
+                    placeholder="Novedades de {{event_title}}"
+                    onChange={(input) => setMessageSubject(input.target.value)}
+                  />
+                </label>
+                <label className="participant-message-field">
+                  <span>Mensaje</span>
+                  <textarea
+                    rows={7}
+                    maxLength={10000}
+                    value={messageBody}
+                    placeholder={"Hola {{participant_name}},\n\n…\n\nEntrar al evento: {{access_link}}"}
+                    onChange={(input) => setMessageBody(input.target.value)}
+                  />
+                </label>
+                <div className="template-tags participant-message-tags">
+                  {["{{participant_name}}", "{{event_title}}", "{{event_date}}", "{{access_link}}", "{{manage_link}}", "{{calendar_link}}", "{{schedule_link}}"].map((tag) => (
+                    <button type="button" key={tag} onClick={() => setMessageBody((current) => `${current}${current && !current.endsWith(" ") ? " " : ""}${tag}`)}>{tag}</button>
+                  ))}
+                </div>
+              </>
+            )}
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <div className="export-actions">
+              <button className="secondary-action" disabled={sendingMessage} onClick={() => setMessageOpen(false)}>Cancelar</button>
+              <button
+                className="primary-button"
+                disabled={sendingMessage || !selectedIds.size || (messageMode === "custom" && (!messageSubject.trim() || !messageBody.trim()))}
+                onClick={() => void sendManualMessage()}
+              >
+                {sendingMessage ? "Enviando…" : `Enviar a ${selectedIds.size}`}
               </button>
             </div>
           </section>
