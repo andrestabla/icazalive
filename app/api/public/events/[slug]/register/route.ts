@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, asc, count, eq, ne } from "drizzle-orm";
+import { and, asc, count, eq, ne, sql } from "drizzle-orm";
 import { NextResponse, after } from "next/server";
 import { normalizeBaseFields } from "@/lib/registration-base-fields";
 import { getDb } from "@/db";
@@ -20,6 +20,7 @@ import { getPublicOrigin } from "@/lib/public-origin";
 import { isStaleDelivery, triggerDeliveries } from "@/lib/communication-worker";
 import { getPublishedLegalDocuments } from "@/lib/privacy";
 import { createRegistrationAccessToken } from "@/lib/registration-access";
+import { clientAddress, rateLimited } from "@/lib/rate-limit";
 import { validateRegistrationResponses } from "@/lib/registration-fields";
 
 export const runtime = "nodejs";
@@ -59,6 +60,18 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json(
       { error: "Revisa los datos requeridos y acepta la política de privacidad." },
       { status: 400 },
+    );
+  }
+
+  // Protección contra registros masivos: 15 por IP cada 10 minutos y 3 por
+  // correo cada hora (cada registro dispara un correo de confirmación).
+  if (
+    rateLimited(`register:${clientAddress(request)}`, 15, 10 * 60_000) ||
+    rateLimited(`register-email:${email}`, 3, 60 * 60_000)
+  ) {
+    return NextResponse.json(
+      { error: "Demasiadas solicitudes de registro. Inténtalo de nuevo en unos minutos." },
+      { status: 429, headers: { "Retry-After": "600" } },
     );
   }
 
@@ -165,7 +178,13 @@ export async function POST(request: Request, context: RouteContext) {
       })
       .onConflictDoUpdate({
         target: users.email,
-        set: { name, active: true, updatedAt: new Date() },
+        // Solo se actualiza si la cuenta existente es de participante: un
+        // registro público nunca renombra ni reactiva cuentas del equipo.
+        set: {
+          name: sql`CASE WHEN ${users.role} = 'participant' THEN ${name} ELSE ${users.name} END`,
+          active: sql`CASE WHEN ${users.role} = 'participant' THEN true ELSE ${users.active} END`,
+          updatedAt: new Date(),
+        },
       })
       .returning({ id: users.id });
 

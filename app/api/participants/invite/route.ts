@@ -1,4 +1,4 @@
-import { and, count, eq, ne } from "drizzle-orm";
+import { and, count, eq, ne, sql } from "drizzle-orm";
 import { getPublicOrigin } from "@/lib/public-origin";
 import { isStaleDelivery, triggerDeliveries } from "@/lib/communication-worker";
 import { NextResponse, after } from "next/server";
@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import { requireApiPermission } from "@/lib/api-guards";
 import {
   createParticipantUrls,
@@ -115,6 +116,9 @@ export async function POST(request: Request) {
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
+  if (!(await canManageEvent(currentUser, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
+  }
   if (event.status === "cancelled" || event.status === "completed") {
     return NextResponse.json(
       { error: "No se pueden enviar invitaciones a un evento finalizado." },
@@ -166,9 +170,10 @@ export async function POST(request: Request) {
         })
         .onConflictDoUpdate({
           target: users.email,
+          // Nunca renombra ni reactiva cuentas del equipo.
           set: {
-            name: participantInput.name,
-            active: true,
+            name: sql`CASE WHEN ${users.role} = 'participant' THEN ${participantInput.name} ELSE ${users.name} END`,
+            active: sql`CASE WHEN ${users.role} = 'participant' THEN true ELSE ${users.active} END`,
             updatedAt: now,
           },
         })

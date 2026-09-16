@@ -71,7 +71,7 @@ export async function POST(request: Request) {
   };
   const title = body.title?.trim();
   const s3Key = body.s3Key?.trim();
-  if (!title || !s3Key || title.length > 200 || s3Key.length > 500) {
+  if (!title || !s3Key || title.length > 200 || s3Key.length > 500 || !s3Key.startsWith("content/") || s3Key.includes("..")) {
     return NextResponse.json(
       { error: "Indica un título y la clave del objeto en S3." },
       { status: 400 },

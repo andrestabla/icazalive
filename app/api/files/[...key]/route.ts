@@ -37,6 +37,14 @@ async function serve(request: Request, context: RouteContext, headOnly: boolean)
     if (value) headers.set(name, value);
   }
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  // Los archivos subidos se sirven como contenido inerte: sin scripts ni
+  // acceso al origen de la aplicación aunque el tipo declarado sea HTML/SVG.
+  headers.set("Content-Security-Policy", "sandbox; default-src 'none'; img-src data:; media-src 'self'");
+  headers.set("X-Content-Type-Options", "nosniff");
+  const upstreamType = headers.get("content-type") ?? "";
+  if (/svg|html|xml|javascript/i.test(upstreamType)) {
+    headers.set("Content-Disposition", "attachment");
+  }
   return new Response(headOnly ? null : upstream.body, {
     status: upstream.status,
     headers,

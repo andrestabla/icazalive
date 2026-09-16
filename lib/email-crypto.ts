@@ -5,8 +5,19 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 // derivación local de respaldo (solo desarrollo). El formato guardado es
 // iv:authTag:ciphertext en base64.
 
+let warnedMissingKey = false;
+
 function encryptionKey(): Buffer {
-  const secret = process.env.AUTH_ENCRYPTION_KEY || "icaza-live-local-fallback-key";
+  const secret = process.env.AUTH_ENCRYPTION_KEY;
+  if (!secret) {
+    // Sin clave propia se usa una derivación fija: en producción queda
+    // registrado en los logs para que se defina AUTH_ENCRYPTION_KEY.
+    if (process.env.NODE_ENV === "production" && !warnedMissingKey) {
+      warnedMissingKey = true;
+      console.error("[email-crypto] AUTH_ENCRYPTION_KEY no está definida: los secretos guardados se cifran con la clave de respaldo del código.");
+    }
+    return createHash("sha256").update("icaza-live-local-fallback-key").digest();
+  }
   // SHA-256 garantiza 32 bytes exactos para AES-256, sea cual sea la longitud.
   return createHash("sha256").update(secret).digest();
 }

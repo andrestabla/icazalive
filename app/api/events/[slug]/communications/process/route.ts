@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { events } from "@/db/schema";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import { processDueDeliveries, requeueFailedDeliveries } from "@/lib/communication-worker";
 import { activeProviderName } from "@/lib/email-provider";
 
@@ -26,6 +27,9 @@ export async function POST(request: Request, context: RouteContext) {
     .limit(1);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
   // { retryFailed: true } vuelve a encolar las entregas con error antes de
   // procesar, para reenviarlas una vez corregida la causa (p. ej. proveedor).

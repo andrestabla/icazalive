@@ -8,6 +8,7 @@ import {
   users,
 } from "@/db/schema";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,9 @@ export async function GET(_: Request, context: RouteContext) {
     .limit(1);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const responses = await db

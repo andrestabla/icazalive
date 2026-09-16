@@ -12,10 +12,7 @@ export async function GET() {
   const row = Array.isArray(database) ? database[0] : (database.rows?.[0] ?? null);
 
   return NextResponse.json({
-    status: "ok",
-    application: "icaza-live",
-    database: process.env.DATABASE_URL ? "postgresql" : "pglite-local",
-    connection: row,
+    status: row ? "ok" : "degraded",
     timestamp: new Date().toISOString(),
   });
 }

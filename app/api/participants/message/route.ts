@@ -11,6 +11,8 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { requireApiPermission } from "@/lib/api-guards";
+import { canManageEvent } from "@/lib/event-permissions";
 import { getBrandSettings } from "@/lib/brand";
 import { renderParticipantCommunication } from "@/lib/communication-renderer";
 import { DEFAULT_COMMUNICATIONS } from "@/lib/default-communications";
@@ -36,6 +38,8 @@ const MAX_RECIPIENTS = 500;
 // personal se conserva: se recupera del último correo enviado y solo se emite
 // uno nuevo si la persona todavía no tenía.
 export async function POST(request: Request) {
+  const permissionCheck = await requireApiPermission("participants.manage");
+  if ("error" in permissionCheck) return permissionCheck.error;
   const currentUser = await requireApiUser();
   if (!currentUser) return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   if (currentUser.role === "participant") return NextResponse.json({ error: "No autorizado." }, { status: 403 });
@@ -88,7 +92,14 @@ export async function POST(request: Request) {
     .leftJoin(registrationAccessTokens, eq(registrationAccessTokens.registrationId, registrations.id))
     .where(inArray(registrations.id, registrationIds));
 
-  const recipients = rows.filter((row) => row.status !== "cancelled" && row.participantActive);
+  // Solo destinatarios de eventos que el usuario gestiona (administrador: todos).
+  const manageable = new Map<string, boolean>();
+  for (const eventId of new Set(rows.map((row) => row.eventId))) {
+    manageable.set(eventId, await canManageEvent(currentUser, eventId));
+  }
+  const recipients = rows.filter(
+    (row) => row.status !== "cancelled" && row.participantActive && manageable.get(row.eventId),
+  );
   if (recipients.length === 0) {
     return NextResponse.json({ error: "Ninguno de los seleccionados puede recibir correos (cancelados o inactivos)." }, { status: 400 });
   }

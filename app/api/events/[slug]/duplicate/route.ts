@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import { findScheduleConflicts } from "@/lib/event-scheduling";
 
 export const runtime = "nodejs";
@@ -53,6 +54,9 @@ export async function POST(request: Request, context: RouteContext) {
     .limit(1);
   if (!source) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(user, source.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const title = body.title?.trim() || `${source.title} — copia`;
