@@ -283,9 +283,14 @@ patch("app/room/[slug]/room-client.tsx", [
 patch("app/events/[slug]/room-modules-panel.tsx", [('      .then((payload: { data?: { roomModules?: Partial<RoomModules> } } | null) => {\n        if (cancelled) return;\n        if (payload?.data?.roomModules) {\n          const merged = { ...DEFAULT_ROOM_MODULES, ...payload.data.roomModules };', '      .then((payload: { data?: { roomModules?: Partial<RoomModules>; event?: { roomModules?: Partial<RoomModules> } } } | null) => {\n        if (cancelled) return;\n        const saved = payload?.data?.event?.roomModules ?? payload?.data?.roomModules;\n        if (saved) {\n          const merged = { ...DEFAULT_ROOM_MODULES, ...saved };')], "payload?.data?.event?.roomModules")
 
 # 10. Sala técnica: el escenario crece con los paneles (sin superposición)
+css = root / "app/globals.css"; g = css.read_text(encoding="utf-8")
+if ".studio-stage { aspect-ratio: 16 / 9; min-height: 360px;" in g:
+    g = g.replace(".studio-stage { aspect-ratio: 16 / 9; min-height: 360px;", ".studio-stage { min-height: 360px;", 1)
+    css.write_text(g, encoding="utf-8"); print("OK globals.css: escenario sin alto fijo")
+else:
+    print("OK globals.css: escenario ya sin alto fijo")
 append_css("app/globals.css", ".studio-stage.grow", """
-/* Sala técnica: el escenario deja de tener alto fijo; el video conserva 16:9. */
-.studio-stage { aspect-ratio: auto !important; min-height: 0 !important; height: auto !important; }
+/* Sala técnica: el escenario crece con los paneles; el estado vacío conserva su alto. */
 .studio-stage-empty { min-height: 300px; display: flex; flex-direction: column; justify-content: center; margin: 0 auto; }
 .studio-stage.grow { display: block; }
 """)
