@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { events } from "@/db/schema";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import { getEventAnalytics } from "@/lib/event-analytics";
 
 export const runtime = "nodejs";
@@ -31,6 +32,9 @@ export async function GET(_: Request, context: RouteContext) {
 
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   return NextResponse.json({

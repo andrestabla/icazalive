@@ -86,7 +86,7 @@ const REACTIONS = ["👏", "❤️", "👍", "🎉", "✋"];
 
 export default function RoomClient({
   eventShell,
-  accessToken,
+  initialAccessToken,
   brand,
 }: {
   eventShell: {
@@ -95,9 +95,31 @@ export default function RoomClient({
     startsAt: string;
     timezone: string;
   };
-  accessToken: string | null;
+  initialAccessToken: string | null;
   brand: PublicBrand;
 }) {
+  // El enlace personal llega en la URL una sola vez: se guarda en la sesión
+  // del navegador y se retira de la barra de direcciones para que no quede en
+  // el historial, en capturas de pantalla ni en cabeceras Referer.
+  const storageKey = `icaza-room-access:${eventShell.slug}`;
+  const [accessToken, setAccessToken] = useState<string | null>(initialAccessToken);
+  useEffect(() => {
+    try {
+      if (initialAccessToken) {
+        window.sessionStorage.setItem(storageKey, initialAccessToken);
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("access")) {
+          url.searchParams.delete("access");
+          window.history.replaceState(window.history.state, "", url.pathname + (url.search || "") + url.hash);
+        }
+      } else {
+        const stored = window.sessionStorage.getItem(storageKey);
+        if (stored) setAccessToken(stored);
+      }
+    } catch {
+      // Sin almacenamiento disponible: se sigue usando el token de la URL.
+    }
+  }, [initialAccessToken, storageKey]);
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

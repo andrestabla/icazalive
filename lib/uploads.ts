@@ -11,7 +11,7 @@ export const UPLOAD_SCOPES: Record<
   brand: {
     prefix: "brand/",
     maxBytes: 3 * 1024 * 1024,
-    accept: /^(image\/(png|jpeg|webp|gif|svg\+xml|x-icon|vnd\.microsoft\.icon|apng)|video\/(mp4|webm))$/,
+    accept: /^(image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon|apng)|video\/(mp4|webm))$/,
     label: "Marca",
   },
   participants: {

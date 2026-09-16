@@ -9,7 +9,7 @@ import {
 import { writeAuditLog } from "@/lib/audit";
 import { DEFAULT_COMMUNICATIONS } from "@/lib/default-communications";
 import { requireApiUser } from "@/lib/auth";
-import { processDueDeliveries } from "@/lib/communication-worker";
+import { canManageEvent } from "@/lib/event-permissions";
 import { ensureLiveNowMessage } from "@/lib/live-notifications";
 
 export const runtime = "nodejs";
@@ -46,10 +46,12 @@ export async function GET(_: Request, context: RouteContext) {
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
+  }
 
-  // Planificador perezoso: al consultar la pestaña se procesan las entregas
-  // vencidas, de modo que confirmaciones y recordatorios avanzan sin cron.
-  await processDueDeliveries(event.id);
+  // La consulta no tiene efectos: el envío de la cola se dispara con
+  // POST /communications/process o con el planificador del servidor.
   await ensureLiveNowMessage(event.id);
 
   const [messages, stats] = await Promise.all([
@@ -85,6 +87,9 @@ export async function POST(request: Request, context: RouteContext) {
     .limit(1);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const existing = await db
@@ -190,6 +195,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     .limit(1);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const changes: {

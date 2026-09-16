@@ -16,6 +16,7 @@ import {
 } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import {
   cleanInteractionText,
   findBlockedTerm,
@@ -57,6 +58,9 @@ export async function GET(_: Request, context: RouteContext) {
   const event = await findEvent(slug);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const db = getDb();
@@ -193,6 +197,9 @@ export async function POST(request: Request, context: RouteContext) {
   const event = await findEvent(slug);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const body = (await request.json()) as {
@@ -390,6 +397,9 @@ export async function PATCH(request: Request, context: RouteContext) {
   const event = await findEvent(slug);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
   const body = (await request.json()) as {
     entity?: "question" | "poll" | "chat" | "moderation" | "resource";

@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { eventRegistrationFields, events } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import {
   createRegistrationFieldKey,
   normalizeFieldOptions,
@@ -38,6 +39,11 @@ async function resolveStaffEvent(slug: string) {
         { error: "Evento no encontrado." },
         { status: 404 },
       ),
+    };
+  }
+  if (!(await canManageEvent(currentUser, event.id))) {
+    return {
+      error: NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 }),
     };
   }
   return { currentUser, event };

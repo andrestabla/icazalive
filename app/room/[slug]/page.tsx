@@ -37,7 +37,7 @@ export default async function RoomPage({
 
   return (
     <RoomClient
-      accessToken={access ?? null}
+      initialAccessToken={access ?? null}
       eventShell={{
         ...event,
         startsAt: event.startsAt.toISOString(),

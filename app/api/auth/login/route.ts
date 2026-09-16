@@ -7,10 +7,19 @@ import { createSession, safeReturnPath, setSessionCookie } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
 import { verifyTotp } from "@/lib/totp";
 import { createHash } from "node:crypto";
+import { clientAddress, rateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  // Máximo 20 intentos por dirección IP cada 10 minutos (además del bloqueo
+  // de cuenta tras 5 fallos).
+  if (rateLimited(`login:${clientAddress(request)}`, 20, 10 * 60_000)) {
+    return NextResponse.json(
+      { error: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo." },
+      { status: 429, headers: { "Retry-After": "600" } },
+    );
+  }
   const body = (await request.json()) as {
     email?: string;
     password?: string;
@@ -137,6 +146,17 @@ export async function POST(request: Request) {
       }
     }
     if (!secondFactorOk) {
+      // Un segundo factor incorrecto cuenta como intento fallido: evita
+      // adivinar el código de 6 dígitos con una contraseña robada.
+      const mfaFailedAttempts = user.failedLoginAttempts + 1;
+      await db
+        .update(users)
+        .set({
+          failedLoginAttempts: mfaFailedAttempts >= 5 ? 0 : mfaFailedAttempts,
+          lockedUntil: mfaFailedAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, user.id));
       await writeAuditLog({
         actorEmail: email,
         action: "auth.login.mfa_failed",

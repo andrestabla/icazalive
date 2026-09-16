@@ -5,6 +5,7 @@ import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { openSecret, sealSecret } from "@/lib/secret-box";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 import {
   evaluateStreamingConfiguration,
   getCredentialAvailability,
@@ -80,6 +81,9 @@ export async function GET(_: Request, context: RouteContext) {
       { error: "Evento o sesión no encontrados." },
       { status: 404 },
     );
+  }
+  if (!(await canManageEvent(auth.user, record.event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const credentials = getCredentialAvailability();
@@ -200,6 +204,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       { error: "Evento o sesión no encontrados." },
       { status: 404 },
     );
+  }
+  if (!(await canManageEvent(auth.user, record.event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
 
   const mode = body.streamingMode ?? record.session.streamingMode;

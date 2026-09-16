@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { events, sessions } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth";
+import { canManageEvent } from "@/lib/event-permissions";
 
 export const runtime = "nodejs";
 
@@ -95,6 +96,9 @@ export async function GET(_: Request, context: RouteContext) {
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
   }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
+  }
 
   const records = await getDb()
     .select()
@@ -134,6 +138,9 @@ export async function POST(request: Request, context: RouteContext) {
   const event = await findEvent(slug);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
   if (!scheduleFitsEvent(schedule, event)) {
     return NextResponse.json(
@@ -208,6 +215,9 @@ export async function PATCH(request: Request, context: RouteContext) {
   const event = await findEvent(slug);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
   const [target] = await getDb()
     .select()
@@ -284,6 +294,9 @@ export async function DELETE(request: Request, context: RouteContext) {
   const event = await findEvent(slug);
   if (!event) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!(await canManageEvent(auth.user, event.id))) {
+    return NextResponse.json({ error: "No eres organizador de este evento." }, { status: 403 });
   }
   const [target, total] = await Promise.all([
     getDb()
