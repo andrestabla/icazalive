@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  CLOSING_MESSAGE_MAX,
   DEFAULT_ROOM_MODULES,
   ROOM_MODULE_KEYS,
   ROOM_MODULE_LABELS,
@@ -10,11 +11,11 @@ import {
 } from "@/lib/room-modules";
 import "../room-modules.css";
 
-// Interruptores de los módulos de la sala. Cada cambio se guarda de inmediato
-// y llega a los participantes conectados por SSE, así que sirve tanto para
-// configurar el evento como para encender o apagar un módulo en plena
-// transmisión. Se usa en la pestaña Interacción y, en modo compacto, en la
-// sala técnica.
+// Interruptores de los módulos de la sala y mensaje de cierre. Cada cambio se
+// guarda de inmediato y llega a los participantes conectados por SSE, así que
+// sirve tanto para configurar el evento como para encender o apagar un módulo
+// en plena transmisión. Se usa en la pestaña Interacción y, en modo compacto,
+// en la sala técnica.
 export default function RoomModulesPanel({
   slug,
   initial,
@@ -27,8 +28,9 @@ export default function RoomModulesPanel({
   onChange?: (modules: RoomModules) => void;
 }) {
   const [modules, setModules] = useState<RoomModules>({ ...DEFAULT_ROOM_MODULES, ...(initial ?? {}) });
+  const [closingDraft, setClosingDraft] = useState<string>(initial?.closingMessage ?? DEFAULT_ROOM_MODULES.closingMessage);
   const [loaded, setLoaded] = useState(Boolean(initial));
-  const [saving, setSaving] = useState<RoomModuleKey | null>(null);
+  const [saving, setSaving] = useState<RoomModuleKey | "closing" | null>(null);
   const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
 
   useEffect(() => {
@@ -36,10 +38,13 @@ export default function RoomModulesPanel({
     let cancelled = false;
     fetch(`/api/events/${slug}`, { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
-      .then((payload: { data?: { roomModules?: Partial<RoomModules> } } | null) => {
+      .then((payload: { data?: { roomModules?: Partial<RoomModules>; event?: { roomModules?: Partial<RoomModules> } } } | null) => {
         if (cancelled) return;
-        if (payload?.data?.roomModules) {
-          setModules({ ...DEFAULT_ROOM_MODULES, ...payload.data.roomModules });
+        const saved = payload?.data?.event?.roomModules ?? payload?.data?.roomModules;
+        if (saved) {
+          const merged = { ...DEFAULT_ROOM_MODULES, ...saved };
+          setModules(merged);
+          setClosingDraft(merged.closingMessage);
         }
         setLoaded(true);
       })
@@ -49,37 +54,55 @@ export default function RoomModulesPanel({
     };
   }, [slug, initial]);
 
-  const toggle = async (key: RoomModuleKey) => {
-    const next = { ...modules, [key]: !modules[key] };
-    setModules(next);
-    setSaving(key);
+  const persist = async (patch: Partial<RoomModules>, next: RoomModules, okText: string) => {
     setNotice(null);
     try {
       const response = await fetch(`/api/events/${slug}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ roomModules: { [key]: next[key] } }),
+        body: JSON.stringify({ roomModules: patch }),
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setModules(modules);
         setNotice({ text: payload.error ?? "No fue posible guardar el cambio.", error: true });
-      } else {
-        onChange?.(next);
-        setNotice({
-          text: `${ROOM_MODULE_LABELS[key].title} ${next[key] ? "activado" : "desactivado"}. Los participantes lo ven al instante.`,
-          error: false,
-        });
+        return false;
       }
+      setModules(next);
+      onChange?.(next);
+      setNotice({ text: okText, error: false });
+      return true;
     } catch {
-      setModules(modules);
       setNotice({ text: "No fue posible contactar al servidor.", error: true });
-    } finally {
-      setSaving(null);
+      return false;
     }
   };
 
+  const toggle = async (key: RoomModuleKey) => {
+    const next = { ...modules, [key]: !modules[key] };
+    setModules(next);
+    setSaving(key);
+    const ok = await persist(
+      { [key]: next[key] },
+      next,
+      `${ROOM_MODULE_LABELS[key].title} ${next[key] ? "activado" : "desactivado"}. Los participantes lo ven al instante.`,
+    );
+    if (!ok) setModules(modules);
+    setSaving(null);
+  };
+
+  const saveClosing = async () => {
+    const message = closingDraft.trim().slice(0, CLOSING_MESSAGE_MAX);
+    if (!message) {
+      setNotice({ text: "Escribe el mensaje de cierre.", error: true });
+      return;
+    }
+    setSaving("closing");
+    await persist({ closingMessage: message }, { ...modules, closingMessage: message }, "Mensaje de cierre guardado.");
+    setSaving(null);
+  };
+
   const activeCount = ROOM_MODULE_KEYS.filter((key) => modules[key]).length;
+  const closingChanged = closingDraft.trim() !== modules.closingMessage;
 
   return (
     <section className={`room-modules${compact ? " compact" : ""}`} aria-label="Módulos de la sala">
@@ -109,6 +132,27 @@ export default function RoomModulesPanel({
             <small>{ROOM_MODULE_LABELS[key].description}</small>
           </label>
         ))}
+      </div>
+      <div className="room-closing-message">
+        <label>
+          <b>Mensaje al finalizar el evento</b>
+          <small>Se muestra en la sala cuando el evento se completa; la sala queda cerrada y sin chat.</small>
+          <textarea
+            rows={2}
+            maxLength={CLOSING_MESSAGE_MAX}
+            value={closingDraft}
+            disabled={!loaded || saving !== null}
+            onChange={(input) => setClosingDraft(input.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="secondary-button"
+          disabled={!loaded || saving !== null || !closingChanged}
+          onClick={() => void saveClosing()}
+        >
+          {saving === "closing" ? "Guardando…" : "Guardar mensaje"}
+        </button>
       </div>
       {notice && (
         <p className={`room-modules-status ${notice.error ? "error" : "ok"}`} role="status">

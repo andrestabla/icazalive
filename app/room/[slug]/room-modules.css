@@ -18,3 +18,8 @@
   .room-interaction > .room-chat-panel { min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
   .room-interaction > .room-chat-panel .room-chat-list { max-height: none; min-height: 0; overflow-y: auto; }
 }
+
+/* Evento finalizado: la sala queda cerrada con el mensaje del organizador. */
+.room-closed > span { background: #1f8f5f33 !important; color: #8fe0b5 !important; }
+.room-closed-message { max-width: 560px; margin: 8px auto 0; font-size: 19px; line-height: 1.5; color: #f3f1f8; }
+.room-closed > small { display: block; margin-top: 18px; color: #a9a4b8; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }

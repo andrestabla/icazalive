@@ -104,7 +104,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   const { slug } = await context.params;
   const body = (await request.json()) as {
-    roomModules?: Partial<Record<"chat" | "questions" | "polls" | "resources" | "reactions", boolean>>;
+    roomModules?: Partial<Record<"chat" | "questions" | "polls" | "resources" | "reactions", boolean>> & { closingMessage?: string };
     baseFields?: Partial<Record<"company" | "jobTitle" | "phone", Partial<{ label: string; required: boolean; active: boolean }>>>;
     registrationBackground?: string | null;
     status?: string;

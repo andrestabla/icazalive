@@ -59,11 +59,15 @@ export default function HelpWidget({
   // solo ofrece soporte: las guías del Centro de ayuda son para el equipo.
   const pathname = usePathname() ?? "";
   const participantContext = /^\/(room|register|manage-registration|privacy)(\/|$)/.test(pathname);
+  // Durante el evento (sala del participante) no se muestra el widget.
+  const inRoom = /^\/room(\/|$)/.test(pathname);
   const participantIntro: Record<HelpLocale, string> = {
     es: "¿Tienes un problema con el evento? Escríbenos y te ayudamos.",
     en: "Having trouble with the event? Write to us and we will help.",
     fr: "Un problème avec l’événement ? Écrivez-nous et nous vous aiderons.",
   };
+
+  if (inRoom) return null;
 
   return (
     <aside className="global-help-widget" aria-label={labels.title}>

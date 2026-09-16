@@ -11,7 +11,7 @@ import "./room-modules.css";
 import SimulatedPlayer, { type SimulatedPlayback } from "./simulated-player";
 
 type RoomData = {
-  modules?: { chat: boolean; questions: boolean; polls: boolean; resources: boolean; reactions: boolean };
+  modules?: { chat: boolean; questions: boolean; polls: boolean; resources: boolean; reactions: boolean; closingMessage?: string };
   viewer: {
     kind: "participant" | "preview";
     name: string;
@@ -368,12 +368,13 @@ export default function RoomClient({
   const muted =
     room.moderation.mutedUntil &&
     new Date(room.moderation.mutedUntil).getTime() > now.getTime();
+  const isCompleted = room.event.status === "completed";
   const canParticipate =
-    room.viewer.kind === "participant" && !room.moderation.blocked && !muted;
+    room.viewer.kind === "participant" && !room.moderation.blocked && !muted && !isCompleted;
 
   // Módulos activos: el organizador puede apagarlos durante la transmisión.
   const roomModules = room.modules ?? { chat: true, questions: true, polls: true, resources: true, reactions: true };
-  const enabledPanels = (["chat", "questions", "polls", "resources"] as const).filter((key) => roomModules[key]);
+  const enabledPanels = isCompleted ? [] : (["chat", "questions", "polls", "resources"] as const).filter((key) => roomModules[key]);
   const visiblePanel = enabledPanels.includes(activePanel) ? activePanel : enabledPanels[0] ?? null;
 
   return (
@@ -395,10 +396,10 @@ export default function RoomClient({
         <section className="room-main">
           <div className="room-stage">
             <div className="room-stage-head">
-              <span className={isLive ? "live" : ""}>● {isLive ? "EN VIVO" : technicalTest ? "PRUEBA TÉCNICA · sin emisión pública" : "LOBBY"}</span>
+              <span className={isLive ? "live" : ""}>● {isLive ? "EN VIVO" : technicalTest ? "PRUEBA TÉCNICA · sin emisión pública" : isCompleted ? "FINALIZADO" : "LOBBY"}</span>
               <small>◉ {room.attendeeCount} participantes</small>
             </div>
-            {room.simulatedPlayback &&
+            {!isCompleted && room.simulatedPlayback &&
             (room.simulatedPlayback.ended ||
               (isLive && minutesUntilStart === 0)) ? (
               <SimulatedPlayer
@@ -417,6 +418,14 @@ export default function RoomClient({
                 <p>Este evento distribuye la señal directamente desde Zoom.</p>
                 <a href={room.session.zoomJoinUrl} target="_blank" rel="noreferrer">Abrir Zoom ↗</a>
               </div>
+            ) : isCompleted ? (
+              <div className="room-lobby room-closed">
+                <span>✓</span>
+                <p className="eyebrow">EVENTO FINALIZADO</p>
+                <h1>{room.event.title}</h1>
+                <p className="room-closed-message">{room.modules?.closingMessage?.trim() || "Gracias por su asistencia, pronto los contactaremos."}</p>
+                <small>La sala está cerrada.</small>
+              </div>
             ) : (
               <div className="room-lobby">
                 <span>◷</span>
@@ -432,7 +441,7 @@ export default function RoomClient({
             <footer><span>{new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: room.event.timezone }).format(start)}</span><small>Interacción en tiempo real</small></footer>
           </div>
 
-          {roomModules.reactions && (
+          {roomModules.reactions && !isCompleted && (
             <div className="room-reaction-bar" aria-label="Reacciones rápidas">
               <p><b>Reacciona</b><small>Comparte cómo lo vives</small></p>
               {REACTIONS.map((reaction) => (

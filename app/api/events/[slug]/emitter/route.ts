@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { events, sessions } from "@/db/schema";
+import { contentAssets, events, sessions } from "@/db/schema";
 import { requireApiUser } from "@/lib/auth";
 import { canManageEvent } from "@/lib/event-permissions";
 import { describeEmitter, readEcsConfig } from "@/lib/aws-ecs";
@@ -68,6 +68,16 @@ export async function GET(_: Request, context: RouteContext) {
       signal = "unknown";
     }
   }
+  // Duración del contenido asignado, para la línea de tiempo de la sala técnica.
+  let durationSeconds: number | null = null;
+  if (resolved.event.contentAssetId) {
+    const [asset] = await getDb()
+      .select({ durationSeconds: contentAssets.durationSeconds })
+      .from(contentAssets)
+      .where(eq(contentAssets.id, resolved.event.contentAssetId))
+      .limit(1);
+    durationSeconds = asset?.durationSeconds ?? null;
+  }
   return NextResponse.json({
     data: {
       status: liveState,
@@ -76,6 +86,8 @@ export async function GET(_: Request, context: RouteContext) {
       ecsConfigured: Boolean(ecs),
       contentConfigured: Boolean(resolved.event.contentAssetId),
       startedAt: session.emitterStartedAt,
+      durationSeconds,
+      serverTime: new Date().toISOString(),
     },
   });
 }

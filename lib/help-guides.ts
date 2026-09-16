@@ -392,6 +392,13 @@ const manageEventsSections: HelpGuideSection[] = [
       ),
       step(
         t(
+          "En la **Sala técnica** de un evento simulado o híbrido, mientras el contenido se emite, aparece una **línea de tiempo** con el minuto que va y la duración total (por ejemplo, 28:10 / 43:00) y cuánto falta. Cuando el evento está en vivo, el botón **Cerrar la sala** detiene la emisión, completa el evento y muestra a los asistentes el mensaje de cierre.",
+          "In the **Technical room** of a simulated or hybrid event, while the content is being broadcast, a **timeline** shows the current minute and the total duration (for example, 28:10 / 43:00) and how much is left. When the event is live, the **Close the room** button stops the broadcast, completes the event and shows attendees the closing message.",
+          "Dans la **Salle technique** d’un événement simulé ou hybride, pendant la diffusion du contenu, une **ligne de temps** indique la minute en cours et la durée totale (par exemple 28:10 / 43:00) et ce qu’il reste. Quand l’événement est en direct, le bouton **Fermer la salle** arrête la diffusion, termine l’événement et affiche le message de clôture aux participants.",
+        ),
+      ),
+      step(
+        t(
           "En eventos En vivo, el panel **Zoom → Amazon IVS** muestra tres pasos: (1) Zoom permite la transmisión personalizada, con el botón **Habilitar en Zoom** si falta; (2) reunión y canal creados (ocurre solo al confirmar el evento); (3) la reunión apunta al canal, con **Conectar con el canal** para rehacerlo. Cuando los tres están en ✓, el anfitrión inicia la reunión en Zoom y tú pulsas **Iniciar transmisión desde Zoom**: la señal llega a la sala en 30 a 60 segundos. **Detener transmisión desde Zoom** la corta.",
           "For Live events, the **Zoom → Amazon IVS** panel shows three steps: (1) Zoom allows custom live streaming, with the **Enable in Zoom** button if missing; (2) meeting and channel created (happens automatically when the event is confirmed); (3) the meeting points at the channel, with **Connect to channel** to redo it. When all three are ✓, the host starts the meeting in Zoom and you click **Start streaming from Zoom**: the signal reaches the room in 30 to 60 seconds. **Stop streaming from Zoom** cuts it.",
           "Pour les événements En direct, le panneau **Zoom → Amazon IVS** affiche trois étapes : (1) Zoom autorise la diffusion personnalisée, avec le bouton **Activer dans Zoom** si nécessaire ; (2) réunion et canal créés (automatique à la confirmation de l’événement) ; (3) la réunion pointe vers le canal, avec **Connecter au canal** pour recommencer. Quand les trois sont ✓, l’hôte démarre la réunion dans Zoom et vous cliquez sur **Démarrer la diffusion depuis Zoom** : le signal arrive dans la salle en 30 à 60 secondes. **Arrêter la diffusion depuis Zoom** la coupe.",
@@ -441,6 +448,13 @@ const manageEventsSections: HelpGuideSection[] = [
           "**Modules de la salle** décide de ce que verront les participants : **Chat en direct**, **Questions**, **Sondages**, **Ressources** et **Réactions**. Désactivez ce dont cet événement n’a pas besoin. Vous pouvez aussi le changer pendant la diffusion : la salle de tous les participants se met à jour instantanément, sans rechargement.",
         ),
         { image: img("interaccion-modulos"), caption: t("Interruptores de los módulos de la sala.", "Room module switches.", "Interrupteurs des modules de la salle.") },
+      ),
+      step(
+        t(
+          "Debajo de los interruptores está el **Mensaje al finalizar el evento**. Cuando el evento se completa (a mano o solo, al terminar el contenido simulado), la sala se cierra: desaparecen el video, el chat y las reacciones, y los asistentes ven ese mensaje. Edítalo y pulsa **Guardar mensaje**; también está en la Sala técnica.",
+          "Below the switches is the **Message when the event ends**. When the event is completed (manually or automatically when the simulated content ends), the room closes: video, chat and reactions disappear and attendees see that message. Edit it and click **Save message**; it is also available in the Technical room.",
+          "Sous les interrupteurs se trouve le **Message à la fin de l’événement**. Quand l’événement est terminé (à la main ou automatiquement à la fin du contenu simulé), la salle se ferme : la vidéo, le chat et les réactions disparaissent et les participants voient ce message. Modifiez-le et cliquez sur **Enregistrer le message** ; il est aussi dans la Salle technique.",
+        ),
       ),
       step(
         t(

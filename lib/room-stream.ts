@@ -35,6 +35,7 @@ type Watcher = {
   seenQuestions: Set<string>;
   reactionsSignature: string | null;
   modulesSignature: string | null;
+  statusSignature: string | null;
   running: boolean;
 };
 
@@ -82,11 +83,19 @@ async function tick(eventId: string, watcher: Watcher) {
     // Módulos de la sala: si el organizador enciende o apaga uno durante la
     // transmisión, todos los asistentes lo reciben sin recargar.
     const [eventRow] = await db
-      .select({ roomModules: events.roomModules })
+      .select({ roomModules: events.roomModules, status: events.status })
       .from(events)
       .where(eq(events.id, eventId))
       .limit(1);
     if (eventRow) {
+      // Estado del evento: al pasar a EN VIVO o completarse, todos los
+      // asistentes recargan la sala al instante (reproductor o cierre).
+      if (watcher.statusSignature === null) {
+        watcher.statusSignature = eventRow.status;
+      } else if (eventRow.status !== watcher.statusSignature) {
+        watcher.statusSignature = eventRow.status;
+        broadcast(watcher, { type: "refresh", reason: "status" });
+      }
       const modules = normalizeRoomModules(eventRow.roomModules);
       const signature = roomModulesSignature(modules);
       if (watcher.modulesSignature === null) {
@@ -200,6 +209,7 @@ export function subscribeToRoom(eventId: string, subscriber: Subscriber) {
       seenQuestions: new Set(),
       reactionsSignature: null,
       modulesSignature: null,
+      statusSignature: null,
       running: false,
     };
     store.set(eventId, watcher);
