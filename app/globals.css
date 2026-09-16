@@ -1170,3 +1170,17 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
   .team-table > article > .team-last-access { grid-area: access; }
   .team-table > article > .team-actions { grid-area: actions; justify-content: flex-start; }
 }
+
+/* Sala técnica: línea de tiempo del contenido simulado y cierre de la sala. */
+.studio-timeline { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: #ffffff0f; border: 1px solid #ffffff1a; }
+.studio-timeline-bar { height: 6px; border-radius: 4px; background: #ffffff22; overflow: hidden; }
+.studio-timeline-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #8be0a4, #4fc27a); transition: width 1s linear; }
+.studio-timeline-labels { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 7px; flex-wrap: wrap; }
+.studio-timeline-labels b { font-variant-numeric: tabular-nums; font-size: 14px; color: #fff; }
+.studio-timeline-labels small { color: #c9c4d8; font-size: 11px; }
+.studio-close-room { border-color: #ff8a9a !important; color: #ffb3bd !important; }
+
+/* Sala técnica: el escenario deja de tener alto fijo; el video conserva 16:9. */
+.studio-stage { aspect-ratio: auto !important; min-height: 0 !important; height: auto !important; }
+.studio-stage-empty { min-height: 300px; display: flex; flex-direction: column; justify-content: center; margin: 0 auto; }
+.studio-stage.grow { display: block; }
