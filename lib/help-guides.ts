@@ -29,7 +29,7 @@ const manageEventsSections: HelpGuideSection[] = [
     steps: [
       step(
         t(
-          "Desde **Resumen** o **Eventos**, pulsa el botón morado **＋ Crear evento** (arriba a la derecha).",
+          "Desde **Resumen** o **Eventos**, pulsa el botón morado **＋ Crear evento** (arriba a la derecha): se abre un modal en la misma página.",
           "From **Overview** or **Events**, click the purple **＋ Create event** button (top right).",
           "Depuis **Résumé** ou **Événements**, cliquez sur le bouton violet **＋ Créer un événement** (en haut à droite).",
         ),

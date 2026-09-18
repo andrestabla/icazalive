@@ -1230,3 +1230,8 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 .field-editor-modal .registration-field-editor { margin: 14px 0 0; padding: 0; border: 0; background: transparent; }
 .resource-modal .resource-creator-form { margin: 14px 0 0; padding: 0; border: 0; background: transparent; }
 .base-field-card > b { display: block; font-size: 14px; margin: 6px 0 4px; }
+
+/* Modal de creación de eventos en /events. */
+.create-modal { width: min(560px, 100%); }
+.create-modal .event-options { margin-top: 14px; }
+.create-modal .event-form { margin-top: 14px; }

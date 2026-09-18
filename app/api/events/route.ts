@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -8,6 +8,7 @@ import {
   events,
   eventTemplates,
   sessions,
+  users,
 } from "@/db/schema";
 import type { EventTemplatePayload } from "@/app/api/event-templates/route";
 import { writeAuditLog } from "@/lib/audit";
@@ -21,11 +22,23 @@ import {
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  if (!(await requireApiUser())) {
+export async function GET(request: Request) {
+  const currentUser = await requireApiUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
   const db = getDb();
+  // Alcance: el organizador solo ve los eventos donde figura como organizador
+  // (o que creó); el administrador ve todos y puede filtrar por organizador.
+  const organizerParam = new URL(request.url).searchParams.get("organizer")?.trim() || null;
+  const scopeUserId =
+    currentUser.role === "administrator" ? organizerParam : currentUser.id;
+  const managedEventIds = scopeUserId
+    ? db.select({ id: eventOrganizers.eventId }).from(eventOrganizers).where(eq(eventOrganizers.userId, scopeUserId))
+    : null;
+  const scope = scopeUserId && managedEventIds
+    ? or(inArray(events.id, managedEventIds), eq(events.createdBy, scopeUserId))
+    : undefined;
   const records = await db
     .select({
       id: events.id,
@@ -40,9 +53,20 @@ export async function GET() {
       createdBy: events.createdBy,
     })
     .from(events)
+    .where(scope)
     .orderBy(asc(events.startsAt));
 
-  return NextResponse.json({ data: attachScheduleConflicts(records) });
+  // Lista de organizadores para el filtro del administrador.
+  const organizers =
+    currentUser.role === "administrator"
+      ? await db
+          .select({ id: users.id, name: users.name, email: users.email })
+          .from(users)
+          .where(and(ne(users.role, "participant"), eq(users.active, true)))
+          .orderBy(asc(users.name))
+      : [];
+
+  return NextResponse.json({ data: attachScheduleConflicts(records), organizers });
 }
 
 export async function POST(request: Request) {

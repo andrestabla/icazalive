@@ -1,7 +1,8 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
+  eventOrganizers,
   eventRegistrationFields,
   events,
   registrationFieldResponses,
@@ -42,6 +43,14 @@ export async function GET() {
   if ("error" in auth) return auth.error;
 
   const db = getDb();
+  // Alcance: el organizador solo ve inscritos de los eventos que gestiona.
+  const scopeUserId = auth.currentUser.role === "administrator" ? null : auth.currentUser.id;
+  const managedEventIds = scopeUserId
+    ? db.select({ id: eventOrganizers.eventId }).from(eventOrganizers).where(eq(eventOrganizers.userId, scopeUserId))
+    : null;
+  const scope = scopeUserId && managedEventIds
+    ? or(inArray(registrations.eventId, managedEventIds), eq(events.createdBy, scopeUserId))
+    : undefined;
   const records = await db
     .select({
       id: registrations.id,
@@ -65,6 +74,7 @@ export async function GET() {
     .from(registrations)
     .innerJoin(users, eq(registrations.participantId, users.id))
     .innerJoin(events, eq(registrations.eventId, events.id))
+    .where(scope)
     .orderBy(desc(registrations.registeredAt));
   const registrationIds = records.map((record) => record.id);
   const customResponses = registrationIds.length
