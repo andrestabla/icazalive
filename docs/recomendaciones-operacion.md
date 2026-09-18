@@ -144,11 +144,41 @@ Este documento reúne las prácticas que garantizan que cada evento salga bien: 
 
 ## 7. Capacidad y rendimiento
 
-- Producción corre en **Replit Autoscale** (2 vCPU, 4 GiB por máquina, hasta 3 máquinas). El video **no** pasa por Replit: lo entrega Amazon IVS por su red global, así que 500 o 5.000 espectadores no cargan el servidor; lo que carga son las conexiones de chat y la entrada masiva al inicio.
-- Para eventos con más de **500 inscritos**, subir temporalmente el máximo de máquinas a 6 en Publishing → Manage (Autoscale machine configuration) y devolverlo después. Solo se paga cuando escalan.
+- Producción corre en **Replit Autoscale** (2 vCPU, 4 GiB por máquina, hasta 3 máquinas). El video **no** pasa por Replit: lo entrega Amazon IVS por su red global, así que 500 o 5.000 espectadores no cargan el servidor; lo que carga son las conexiones de chat en tiempo real (una por asistente) y la entrada masiva al inicio.
 - Recomendar a los asistentes entrar **5 minutos antes** para repartir la carga de entrada.
-- En redes débiles el reproductor baja la calidad solo; el chat se reconecta solo. No hace falta que el participante haga nada.
-- Activar en Replit **Enable app uptime email notifications** para enterarse de caídas.
+- En redes débiles el reproductor baja la calidad solo (720p máximo); el chat se reconecta solo y, si el canal en tiempo real cae, la sala sondea cada 8 segundos. El participante no tiene que hacer nada.
+- Para redes muy débiles del público, configurar la sesión en **Latencia estándar** (Transmisión): el búfer es mayor y aguanta microcortes. Baja latencia solo cuando prime la interacción.
+- Script de prueba de carga disponible en el repositorio (`scripts/sse-load.mjs`): abre cientos de conexiones de sala contra producción y reporta fallos y latencia. Ejecutarlo antes de un evento grande, nunca durante uno.
+
+### 7.1 Lista de verificación en Replit para eventos de cientos de conexiones
+
+Todo se configura en el proyecto `icazalive-app` de Replit. Los cambios de capacidad se aplican sin republicar código.
+
+| Ajuste | Dónde | Valor recomendado | Por qué |
+|---|---|---|---|
+| **Tipo de publicación** | Publishing → Overview → Type | Autoscale (no Static ni Reserved VM) | Añade máquinas con el tráfico y vuelve a cero al terminar; el cobro es por uso |
+| **Machine power** | Publishing → Manage → Autoscale machine configuration → Edit | 2 vCPU / 4 GiB (actual) para hasta 500 asistentes; 4 vCPU / 8 GiB para más de 1.000 | Cada conexión de sala en tiempo real consume memoria; más RAM por máquina reduce reinicios |
+| **Max number of machines** | Mismo panel | 3 en operación normal; **6** para eventos de 500 a 1.500 inscritos; **10** por encima | Es el techo del autoescalado; solo se paga cuando efectivamente escalan. Bajarlo de nuevo tras el evento |
+| **Geografía** | Publishing → Overview | Sudamérica (actual) | Menor latencia para el público de la región |
+| **Enable app uptime email notifications** | Publishing → Adjust settings | Activado | Aviso por correo si el sitio deja de responder |
+| **Block publishing of critical vulnerabilities** | Publishing → Adjust settings → Security | Activado | Impide publicar una versión con dependencias vulnerables conocidas |
+| **Production database** | Database → Production Database | Conectada; comprobar espacio (100 GB de tope) | Es la base que usan los asistentes; nunca publicar con la base de desarrollo |
+| **Créditos** | Cuenta → Billing | Recarga automática activa con un tope mensual conocido | Sin créditos se apaga la base de datos y el sitio cae en pleno evento |
+| **Secrets** | Tools → Secrets | `AWS_*`, `AWS_IVS_RECORDING_CONFIGURATION_ARN`, `SESSION_SECRET`, `AUTH_ENCRYPTION_KEY`, `SECRET_BOX_KEY`, `APP_BASE_URL` | Los despliegues los leen al publicar; una shell abierta no ve secretos nuevos |
+| **Dominios** | Publishing → Domains | `liveicazajammoul.com` verificado con TLS | Sin dominio verificado los correos y las miniaturas apuntan a la dirección `.replit.app` |
+| **Monitoring** | Tools → Monitoring | Revisar antes y durante el evento | Muestra peticiones, errores y máquinas activas en tiempo real |
+
+**Rutina antes de un evento grande (el día anterior)**
+1. Subir *Max number of machines* al valor de la tabla y pulsar *Approve and update*.
+2. Confirmar créditos suficientes y recarga automática.
+3. Ejecutar el script de carga con la mitad de los inscritos esperados y revisar que no haya fallos.
+4. Durante el evento, dejar abierta la pestaña *Monitoring* de Replit.
+5. Al día siguiente, devolver *Max number of machines* a 3.
+
+**Límites conocidos**
+- Autoscale escala a cero sin tráfico: el planificador interno de correos y arranques automáticos depende de que haya al menos una máquina activa. En la práctica los asistentes en el lobby la mantienen despierta; para eventos con pocos inscritos, abrir la sala técnica 15 minutos antes garantiza una máquina activa.
+- Replit no publica un tope de conexiones simultáneas por máquina; el dimensionamiento de la tabla viene de la arquitectura de la sala (una conexión ligera por asistente, sin video en el servidor) y debe confirmarse con el script de carga en cada aumento de audiencia.
+- Si algún día se supera de forma habitual el rango de 1.500 asistentes, el siguiente paso es un almacén compartido (Redis o base) para los límites de peticiones y el canal en tiempo real.
 
 ---
 
