@@ -93,7 +93,8 @@ try {
   const grab = (name) => { const m = en.match(new RegExp(`export const ${name}: Record<string, string> = (\\{[\\s\\S]*?\\n\\});`)); return m ? Function(`return ${m[1]}`)() : {}; };
   dict = grab("EN"); dictPatterns = grab("EN_PATTERNS");
 } catch { /* sin diccionario aún */ }
-const list = [...strings].filter((s) => !onlyMissing || dict[s] === undefined).sort((a, b) => a.localeCompare(b, "es"));
+const known = (s) => dict[s.trim()] !== undefined || dict[s.trim().replace(/^[^\p{L}\p{N}]+\s+/u, "")] !== undefined || dict[s.trim().replace(/\s+[^\p{L}\p{N}\s.…!?)]+$/u, "")] !== undefined;
+const list = [...strings].filter((s) => !onlyMissing || !known(s)).sort((a, b) => a.localeCompare(b, "es"));
 const plist = [...patterns].filter((s) => !onlyMissing || dictPatterns[s] === undefined).sort((a, b) => a.localeCompare(b, "es"));
 const out = { strings: list, patterns: plist, where: Object.fromEntries([...list, ...plist].map((s) => [s, where.get(s)])) };
 process.stdout.write(JSON.stringify(out, null, 1) + "\n");

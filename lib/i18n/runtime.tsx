@@ -35,6 +35,8 @@ export function createTranslator(dict: Dict, rules: Rule[]) {
     // Símbolo inicial (＋, ✓, ↓…) seguido de un texto conocido.
     const symbol = core.match(/^([^\p{L}\p{N}]+\s+)(.+)$/u);
     if (symbol && dict[symbol[2]] !== undefined) return symbol[1] + dict[symbol[2]];
+    const trailing = core.match(/^(.+?)(\s+[^\p{L}\p{N}\s.…!?)]+)$/u);
+    if (trailing && dict[trailing[1]] !== undefined) return dict[trailing[1]] + trailing[2];
     // Las reglas se aplican en cadena: una fecha puede necesitar varias.
     let out = core;
     for (const rule of rules) {

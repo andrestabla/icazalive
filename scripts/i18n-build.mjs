@@ -47,6 +47,8 @@ for (const extra of extras) {
 for (const [key, value] of Object.entries(EN)) {
   const m = key.match(/^[^\p{L}\p{N}]+\s+(.+)$/u);
   if (m && EN[m[1]] === undefined) EN[m[1]] = value.replace(/^[^\p{L}\p{N}]+\s+/u, "");
+  const t = key.match(/^(.+?)\s+[^\p{L}\p{N}\s.…!?)]+$/u);
+  if (t && EN[t[1]] === undefined) EN[t[1]] = value.replace(/\s+[^\p{L}\p{N}\s.…!?)]+$/u, "");
 }
 const sortObj = (obj) => Object.fromEntries(Object.entries(obj).sort(([a], [b]) => a.localeCompare(b, "es")));
 const render = (obj) => JSON.stringify(sortObj(obj), null, 1).replace(/^ /gm, "  ");
