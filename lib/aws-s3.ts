@@ -44,6 +44,17 @@ export async function putVideo(
   body: ReadableStream<Uint8Array>,
   contentLength: number,
 ): Promise<S3Result> {
+  return putObject(config, key, body, contentLength, "video/mp4");
+}
+
+// Sube cualquier objeto (evidencias de soporte, documentos) con su tipo.
+export async function putObject(
+  config: { credentials: AwsCredentials; bucket: string },
+  key: string,
+  body: ReadableStream<Uint8Array> | Uint8Array,
+  contentLength: number,
+  contentType: string,
+): Promise<S3Result> {
   const host = bucketHost(config.bucket, config.credentials.region);
   const path = objectPath(key);
 
@@ -55,7 +66,7 @@ export async function putVideo(
     path,
     payloadHash: "UNSIGNED-PAYLOAD",
     extraHeaders: {
-      "content-type": "video/mp4",
+      "content-type": contentType,
       "content-length": String(contentLength),
     },
   });

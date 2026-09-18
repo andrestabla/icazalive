@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { rolePermissions, userPermissions } from "@/db/schema";
+import { rolePermissions, userPermissions, users } from "@/db/schema";
 import type { AuthenticatedUser } from "@/lib/auth";
 
 export type StaffRole = "administrator" | "organizer";
@@ -39,6 +39,15 @@ export const permissionCatalog = [
     label: "Analítica",
     path: "/analytics",
     permissions: [{ key: "analytics.view", label: "Ver analítica y reportes" }],
+  },
+  {
+    module: "support",
+    label: "Soporte",
+    path: "/support",
+    permissions: [
+      { key: "support.view", label: "Ver los casos de soporte" },
+      { key: "support.manage", label: "Gestionar casos: estado, asignación y respuestas" },
+    ],
   },
   {
     module: "integrations",
@@ -183,7 +192,7 @@ export async function getRoleDefaults(): Promise<Record<StaffRole, Set<Permissio
 }
 
 export async function getEffectivePermissions(
-  user: Pick<AuthenticatedUser, "id" | "role">,
+  user: Pick<AuthenticatedUser, "id" | "role"> & { supportAgent?: boolean | null },
 ): Promise<EffectivePermissions> {
   if (user.role === "participant") {
     return { granted: new Set(), roleGranted: new Set(), overrides: new Map() };
@@ -208,6 +217,17 @@ export async function getEffectivePermissions(
 
   if (user.role === "administrator") {
     for (const key of lockedAdministratorPermissions) granted.add(key);
+  }
+  // Los miembros marcados como soporte en Equipo gestionan los casos aunque
+  // su rol no lo incluya.
+  let supportAgent = user.supportAgent;
+  if (supportAgent === undefined) {
+    const [row] = await getDb().select({ supportAgent: users.supportAgent }).from(users).where(eq(users.id, user.id)).limit(1);
+    supportAgent = row?.supportAgent ?? false;
+  }
+  if (supportAgent) {
+    granted.add("support.view");
+    granted.add("support.manage");
   }
   return { granted, roleGranted, overrides };
 }

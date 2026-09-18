@@ -223,6 +223,9 @@ export const users = pgTable("users", {
   locale: text("locale"),
   avatarUrl: text("avatar_url"),
   avatarSource: text("avatar_source"),
+  // Miembro del equipo que atiende los casos de soporte (recibe los avisos y
+  // su correo aparece como contacto de soporte en el Centro de ayuda).
+  supportAgent: boolean("support_agent").notNull().default(false),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
   mfaSecret: text("mfa_secret"),
   mfaEnrolledAt: timestamp("mfa_enrolled_at", { withTimezone: true }),
@@ -933,6 +936,12 @@ export const supportRequests = pgTable(
     affectedEmail: text("affected_email"),
     screenshotUrl: text("screenshot_url"),
     status: supportRequestStatus("status").notNull().default("new"),
+    // Gestión del caso: agente asignado, cierre y seguimiento del solicitante
+    // (enlace con token para ver el caso, responder y adjuntar evidencias).
+    assignedTo: uuid("assigned_to").references(() => users.id, { onDelete: "set null" }),
+    accessToken: text("access_token"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
     consentAcceptedAt: timestamp("consent_accepted_at", { withTimezone: true })
       .notNull(),
     retentionUntil: timestamp("retention_until", { withTimezone: true })
@@ -945,6 +954,46 @@ export const supportRequests = pgTable(
     index("support_requests_status_idx").on(table.status),
     index("support_requests_created_idx").on(table.createdAt),
   ],
+);
+
+// Conversación de cada caso de soporte: mensajes del solicitante, respuestas
+// del agente y notas internas (solo visibles para el equipo).
+export const supportMessages = pgTable(
+  "support_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id")
+      .notNull()
+      .references(() => supportRequests.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id").references(() => users.id, { onDelete: "set null" }),
+    authorName: text("author_name").notNull(),
+    authorRole: text("author_role").notNull().default("requester"),
+    body: text("body").notNull(),
+    internal: boolean("internal").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("support_messages_request_idx").on(table.requestId)],
+);
+
+// Evidencias adjuntas (S3, directorio support/) por el solicitante o el agente.
+export const supportAttachments = pgTable(
+  "support_attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id")
+      .notNull()
+      .references(() => supportRequests.id, { onDelete: "cascade" }),
+    messageId: uuid("message_id").references(() => supportMessages.id, { onDelete: "set null" }),
+    s3Key: text("s3_key").notNull(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    uploadedByUserId: uuid("uploaded_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    uploadedByName: text("uploaded_by_name").notNull(),
+    uploadedByRole: text("uploaded_by_role").notNull().default("requester"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("support_attachments_request_idx").on(table.requestId)],
 );
 
 export const legalDocuments = pgTable(

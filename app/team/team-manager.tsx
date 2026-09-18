@@ -15,6 +15,7 @@ type TeamMember = {
   email: string;
   role: "administrator" | "organizer" | "participant";
   active: boolean;
+  supportAgent: boolean;
   lockedUntil: string | null;
   lastLoginAt: string | null;
   createdAt: string;
@@ -145,6 +146,7 @@ export default function TeamManager({
       name?: string;
       email?: string;
       resendCredentials?: boolean;
+      supportAgent?: boolean;
     },
   ) => {
     setSaving(member.id);
@@ -168,7 +170,11 @@ export default function TeamManager({
           : current.map((item) => (item.id === member.id ? payload.data! : item)),
       );
       setMessage(
-        changes.resendCredentials
+        changes.supportAgent !== undefined
+          ? changes.supportAgent
+            ? `${member.name} ahora atiende los casos de soporte y su correo aparece como contacto en el Centro de ayuda.`
+            : `${member.name} ya no atiende los casos de soporte.`
+          : changes.resendCredentials
           ? `${member.name} recibió de nuevo sus credenciales por correo.`
           : changes.name !== undefined || changes.email !== undefined
             ? `Datos de ${payload.data.name} actualizados${changes.email !== undefined && changes.email !== member.email ? "; se le avisó al nuevo correo" : ""}.`
@@ -275,7 +281,7 @@ export default function TeamManager({
               <article key={member.id}>
                 <div className="team-person">
                   <span>{initials(member.name)}</span>
-                  <p><b>{member.name}{isCurrent && <i>Tú</i>}</b><small>{member.email}</small></p>
+                  <p><b>{member.name}{isCurrent && <i>Tú</i>}{member.supportAgent && <i className="team-support-badge">Soporte</i>}</b><small>{member.email}</small></p>
                 </div>
                 <select
                   aria-label={`Rol de ${member.name}`}
@@ -299,6 +305,15 @@ export default function TeamManager({
                   {locked ? "Bloqueado" : member.active ? "Activo" : "Inactivo"}
                 </span>
                 <div className="team-actions">
+                  <label className="team-support-toggle" title="Atiende los casos de soporte">
+                    <input
+                      type="checkbox"
+                      checked={member.supportAgent}
+                      disabled={saving === member.id || !member.active}
+                      onChange={(input) => void patchMember(member, { supportAgent: input.target.checked })}
+                    />
+                    Soporte
+                  </label>
                   <button
                     disabled={saving === member.id}
                     onClick={() => {

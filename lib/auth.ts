@@ -18,6 +18,7 @@ export type AuthenticatedUser = {
   role: "administrator" | "organizer" | "participant";
   locale?: string | null;
   avatarUrl?: string | null;
+  supportAgent?: boolean | null;
 };
 
 function hashToken(token: string): string {
@@ -82,6 +83,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       role: users.role,
       locale: users.locale,
       avatarUrl: users.avatarUrl,
+      supportAgent: users.supportAgent,
     })
     .from(authSessions)
     .innerJoin(users, eq(authSessions.userId, users.id))

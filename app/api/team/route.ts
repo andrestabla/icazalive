@@ -29,6 +29,7 @@ function safeMember(record: typeof users.$inferSelect) {
     email: record.email,
     role: record.role,
     active: record.active,
+    supportAgent: record.supportAgent,
     lockedUntil: record.lockedUntil,
     lastLoginAt: record.lastLoginAt,
     createdAt: record.createdAt,
@@ -224,6 +225,7 @@ export async function PATCH(request: Request) {
     name?: string;
     email?: string;
     resendCredentials?: boolean;
+    supportAgent?: boolean;
   };
   if (!body.id || typeof body.id !== "string") {
     return NextResponse.json(
@@ -269,6 +271,7 @@ export async function PATCH(request: Request) {
   let passwordHash = target.passwordHash;
   let name = target.name;
   let email = target.email;
+  const supportAgent = typeof body.supportAgent === "boolean" ? body.supportAgent : target.supportAgent;
   try {
     if (body.name !== undefined) name = cleanName(body.name);
     if (body.email !== undefined) email = cleanEmail(body.email);
@@ -325,6 +328,7 @@ export async function PATCH(request: Request) {
     .set({
       name,
       email,
+      supportAgent,
       role,
       active,
       passwordHash,
@@ -360,6 +364,7 @@ export async function PATCH(request: Request) {
       name,
       previousEmail: target.email,
       email,
+      supportAgent,
     },
     request,
   });

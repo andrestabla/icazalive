@@ -15,7 +15,8 @@ export type SidebarSection =
   | "Permisos"
   | "Auditoría"
   | "Privacidad"
-  | "Perfil";
+  | "Perfil"
+  | "Soporte";
 
 // La navegación se arma con los permisos efectivos del usuario: solo se
 // muestran los módulos a los que realmente puede entrar.
@@ -29,6 +30,7 @@ const workspaceModules: {
   { label: "Eventos", href: "/events", icon: "◫", permission: "events.view" },
   { label: "Participantes", href: "/participants", icon: "♙", permission: "participants.view" },
   { label: "Analítica", href: "/analytics", icon: "⌁", permission: "analytics.view" },
+  { label: "Soporte", href: "/support", icon: "?", permission: "support.view" },
 ];
 
 const settingsModules: {

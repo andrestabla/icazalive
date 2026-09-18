@@ -2,7 +2,7 @@
 // propio directorio del bucket: brand/, participants/, content/.
 // Este módulo no depende de Node y puede importarse desde el cliente.
 
-export type UploadScope = "brand" | "participants" | "avatars" | "content";
+export type UploadScope = "brand" | "participants" | "avatars" | "support" | "content";
 
 export const UPLOAD_SCOPES: Record<
   UploadScope,
@@ -25,6 +25,12 @@ export const UPLOAD_SCOPES: Record<
     maxBytes: 3 * 1024 * 1024,
     accept: /^image\/(png|jpeg|webp|gif)$/,
     label: "Perfil",
+  },
+  support: {
+    prefix: "support/",
+    maxBytes: 25 * 1024 * 1024,
+    accept: /^(image\/(png|jpeg|webp|gif|heic)|application\/pdf|video\/(mp4|webm|quicktime)|text\/(plain|csv)|application\/(zip|vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet|presentationml\.presentation)))$/,
+    label: "Soporte",
   },
   content: {
     prefix: "content/",

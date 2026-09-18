@@ -19,6 +19,7 @@ export default async function TeamPage() {
       email: users.email,
       role: users.role,
       active: users.active,
+      supportAgent: users.supportAgent,
       lockedUntil: users.lockedUntil,
       lastLoginAt: users.lastLoginAt,
       createdAt: users.createdAt,

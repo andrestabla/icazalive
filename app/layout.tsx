@@ -5,6 +5,7 @@ import FeedbackDialog from "@/app/components/feedback-dialog";
 import { getBrandSettings } from "@/lib/brand";
 import I18nRuntime from "@/lib/i18n/runtime";
 import { resolveLocale } from "@/lib/i18n/server";
+import { getSupportContact } from "@/lib/support";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -30,11 +31,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const loaderStyle = brand?.loaderUrl
     ? ({ "--brand-loader-url": `url("${brand.loaderUrl}")` } as React.CSSProperties)
     : undefined;
-  const supportEmail =
-    process.env.SUPPORT_EMAIL ?? "soporte@icazalive.local";
-  const supportHours =
-    process.env.SUPPORT_HOURS ??
-    "Lunes a viernes · 08:00–18:00 (hora de Miami)";
+  // Contacto de soporte: los agentes designados en Equipo (o el buzón por defecto).
+  const supportContact = await getSupportContact();
+  const supportEmail = supportContact.email;
+  const supportHours = supportContact.hours;
 
   return (
     <html lang={locale} data-locale={locale}>

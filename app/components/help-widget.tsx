@@ -43,7 +43,7 @@ const guideLinks: { slug: string; icon: string; label: Record<HelpLocale, string
   { slug: "guide-manage-events", icon: "◫", label: { es: "Guía: gestionar eventos", en: "Guide: managing events", fr: "Guide : gérer les événements" } },
   { slug: "guide-participants", icon: "♙", label: { es: "Guía: participantes", en: "Guide: participants", fr: "Guide : participants" } },
   { slug: "guide-analytics", icon: "⌁", label: { es: "Guía: analítica", en: "Guide: analytics", fr: "Guide : analyses" } },
-  { slug: "guide-account-team", icon: "♧", label: { es: "Guía: tu cuenta y el equipo", en: "Guide: your account and team", fr: "Guide : votre compte et l’équipe" } },
+  { slug: "guide-account-team", icon: "♧", label: { es: "Guía: cuenta, equipo y soporte", en: "Guide: account, team and support", fr: "Guide : compte, équipe et support" } },
 ];
 
 export default function HelpWidget({

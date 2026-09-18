@@ -1,3 +1,4 @@
+import { getSupportContact } from "@/lib/support";
 import { getCurrentUser } from "@/lib/auth";
 import { getBrandSettings } from "@/lib/brand";
 import { getPublishedLegalDocuments } from "@/lib/privacy";
@@ -31,8 +32,7 @@ export default async function PrivacyPage() {
       }}
       privacyEmail={
         process.env.PRIVACY_EMAIL ??
-        process.env.SUPPORT_EMAIL ??
-        "privacidad@icazalive.local"
+        (await getSupportContact()).emails[0]
       }
     />
   );

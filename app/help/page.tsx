@@ -1,3 +1,4 @@
+import { getSupportContact } from "@/lib/support";
 import { getCurrentUser } from "@/lib/auth";
 import { getBrandSettings } from "@/lib/brand";
 import type { HelpLocale } from "@/lib/help-content";
@@ -24,6 +25,7 @@ export default async function HelpPage({
       ? parameters.lang
       : "es";
 
+  const supportContact = await getSupportContact();
   return (
     <HelpCenterClient
       brand={brand}
@@ -31,12 +33,9 @@ export default async function HelpPage({
       initialLocale={locale}
       initialArticle={parameters.article ?? null}
       initialContactOpen={parameters.contact === "1"}
-      supportEmail={process.env.SUPPORT_EMAIL ?? "soporte@icazalive.local"}
+      supportEmail={supportContact.email}
       salesEmail={process.env.SALES_EMAIL ?? "ventas@icazalive.local"}
-      supportHours={
-        process.env.SUPPORT_HOURS ??
-        "Lunes a viernes · 08:00–18:00 (hora de Miami)"
-      }
+      supportHours={supportContact.hours}
     />
   );
 }

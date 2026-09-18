@@ -983,6 +983,48 @@ const accountSections: HelpGuideSection[] = [
     ],
   },
   {
+    id: "soporte",
+    title: t("Soporte: casos, estados y evidencias", "Support: cases, statuses and evidence", "Support : dossiers, statuts et preuves"),
+    intro: t(
+      "Cada solicitud que llega por Contactar soporte se convierte en un caso. Los miembros marcados como Soporte en Equipo los reciben por correo y los gestionan desde el módulo Soporte del menú lateral.",
+      "Every request sent through Contact support becomes a case. Members marked as Support in Team receive them by email and manage them from the Support module in the side menu.",
+      "Chaque demande envoyée via Contacter le support devient un dossier. Les membres marqués Support dans Équipe les reçoivent par e-mail et les gèrent depuis le module Support du menu latéral.",
+    ),
+    steps: [
+      step(
+        t(
+          "En **Equipo**, marca la casilla **Soporte** de uno o más miembros. Su correo pasa a ser el contacto de soporte que aparece en el Centro de ayuda, en el botón de ayuda y en los correos de los casos; si no hay nadie marcado, se usa el buzón por defecto de la plataforma.",
+          "In **Team**, tick the **Support** box for one or more members. Their email becomes the support contact shown in the Help center, the help button and the case emails; if nobody is marked, the platform's default mailbox is used.",
+          "Dans **Équipe**, cochez la case **Support** pour un ou plusieurs membres. Leur e-mail devient le contact de support affiché dans le Centre d’aide, le bouton d’aide et les e-mails des dossiers ; si personne n’est coché, la boîte par défaut de la plateforme est utilisée.",
+        ),
+        { image: img("equipo-soporte"), caption: t("Casilla Soporte en la lista del equipo.", "Support box in the team list.", "Case Support dans la liste de l’équipe.") },
+      ),
+      step(
+        t(
+          "**Soporte** muestra los casos con sus contadores por estado: **Abierto** (recién recibido), **En gestión** (un agente lo atiende), **Solucionado** y **Sin solución**. Pulsa un contador para filtrar, busca por asunto, nombre o correo, y filtra por agente (**Mis casos**, **Sin asignar**). Al abrir un caso ves la descripción, las evidencias y la conversación.",
+          "**Support** lists the cases with counters by status: **Open** (just received), **In progress** (an agent is on it), **Resolved** and **Unresolved**. Click a counter to filter, search by subject, name or email, and filter by agent (**My cases**, **Unassigned**). Opening a case shows the description, evidence and conversation.",
+          "**Support** affiche les dossiers avec leurs compteurs par statut : **Ouvert** (à peine reçu), **En cours** (un agent s’en occupe), **Résolu** et **Sans solution**. Cliquez sur un compteur pour filtrer, cherchez par sujet, nom ou e-mail, et filtrez par agent (**Mes dossiers**, **Non assignés**). L’ouverture d’un dossier montre la description, les preuves et la conversation.",
+        ),
+        { image: img("soporte-mesa"), caption: t("Módulo Soporte con un caso en gestión.", "Support module with a case in progress.", "Module Support avec un dossier en cours.") },
+      ),
+      step(
+        t(
+          "El agente cambia el **Estado** y el **Agente** asignado desde los selectores; cada cambio de estado se avisa por correo al solicitante. **Enviar respuesta** le llega por correo (y el caso pasa a En gestión si estaba abierto); con **Nota interna** el mensaje solo lo ve el equipo. **Adjuntar evidencias** guarda capturas, PDF o video (hasta 25 MB) en Amazon S3.",
+          "The agent changes the **Status** and the assigned **Agent** with the selectors; every status change is emailed to the requester. **Send reply** reaches them by email (and the case moves to In progress if it was open); with **Internal note** only the team sees the message. **Attach evidence** stores screenshots, PDF or video (up to 25 MB) in Amazon S3.",
+          "L’agent change le **Statut** et l’**Agent** assigné via les sélecteurs ; chaque changement de statut est notifié par e-mail au demandeur. **Envoyer la réponse** lui parvient par e-mail (et le dossier passe En cours s’il était ouvert) ; avec **Note interne**, seul l’équipe voit le message. **Joindre des preuves** stocke captures, PDF ou vidéo (jusqu’à 25 Mo) dans Amazon S3.",
+        ),
+      ),
+      step(
+        t(
+          "El solicitante recibe un correo de confirmación con el enlace **Ver mi caso**: una página sin inicio de sesión donde ve el estado, la conversación pública, adjunta sus propias evidencias y responde. Cada respuesta o evidencia suya avisa al agente asignado (o a todos los agentes si no hay ninguno). Si responde a un caso Solucionado o Sin solución, el caso vuelve a En gestión.",
+          "The requester receives a confirmation email with the **View my case** link: a page with no sign-in where they see the status, the public conversation, attach their own evidence and reply. Each reply or attachment of theirs notifies the assigned agent (or every agent if none is assigned). If they reply to a Resolved or Unresolved case, it goes back to In progress.",
+          "Le demandeur reçoit un e-mail de confirmation avec le lien **Voir mon dossier** : une page sans connexion où il voit le statut, la conversation publique, joint ses propres preuves et répond. Chaque réponse ou preuve de sa part notifie l’agent assigné (ou tous les agents s’il n’y en a pas). S’il répond à un dossier Résolu ou Sans solution, celui-ci repasse En cours.",
+        ),
+        { image: img("soporte-seguimiento"), caption: t("Página de seguimiento del solicitante.", "Requester tracking page.", "Page de suivi du demandeur.") },
+      ),
+    ],
+  },
+  {
     id: "alcance",
     title: t("Qué ve cada rol", "What each role sees", "Ce que voit chaque rôle"),
     steps: [
@@ -1095,14 +1137,14 @@ export const helpGuides: HelpArticle[] = [
     category: "account",
     featured: true,
     title: t(
-      "Tu cuenta, el idioma y el equipo",
-      "Your account, language and team",
-      "Votre compte, la langue et l’équipe",
+      "Tu cuenta, el idioma, el equipo y el soporte",
+      "Your account, language, team and support",
+      "Votre compte, la langue, l’équipe et le support",
     ),
     summary: t(
-      "Perfil con foto e idioma (español o inglés), zona horaria y Calendly; cómo el administrador añade, edita y reenvía credenciales a los miembros, y qué ve cada rol.",
-      "Profile with photo and language (Spanish or English), time zone and Calendly; how the administrator adds, edits and resends credentials to members, and what each role sees.",
-      "Profil avec photo et langue (espagnol ou anglais), fuseau horaire et Calendly ; comment l’administrateur ajoute, modifie et renvoie les identifiants aux membres, et ce que voit chaque rôle.",
+      "Perfil con foto e idioma (español o inglés), zona horaria y Calendly; cómo el administrador añade, edita y reenvía credenciales a los miembros; el módulo Soporte con sus casos, estados y evidencias, y qué ve cada rol.",
+      "Profile with photo and language (Spanish or English), time zone and Calendly; how the administrator adds, edits and resends credentials to members; the Support module with its cases, statuses and evidence, and what each role sees.",
+      "Profil avec photo et langue (espagnol ou anglais), fuseau horaire et Calendly ; comment l’administrateur ajoute, modifie et renvoie les identifiants aux membres ; le module Support avec ses dossiers, statuts et preuves, et ce que voit chaque rôle.",
     ),
     content: t(
       "Todo lo personal se gestiona desde Mi perfil; las cuentas del personal, desde Equipo. Esta guía muestra ambas pantallas tal como se ven en la plataforma.",
@@ -1110,8 +1152,8 @@ export const helpGuides: HelpArticle[] = [
       "Tout ce qui est personnel se gère depuis Mon profil ; les comptes du personnel, depuis Équipe. Ce guide montre les deux écrans tels qu’ils apparaissent dans la plateforme.",
     ),
     keywords: {
-      es: ["perfil", "foto", "idioma", "inglés", "english", "zona horaria", "calendly", "equipo", "miembro", "editar", "correo", "reenviar credenciales", "contraseña temporal", "rol", "organizador", "administrador", "permisos", "solo lectura", "contenidos"],
-      en: ["profile", "photo", "language", "english", "spanish", "time zone", "calendly", "team", "member", "edit", "email", "resend credentials", "temporary password", "role", "organizer", "administrator", "permissions", "read-only", "content"],
+      es: ["perfil", "foto", "idioma", "inglés", "english", "zona horaria", "calendly", "equipo", "miembro", "editar", "correo", "reenviar credenciales", "contraseña temporal", "rol", "organizador", "administrador", "permisos", "solo lectura", "contenidos", "soporte", "caso", "ticket", "evidencias", "agente", "abierto", "en gestión", "solucionado", "sin solución"],
+      en: ["profile", "photo", "language", "english", "spanish", "time zone", "calendly", "team", "member", "edit", "email", "resend credentials", "temporary password", "role", "organizer", "administrator", "permissions", "read-only", "content", "support", "case", "ticket", "evidence", "agent", "open", "in progress", "resolved", "unresolved"],
       fr: ["profil", "photo", "langue", "anglais", "espagnol", "fuseau horaire", "calendly", "équipe", "membre", "modifier", "e-mail", "renvoyer les identifiants", "mot de passe temporaire", "rôle", "organisateur", "administrateur", "permissions", "lecture seule", "contenus"],
     },
     sections: accountSections,

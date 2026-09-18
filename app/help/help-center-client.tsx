@@ -115,6 +115,10 @@ const uiText = {
     send: "Enviar solicitud",
     sending: "Enviando…",
     success: "Solicitud recibida",
+    evidence: "Adjuntar evidencias (capturas, PDF, video)",
+    evidenceSending: "Subiendo evidencias…",
+    evidenceDone: "{n} archivo(s) adjuntado(s) al caso.",
+    ticketLink: "Ver el seguimiento de mi caso ↗",
     privacy:
       "Usaremos estos datos solo para atender la solicitud y los conservaremos durante 180 días.",
     consent:
@@ -170,6 +174,10 @@ const uiText = {
     send: "Send request",
     sending: "Sending…",
     success: "Request received",
+    evidence: "Attach evidence (screenshots, PDF, video)",
+    evidenceSending: "Uploading evidence…",
+    evidenceDone: "{n} file(s) attached to the case.",
+    ticketLink: "Track my case ↗",
     privacy:
       "We will use this data only to handle the request and retain it for 180 days.",
     consent:
@@ -225,6 +233,10 @@ const uiText = {
     send: "Envoyer la demande",
     sending: "Envoi…",
     success: "Demande reçue",
+    evidence: "Joindre des preuves (captures, PDF, vidéo)",
+    evidenceSending: "Envoi des preuves…",
+    evidenceDone: "{n} fichier(s) joint(s) au dossier.",
+    ticketLink: "Suivre mon dossier ↗",
     privacy:
       "Nous utiliserons ces données uniquement pour traiter la demande et les conserverons pendant 180 jours.",
     consent:
@@ -356,7 +368,19 @@ export default function HelpCenterClient({
     id: string;
     supportEmail: string;
     serviceHours: string;
+    token?: string;
+    ticketPath?: string;
   } | null>(null);
+  const [evidenceState, setEvidenceState] = useState<{ busy: boolean; done: number; error: string }>({ busy: false, done: 0, error: "" });
+  const uploadEvidence = async (files: FileList | null) => {
+    if (!createdRequest?.token || !files || files.length === 0) return;
+    setEvidenceState({ busy: true, done: evidenceState.done, error: "" });
+    const form = new FormData();
+    Array.from(files).forEach((file) => form.append("files", file));
+    const response = await fetch(`/api/support/ticket/${encodeURIComponent(createdRequest.token)}/attachments`, { method: "POST", body: form });
+    const payload = (await response.json().catch(() => ({}))) as { data?: unknown[]; error?: string };
+    setEvidenceState({ busy: false, done: evidenceState.done + (response.ok ? (payload.data?.length ?? files.length) : 0), error: response.ok ? "" : payload.error ?? "No fue posible adjuntar." });
+  };
   const labels = uiText[locale];
 
   const filteredArticles = useMemo(
@@ -402,6 +426,8 @@ export default function HelpCenterClient({
         id: string;
         supportEmail: string;
         serviceHours: string;
+        token?: string;
+        ticketPath?: string;
       };
       error?: string;
       duplicateId?: string;
@@ -764,10 +790,22 @@ export default function HelpCenterClient({
                   <b>{createdRequest.supportEmail}</b>
                   <small>{createdRequest.serviceHours}</small>
                 </div>
+                {createdRequest.token && (
+                  <div className="support-success-actions">
+                    <label className="support-evidence">
+                      <input type="file" multiple hidden disabled={evidenceState.busy} accept="image/*,application/pdf,video/*,text/plain,text/csv,.docx,.xlsx,.pptx,.zip" onChange={(input) => { void uploadEvidence(input.target.files); input.target.value = ""; }} />
+                      <span className="secondary-action">{evidenceState.busy ? labels.evidenceSending : labels.evidence}</span>
+                      {evidenceState.done > 0 && <small>{labels.evidenceDone.replace("{n}", String(evidenceState.done))}</small>}
+                      {evidenceState.error && <small className="support-evidence-error">{evidenceState.error}</small>}
+                    </label>
+                    <a className="support-ticket-link" href={createdRequest.ticketPath} target="_blank" rel="noreferrer">{labels.ticketLink}</a>
+                  </div>
+                )}
                 <button
                   className="primary-button"
                   onClick={() => {
                     setCreatedRequest(null);
+                    setEvidenceState({ busy: false, done: 0, error: "" });
                     setContactOpen(false);
                   }}
                 >

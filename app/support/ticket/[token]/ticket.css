@@ -1,0 +1,36 @@
+/* Página pública de seguimiento de un caso de soporte. */
+.ticket-shell { min-height: 100vh; background: #f4f2f8; padding: 28px 16px 48px; display: grid; gap: 18px; justify-items: center; align-content: start; font-family: var(--font-geist-sans), system-ui, sans-serif; color: #26232e; }
+.ticket-brand { display: flex; align-items: center; gap: 10px; width: min(760px, 100%); }
+.ticket-brand img, .ticket-monogram { width: 34px; height: 34px; border-radius: 9px; object-fit: contain; background: #fff; }
+.ticket-monogram { display: grid; place-items: center; background: #6946df; color: #fff; font-weight: 800; }
+.ticket-brand b { font-size: 15px; } .ticket-brand small { color: #8e8998; font-size: 12px; margin-left: -2px; }
+.ticket-card { width: min(760px, 100%); background: #fff; border: 1px solid #e6e3ec; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px -22px #2a1d5c66; }
+.ticket-head { padding: 24px 26px 18px; border-bottom: 1px solid #f0eef3; }
+.eyebrow { margin: 0 0 6px; font-size: 11px; font-weight: 750; letter-spacing: .08em; color: #8e8998; }
+.ticket-head h1 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.3px; overflow-wrap: anywhere; }
+.ticket-status { display: grid; gap: 3px; padding: 11px 13px; border-radius: 10px; margin-bottom: 10px; }
+.ticket-status b { font-size: 13px; } .ticket-status span { font-size: 12px; line-height: 1.5; }
+.ticket-status.new { background: #fff0e4; color: #7d4a17; } .ticket-status.in_progress { background: #e9f1ff; color: #1f5a9a; } .ticket-status.resolved { background: #e6f7ef; color: #1d5d4a; } .ticket-status.closed { background: #f1eff4; color: #5f5a69; }
+.ticket-meta { margin: 0; font-size: 12px; color: #8e8998; line-height: 1.5; }
+.ticket-block { padding: 18px 26px; border-bottom: 1px solid #f0eef3; display: grid; gap: 8px; }
+.ticket-block-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.ticket-text, .ticket-message p { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; color: #3f3b4a; }
+.ticket-hint { color: #9b97a3; font-size: 12px; margin: 0; }
+.ticket-files { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
+.ticket-files li { display: grid; gap: 2px; padding: 9px 11px; border: 1px solid #ece9f1; border-radius: 9px; background: #faf9fb; }
+.ticket-files a { color: #6847dc; font-weight: 600; font-size: 13px; text-decoration: none; overflow-wrap: anywhere; } .ticket-files small { color: #9b97a3; font-size: 11px; }
+.ticket-thread { display: grid; gap: 10px; }
+.ticket-message { padding: 11px 13px; border-radius: 10px; border: 1px solid #ece9f1; background: #fff; }
+.ticket-message.agent { background: #f3f0ff; border-color: #e1d9fb; }
+.ticket-message header { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; font-size: 12px; } .ticket-message header small { color: #9b97a3; }
+.ticket-reply { display: grid; gap: 10px; margin-top: 6px; }
+.ticket-reply textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; line-height: 1.5; padding: 11px 12px; border: 1px solid #dfdce6; border-radius: 10px; resize: vertical; outline: 0; }
+.ticket-reply textarea:focus { border-color: #8064e5; box-shadow: 0 0 0 3px #6946df13; }
+.ticket-reply-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ticket-primary, .ticket-secondary { font: inherit; font-size: 13px; font-weight: 650; border-radius: 9px; padding: 10px 16px; cursor: pointer; }
+.ticket-primary { border: 0; background: #6946df; color: #fff; } .ticket-primary:disabled, .ticket-secondary:disabled { opacity: .55; cursor: default; }
+.ticket-secondary { border: 1px solid #dfdce6; background: #fff; color: #4d4a58; padding: 8px 12px; }
+.ticket-notice { color: #257e67; font-size: 12px; } .ticket-error, .ticket-error-inline { color: #b0455a; font-size: 13px; }
+.ticket-error { width: min(760px, 100%); background: #fff; border: 1px solid #f1d5da; border-radius: 12px; padding: 16px; }
+.ticket-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 26px; font-size: 12px; color: #8e8998; }
+.ticket-foot a { color: #6847dc; text-decoration: none; }

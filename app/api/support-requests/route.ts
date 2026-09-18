@@ -1,10 +1,13 @@
 import { and, desc, eq, gt, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { supportRequests } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { getCurrentUser, requireApiUser } from "@/lib/auth";
 import type { HelpLocale } from "@/lib/help-content";
+import { getPublicOrigin } from "@/lib/public-origin";
+import { createSupportToken, getSupportContact, supportTicketPath } from "@/lib/support";
+import { notifySupportRequestCreated } from "@/lib/support-notifications";
 
 export const runtime = "nodejs";
 
@@ -163,9 +166,11 @@ export async function POST(request: Request) {
   }
 
   const now = new Date();
+  const accessToken = createSupportToken();
   const [created] = await db
     .insert(supportRequests)
     .values({
+      accessToken,
       requesterUserId: currentUser?.id ?? null,
       requesterName,
       requesterEmail,
@@ -205,15 +210,25 @@ export async function POST(request: Request) {
     request,
   });
 
+  const contact = await getSupportContact();
+  const origin = getPublicOrigin(request);
+  after(() =>
+    notifySupportRequestCreated({
+      ticket: { id: created.id, subject, requesterName, requesterEmail, status: created.status },
+      token: accessToken,
+      origin,
+      category: body.category ?? "other",
+    }),
+  );
+
   return NextResponse.json(
     {
       data: {
         ...created,
-        supportEmail:
-          process.env.SUPPORT_EMAIL ?? "soporte@icazalive.local",
-        serviceHours:
-          process.env.SUPPORT_HOURS ??
-          "Lunes a viernes · 08:00–18:00 (hora de Miami)",
+        token: accessToken,
+        ticketPath: supportTicketPath(accessToken),
+        supportEmail: contact.email,
+        serviceHours: contact.hours,
       },
     },
     { status: 201 },
