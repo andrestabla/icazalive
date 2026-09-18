@@ -53,9 +53,9 @@ const manageEventsSections: HelpGuideSection[] = [
       ),
       step(
         t(
-          "Completa **Información principal**: elige una **Plantilla** si guardaste una de un evento anterior (copia agenda, comunicaciones y encuestas), escribe el **Nombre del evento**, la **Fecha y hora** (siempre en hora de Miami, America/New_York) y la **Duración**. Pulsa **Crear borrador**.",
-          "Fill in **Main information**: pick a **Template** if you saved one from a previous event (it copies agenda, communications and polls), type the **Event name**, the **Date and time** (always Miami time, America/New_York) and the **Duration**. Click **Create draft**.",
-          "Renseignez **Informations principales** : choisissez un **Modèle** si vous en avez enregistré un depuis un événement précédent (il copie l’agenda, les communications et les sondages), saisissez le **Nom de l’événement**, la **Date et l’heure** (toujours à l’heure de Miami, America/New_York) et la **Durée**. Cliquez sur **Créer le brouillon**.",
+          "Completa **Información principal**: elige una **Plantilla** si guardaste una de un evento anterior (copia agenda, comunicaciones y encuestas), escribe el **Nombre del evento**, la **Fecha y hora** (siempre en hora de Miami, America/New_York) y la **Duración** en minutos: cualquier valor entre 5 y 720 (por ejemplo 22), con sugerencias rápidas al desplegar el campo. Pulsa **Crear borrador**. La duración también se cambia después desde **Cambiar fecha y hora** en la ficha del evento.",
+          "Fill in **Main information**: pick a **Template** if you saved one from a previous event (it copies agenda, communications and polls), type the **Event name**, the **Date and time** (always Miami time, America/New_York) and the **Duration** in minutes: any value between 5 and 720 (for example 22), with quick suggestions when you open the field. Click **Create draft**. The duration can also be changed later from **Change date and time** on the event page.",
+          "Renseignez **Informations principales** : choisissez un **Modèle** si vous en avez enregistré un depuis un événement précédent (il copie l’agenda, les communications et les sondages), saisissez le **Nom de l’événement**, la **Date et l’heure** (toujours à l’heure de Miami, America/New_York) et la **Durée** en minutes : toute valeur entre 5 et 720 (par exemple 22), avec des suggestions rapides en ouvrant le champ. Cliquez sur **Créer le brouillon**. La durée se modifie aussi ensuite via **Changer la date et l’heure** sur la fiche de l’événement.",
         ),
         {
           image: img("crear-informacion"),
@@ -344,6 +344,7 @@ const manageEventsSections: HelpGuideSection[] = [
           "**Opportunity reminder** is a sixth automation with the same structure as the follow-up: it goes out some time after the event ends, but **only to people who registered and did not enter**. If the person did attend, the send cancels itself. Enable it with its switch; existing registrants are scheduled at that moment. The **Schedule a meeting** button appears only if you saved your Calendly link.",
           "**Rappel opportunité** est une sixième automatisation, de même structure que le suivi : elle part un certain temps après la fin de l’événement, mais **uniquement aux inscrits qui ne sont pas entrés**. Si la personne a assisté, l’envoi s’annule tout seul. Activez-la avec son interrupteur ; les inscrits existants sont programmés à ce moment. Le bouton **Planifier une réunion** n’apparaît que si vous avez enregistré votre lien Calendly.",
         ),
+        { image: img("comunicaciones-oportunidad"), caption: t("Recordatorio oportunidad en la secuencia del participante.", "Opportunity reminder in the participant sequence.", "Rappel opportunité dans la séquence du participant.") },
       ),
       step(
         t(
@@ -774,11 +775,19 @@ const analyticsSections: HelpGuideSection[] = [
     id: "global",
     title: t("Analítica global", "Global analytics", "Analyses globales"),
     intro: t(
-      "La página Analítica del menú lateral consolida todos los eventos. Los datos se actualizan cada vez que la abres.",
-      "The Analytics page in the side menu consolidates all events. Data refreshes every time you open it.",
-      "La page Analyses du menu latéral consolide tous les événements. Les données se rafraîchissent à chaque ouverture.",
+      "La página Analítica del menú lateral consolida los eventos que puedes ver: si eres organizador, solo los tuyos; si eres administrador, todos, con filtros. Los datos se actualizan cada vez que la abres.",
+      "The Analytics page in the side menu consolidates the events you can see: your own if you are an organizer; all of them, with filters, if you are an administrator. Data refreshes every time you open it.",
+      "La page Analyses du menu latéral consolide les événements que vous pouvez voir : les vôtres si vous êtes organisateur ; tous, avec des filtres, si vous êtes administrateur. Les données se rafraîchissent à chaque ouverture.",
     ),
     steps: [
+      step(
+        t(
+          "Si eres **administrador**, arriba verás la barra de filtros: **Organizador** (los eventos donde esa persona es propietaria o coorganizadora), **Evento** y el rango **Desde / Hasta** por fecha de inicio. Los filtros se combinan, se aplican a todos los indicadores, gráficos y a la tabla de rendimiento, y quedan en la dirección de la página para que puedas compartir la vista. **Limpiar filtros** vuelve al total.",
+          "If you are an **administrator**, you will see the filter bar at the top: **Organizer** (events where that person is owner or co-organizer), **Event** and the **From / To** range by start date. Filters combine, apply to every indicator, chart and the performance table, and are kept in the page address so you can share the view. **Clear filters** goes back to the total.",
+          "Si vous êtes **administrateur**, la barre de filtres apparaît en haut : **Organisateur** (événements dont cette personne est propriétaire ou co-organisatrice), **Événement** et la plage **Du / Au** par date de début. Les filtres se combinent, s’appliquent à tous les indicateurs, graphiques et au tableau de performance, et restent dans l’adresse de la page pour partager la vue. **Effacer les filtres** revient au total.",
+        ),
+        { image: img("analitica-filtros"), caption: t("Filtros del administrador en Analítica.", "Administrator filters in Analytics.", "Filtres de l’administrateur dans Analyses.") },
+      ),
       step(
         t(
           "Los cuatro indicadores superiores: **Registros** (inscripciones totales y en cuántos eventos), **Visitas a sala** (accesos individuales con enlace personal), **Participación** (porcentaje de asistentes que hicieron algo: pregunta, voto, mensaje o reacción) y **Mensajes preparados** (correos en cola o programados).",
@@ -882,6 +891,120 @@ const analyticsSections: HelpGuideSection[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Guía 4: Tu cuenta, el idioma y el equipo
+// ---------------------------------------------------------------------------
+
+const accountSections: HelpGuideSection[] = [
+  {
+    id: "perfil",
+    title: t("Tu perfil", "Your profile", "Votre profil"),
+    intro: t(
+      "Pulsa tu nombre, abajo a la izquierda del menú lateral, para abrir **Mi perfil**. Desde ahí gestionas tus datos, tu foto y tus preferencias sin pasar por un administrador.",
+      "Click your name at the bottom left of the side menu to open **My profile**. From there you manage your details, your photo and your preferences without going through an administrator.",
+      "Cliquez sur votre nom, en bas à gauche du menu latéral, pour ouvrir **Mon profil**. Vous y gérez vos données, votre photo et vos préférences sans passer par un administrateur.",
+    ),
+    steps: [
+      step(
+        t(
+          "**Identidad**: cambia tu **Nombre completo** y pulsa **Guardar nombre**. El correo y el rol se muestran en gris porque solo un administrador los cambia desde **Equipo** (el correo es tu acceso).",
+          "**Identity**: change your **Full name** and click **Save name**. Email and role are greyed out because only an administrator changes them from **Team** (the email is your sign-in).",
+          "**Identité** : modifiez votre **Nom complet** et cliquez sur **Enregistrer le nom**. L’e-mail et le rôle sont grisés car seul un administrateur les modifie depuis **Équipe** (l’e-mail est votre identifiant).",
+        ),
+        { image: img("perfil"), caption: t("Pantalla Mi perfil.", "My profile screen.", "Écran Mon profil.") },
+      ),
+      step(
+        t(
+          "**Foto**: **Subir foto** acepta PNG, JPG, WEBP o GIF de hasta 3 MB; se guarda en Amazon S3 y aparece en el menú lateral. **Quitar foto** vuelve a las iniciales. Si entras con Google, tu foto de Google se sincroniza sola en cada ingreso, salvo que hayas subido una propia.",
+          "**Photo**: **Upload photo** accepts PNG, JPG, WEBP or GIF up to 3 MB; it is stored in Amazon S3 and shown in the side menu. **Remove photo** goes back to your initials. If you sign in with Google, your Google photo syncs on every sign-in unless you uploaded your own.",
+          "**Photo** : **Téléverser une photo** accepte PNG, JPG, WEBP ou GIF jusqu’à 3 Mo ; elle est stockée dans Amazon S3 et affichée dans le menu latéral. **Retirer la photo** revient aux initiales. Si vous vous connectez avec Google, votre photo Google se synchronise à chaque connexion, sauf si vous en avez téléversé une.",
+        ),
+      ),
+      step(
+        t(
+          "**Zona horaria y agenda**: elige la zona horaria en la que quieres ver las fechas administrativas (por defecto, la del navegador) y guarda tu **Enlace de agendamiento (Calendly)**: es el botón **Agendar una reunión** de los correos de seguimiento y de Recordatorio oportunidad de tus eventos. **Seguridad**: el candado abre el cambio de contraseña y la verificación en dos pasos.",
+          "**Time zone and scheduling**: choose the time zone for administrative dates (browser time zone by default) and save your **Scheduling link (Calendly)**: it is the **Schedule a meeting** button in the follow-up and Opportunity reminder emails of your events. **Security**: the lock opens the password change and two-step verification.",
+          "**Fuseau horaire et agenda** : choisissez le fuseau des dates administratives (celui du navigateur par défaut) et enregistrez votre **Lien de prise de rendez-vous (Calendly)** : c’est le bouton **Planifier une réunion** des e-mails de suivi et de Rappel opportunité de vos événements. **Sécurité** : le cadenas ouvre le changement de mot de passe et la vérification en deux étapes.",
+        ),
+      ),
+    ],
+  },
+  {
+    id: "idioma",
+    title: t("Usar la plataforma en inglés", "Using the platform in English", "Utiliser la plateforme en anglais"),
+    steps: [
+      step(
+        t(
+          "En **Mi perfil → Idioma de la plataforma** pulsa **English**. La página se recarga y toda la interfaz de gestión (menús, botones, formularios, mensajes, fechas) pasa al inglés. La preferencia se guarda en tu cuenta: la verás también en tus próximos ingresos y desde otro dispositivo. Para volver, pulsa **Español**.",
+          "In **My profile → Platform language** click **English**. The page reloads and the whole management interface (menus, buttons, forms, messages, dates) switches to English. The preference is stored in your account: you will see it on your next sign-ins and from another device. To go back, click **Español**.",
+          "Dans **Mon profil → Langue de la plateforme**, cliquez sur **English**. La page se recharge et toute l’interface de gestion (menus, boutons, formulaires, messages, dates) passe en anglais. La préférence est enregistrée dans votre compte : vous la retrouverez à vos prochaines connexions et depuis un autre appareil. Pour revenir, cliquez sur **Español**.",
+        ),
+        {
+          tip: t(
+            "El Centro de ayuda y el botón de ayuda siguen tu idioma. Los correos a participantes y sus páginas (registro, sala) se mantienen en el idioma en que escribiste las plantillas.",
+            "The Help center and the help button follow your language. Emails to participants and their pages (registration, room) stay in the language you wrote the templates in.",
+            "Le Centre d’aide et le bouton d’aide suivent votre langue. Les e-mails aux participants et leurs pages (inscription, salle) restent dans la langue de vos modèles.",
+          ),
+        },
+      ),
+    ],
+  },
+  {
+    id: "equipo",
+    title: t("Equipo: gestionar las cuentas del personal", "Team: managing staff accounts", "Équipe : gérer les comptes du personnel"),
+    intro: t(
+      "**Equipo** (menú lateral) solo lo ven los administradores. Cada alta o cambio se avisa por correo a la persona y queda en Auditoría.",
+      "**Team** (side menu) is only visible to administrators. Every new account or change is emailed to the person and recorded in the Audit log.",
+      "**Équipe** (menu latéral) n’est visible que des administrateurs. Chaque création ou changement est notifié par e-mail à la personne et consigné dans l’Audit.",
+    ),
+    steps: [
+      step(
+        t(
+          "**＋ Añadir miembro**: nombre, correo, rol (**Organizador** u **Administrador**) y una contraseña temporal generada. La persona recibe un correo con su acceso; tú puedes copiar las credenciales por si necesita ayuda.",
+          "**＋ Add member**: name, email, role (**Organizer** or **Administrator**) and a generated temporary password. The person receives an email with their access; you can copy the credentials in case they need help.",
+          "**＋ Ajouter un membre** : nom, e-mail, rôle (**Organisateur** ou **Administrateur**) et un mot de passe temporaire généré. La personne reçoit un e-mail avec son accès ; vous pouvez copier les identifiants au cas où.",
+        ),
+      ),
+      step(
+        t(
+          "**Editar** abre los datos del miembro: corrige el **Nombre completo** o cambia el **Correo electrónico**. Con un correo nuevo, la persona entrará con él, recibirá un aviso y sus sesiones abiertas se cierran. Abajo, **Reenviar credenciales por correo** genera una contraseña temporal nueva y la envía junto con el enlace de ingreso: úsalo cuando alguien perdió el acceso o nunca recibió el primer correo.",
+          "**Edit** opens the member's details: fix the **Full name** or change the **Email address**. With a new email, the person signs in with it, receives a notice and their open sessions are closed. Below, **Resend credentials by email** generates a new temporary password and sends it with the sign-in link: use it when someone lost access or never received the first email.",
+          "**Modifier** ouvre les données du membre : corrigez le **Nom complet** ou changez l’**Adresse e-mail**. Avec un nouvel e-mail, la personne se connecte avec celui-ci, reçoit un avis et ses sessions ouvertes sont fermées. En bas, **Renvoyer les identifiants par e-mail** génère un nouveau mot de passe temporaire et l’envoie avec le lien de connexion : utile quand quelqu’un a perdu l’accès ou n’a jamais reçu le premier e-mail.",
+        ),
+        { image: img("equipo-editar"), caption: t("Modal Editar miembro con el reenvío de credenciales.", "Edit member modal with credential resend.", "Fenêtre Modifier le membre avec le renvoi des identifiants.") },
+      ),
+      step(
+        t(
+          "El selector **Rol** cambia el rol al instante (pasar a **Participante** saca a la persona del equipo pero conserva su historial). **Restablecer** fija una contraseña temporal concreta, **Desactivar** bloquea el ingreso sin borrar nada y **Eliminar** borra la cuenta de forma definitiva. Siempre debe quedar al menos un administrador activo y no puedes desactivar ni eliminar tu propia cuenta.",
+          "The **Role** selector changes the role instantly (switching to **Participant** removes the person from the team but keeps their history). **Reset** sets a specific temporary password, **Deactivate** blocks sign-in without deleting anything and **Delete** removes the account permanently. At least one active administrator must remain and you cannot deactivate or delete your own account.",
+          "Le sélecteur **Rôle** change le rôle immédiatement (passer à **Participant** retire la personne de l’équipe mais conserve son historique). **Réinitialiser** fixe un mot de passe temporaire précis, **Désactiver** bloque la connexion sans rien supprimer et **Supprimer** efface le compte définitivement. Il doit toujours rester au moins un administrateur actif et vous ne pouvez ni désactiver ni supprimer votre propre compte.",
+        ),
+      ),
+    ],
+  },
+  {
+    id: "alcance",
+    title: t("Qué ve cada rol", "What each role sees", "Ce que voit chaque rôle"),
+    steps: [
+      step(
+        t(
+          "**Organizador**: en **Eventos**, **Participantes** y **Analítica** solo aparecen los eventos que creó o en los que figura como coorganizador, y sus inscritos. En **Contenidos** puede subir videos y usar toda la biblioteca en sus eventos, pero solo puede **renombrar o retirar** los que subió; los demás se muestran como **Solo lectura**.",
+          "**Organizer**: **Events**, **Participants** and **Analytics** only show the events they created or co-organize, and their registrants. In **Content** they can upload videos and use the whole library in their events, but can only **rename or remove** the ones they uploaded; the rest appear as **Read-only**.",
+          "**Organisateur** : **Événements**, **Participants** et **Analyses** n’affichent que les événements qu’il a créés ou co-organise, et leurs inscrits. Dans **Contenus**, il peut téléverser des vidéos et utiliser toute la bibliothèque dans ses événements, mais ne peut **renommer ou retirer** que celles qu’il a téléversées ; les autres apparaissent en **Lecture seule**.",
+        ),
+        { image: img("contenidos-biblioteca"), caption: t("Biblioteca de contenidos.", "Content library.", "Bibliothèque de contenus.") },
+      ),
+      step(
+        t(
+          "**Administrador**: ve todos los eventos, participantes y contenidos, filtra **Eventos** y **Analítica** por organizador y es quien gestiona **Equipo**, **Permisos**, **Integraciones**, **Marca**, **Auditoría** y **Privacidad**. Los módulos sin permiso no aparecen en el menú lateral; los permisos por rol y por persona se ajustan en **Permisos**.",
+          "**Administrator**: sees every event, participant and content item, filters **Events** and **Analytics** by organizer and manages **Team**, **Permissions**, **Integrations**, **Brand**, **Audit log** and **Privacy**. Modules without permission do not appear in the side menu; role and per-person permissions are adjusted in **Permissions**.",
+          "**Administrateur** : voit tous les événements, participants et contenus, filtre **Événements** et **Analyses** par organisateur et gère **Équipe**, **Permissions**, **Intégrations**, **Marque**, **Audit** et **Confidentialité**. Les modules sans permission n’apparaissent pas dans le menu latéral ; les permissions par rôle et par personne se règlent dans **Permissions**.",
+        ),
+      ),
+    ],
+  },
+];
+
 export const helpGuides: HelpArticle[] = [
   {
     slug: "guide-manage-events",
@@ -966,5 +1089,32 @@ export const helpGuides: HelpArticle[] = [
     },
     sections: analyticsSections,
     related: ["guide-manage-events", "guide-participants", "read-event-analytics"],
+  },
+  {
+    slug: "guide-account-team",
+    category: "account",
+    featured: true,
+    title: t(
+      "Tu cuenta, el idioma y el equipo",
+      "Your account, language and team",
+      "Votre compte, la langue et l’équipe",
+    ),
+    summary: t(
+      "Perfil con foto e idioma (español o inglés), zona horaria y Calendly; cómo el administrador añade, edita y reenvía credenciales a los miembros, y qué ve cada rol.",
+      "Profile with photo and language (Spanish or English), time zone and Calendly; how the administrator adds, edits and resends credentials to members, and what each role sees.",
+      "Profil avec photo et langue (espagnol ou anglais), fuseau horaire et Calendly ; comment l’administrateur ajoute, modifie et renvoie les identifiants aux membres, et ce que voit chaque rôle.",
+    ),
+    content: t(
+      "Todo lo personal se gestiona desde Mi perfil; las cuentas del personal, desde Equipo. Esta guía muestra ambas pantallas tal como se ven en la plataforma.",
+      "Everything personal is managed from My profile; staff accounts, from Team. This guide shows both screens exactly as they appear in the platform.",
+      "Tout ce qui est personnel se gère depuis Mon profil ; les comptes du personnel, depuis Équipe. Ce guide montre les deux écrans tels qu’ils apparaissent dans la plateforme.",
+    ),
+    keywords: {
+      es: ["perfil", "foto", "idioma", "inglés", "english", "zona horaria", "calendly", "equipo", "miembro", "editar", "correo", "reenviar credenciales", "contraseña temporal", "rol", "organizador", "administrador", "permisos", "solo lectura", "contenidos"],
+      en: ["profile", "photo", "language", "english", "spanish", "time zone", "calendly", "team", "member", "edit", "email", "resend credentials", "temporary password", "role", "organizer", "administrator", "permissions", "read-only", "content"],
+      fr: ["profil", "photo", "langue", "anglais", "espagnol", "fuseau horaire", "calendly", "équipe", "membre", "modifier", "e-mail", "renvoyer les identifiants", "mot de passe temporaire", "rôle", "organisateur", "administrateur", "permissions", "lecture seule", "contenus"],
+    },
+    sections: accountSections,
+    related: ["guide-manage-events", "guide-analytics", "protect-account"],
   },
 ];
