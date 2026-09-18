@@ -176,6 +176,7 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
               <p>Así te ven los demás miembros del equipo y los participantes.</p>
             </div>
           </div>
+          <div className="profile-body">
           <div className="profile-photo">
             <div className="profile-photo-frame">
               {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" referrerPolicy="no-referrer" /> : initials(profile.name)}
@@ -227,9 +228,10 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
               </button>
             </div>
           </form>
+          </div>
         </section>
 
-        <div className="profile-card">
+        <div className="profile-column">
           <section className="panel profile-card">
             <div className="panel-heading">
               <div>
@@ -238,6 +240,7 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
                 <p>Se aplica a toda la interfaz y se recuerda en tus próximos ingresos.</p>
               </div>
             </div>
+            <div className="profile-body">
             <div className="profile-language" role="group" aria-label="Idioma">
               {(Object.keys(LOCALE_LABELS) as Locale[]).map((locale) => (
                 <button
@@ -252,6 +255,7 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
                 </button>
               ))}
             </div>
+            </div>
           </section>
 
           <section className="panel profile-card">
@@ -261,6 +265,7 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
                 <h2>Cómo ves las fechas</h2>
               </div>
             </div>
+            <div className="profile-body">
             <form className="profile-form" onSubmit={savePreferences}>
               <label>
                 Zona horaria para fechas administrativas
@@ -284,6 +289,7 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
                 </button>
               </div>
             </form>
+            </div>
           </section>
 
           <section className="panel profile-card">
@@ -293,6 +299,7 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
                 <h2>Contraseña y verificación</h2>
               </div>
             </div>
+            <div className="profile-body">
             <div className="profile-security">
               <p>{profile.hasPassword ? "Cambia tu contraseña o activa la verificación en dos pasos." : "Entras con Google. Puedes activar la verificación en dos pasos."}</p>
               <AccountSecurity />
@@ -300,6 +307,7 @@ export default function ProfileEditor({ profile: initial }: { profile: Profile }
             <div className="profile-meta">
               <p><span>Cuenta creada</span><b>{profile.createdAt}</b></p>
               <p><span>Último acceso</span><b>{profile.lastLoginAt}</b></p>
+            </div>
             </div>
           </section>
         </div>
