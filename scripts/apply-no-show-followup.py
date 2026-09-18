@@ -82,6 +82,17 @@ if "backfillAfterEventDeliveries" not in s:
     write(comm, s); print(f"OK {comm}: recordatorio oportunidad")
 else: print(f"OK {comm}: ya aplicado")
 
+# 3b. Ficha del evento (servidor): garantiza la plantilla para eventos existentes
+pg = "app/events/[slug]/page.tsx"; s = read(pg)
+if "ensureMessageOfType" not in s:
+    s = s.replace('import { notFound } from "next/navigation";', 'import { notFound } from "next/navigation";\nimport { ensureMessageOfType } from "@/lib/communication-backfill";', 1)
+    old = "  if (!event) notFound();\n\n  const [\n    sessionRecords,"
+    if old not in s: print("ERROR page.tsx: ancla"); sys.exit(1)
+    s = s.replace(old, "  if (!event) notFound();\n  // Eventos creados antes de esta automatización reciben su plantilla (pausada).\n  await ensureMessageOfType(event.id, \"no_show_followup\");\n\n  const [\n    sessionRecords,", 1)
+    if "ensureMessageOfType } from" not in s: print("ERROR page.tsx: import"); sys.exit(1)
+    write(pg, s); print(f"OK {pg}: plantilla garantizada")
+else: print(f"OK {pg}: ya aplicado")
+
 # 4. Worker: no se envía a quien sí asistió
 patch("lib/communication-worker.ts", [(
 '''    if (isStaleDelivery(delivery.type, delivery.scheduledFor, now)) {''',

@@ -1,5 +1,6 @@
 import { count, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { ensureMessageOfType } from "@/lib/communication-backfill";
 import { getDb } from "@/db";
 import {
   communicationDeliveries,
@@ -26,6 +27,8 @@ export default async function EventDetailPage({
   const db = getDb();
   const [event] = await db.select().from(events).where(eq(events.slug, slug)).limit(1);
   if (!event) notFound();
+  // Eventos creados antes de esta automatización reciben su plantilla (pausada).
+  await ensureMessageOfType(event.id, "no_show_followup");
 
   const [
     sessionRecords,
