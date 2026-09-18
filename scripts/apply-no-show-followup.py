@@ -112,34 +112,22 @@ if "registrations" not in s.split('} from "@/db/schema";')[0]:
 for rel in ["app/api/public/events/[slug]/register/route.ts", "app/api/participants/invite/route.ts"]:
     patch(rel, [('message.type === "post_event"\n', '(message.type === "post_event" || message.type === "no_show_followup")\n')], 'message.type === "no_show_followup"')
 
-# 6. Ficha del evento: etiqueta, tipo y editores de momento/Calendly
-ed = "app/events/[slug]/event-detail.tsx"
-patch(ed, [
-    ('type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event";',
-     'type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event" | "no_show_followup";'),
-    ('''  post_event: {
-    title: "Seguimiento posterior",
-    timing: "1 hora después del evento",
-    icon: "↗",
-  },
-};''', '''  post_event: {
-    title: "Seguimiento posterior",
-    timing: "1 hora después del evento",
-    icon: "↗",
-  },
-  no_show_followup: {
-    title: "Recordatorio oportunidad",
-    timing: "Solo a quienes no entraron al evento",
-    icon: "↺",
-  },
-};'''),
-    ('<p>{item.type === "post_event" ? describeFollowUpOffset(item.offsetMinutes) : label.timing}</p>',
-     '<p>{item.type === "post_event" || item.type === "no_show_followup" ? `${describeFollowUpOffset(item.offsetMinutes)}${item.type === "no_show_followup" ? " · solo a quienes no entraron" : ""}` : label.timing}</p>'),
-    ('                  {selectedCommunication.type === "post_event" && (\n                    <FollowUpTiming',
-     '                  {(selectedCommunication.type === "post_event" || selectedCommunication.type === "no_show_followup") && (\n                    <FollowUpTiming'),
-    ('                  {selectedCommunication.type === "post_event" && (\n                    <div className="scheduling-link-box">',
-     '                  {(selectedCommunication.type === "post_event" || selectedCommunication.type === "no_show_followup") && (\n                    <div className="scheduling-link-box">'),
-], 'no_show_followup: {')
+# 6. Ficha del evento: etiqueta, tipo y editores de momento/Calendly (tolerante al icono y sangría de Replit)
+ed = "app/events/[slug]/event-detail.tsx"; s = read(ed)
+if "no_show_followup: {" not in s:
+    s = s.replace('type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event";',
+                  'type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event" | "no_show_followup";', 1)
+    m = re.search(r'(  post_event: \{\n    title: "Seguimiento posterior",\n    timing: "[^"]*",\n    icon: ([^\n]+?),?\n  \},\n)\};', s)
+    if not m: print("ERROR event-detail: bloque post_event"); sys.exit(1)
+    s = s[:m.start()] + m.group(1) + '  no_show_followup: {\n    title: "Recordatorio oportunidad",\n    timing: "Solo a quienes no entraron al evento",\n    icon: ' + m.group(2) + ',\n  },\n};' + s[m.end():]
+    old = '<p>{item.type === "post_event" ? describeFollowUpOffset(item.offsetMinutes) : label.timing}</p>'
+    if old not in s: print("ERROR event-detail: item.type"); sys.exit(1)
+    s = s.replace(old, '<p>{item.type === "post_event" || item.type === "no_show_followup" ? `${describeFollowUpOffset(item.offsetMinutes)}${item.type === "no_show_followup" ? " · solo a quienes no entraron" : ""}` : label.timing}</p>', 1)
+    n = s.count('{selectedCommunication.type === "post_event" && (')
+    if n != 2: print(f"ERROR event-detail: esperaba 2 bloques post_event, hay {n}"); sys.exit(1)
+    s = s.replace('{selectedCommunication.type === "post_event" && (', '{(selectedCommunication.type === "post_event" || selectedCommunication.type === "no_show_followup") && (')
+    write(ed, s); print(f"OK {ed}: aplicado")
+else: print(f"OK {ed}: ya aplicado")
 
 # 7. Envío manual y plantillas
 patch("app/participants/participants-list.tsx", [('    { value: "post_event", label: "Seguimiento posterior" },', '    { value: "post_event", label: "Seguimiento posterior" },\n    { value: "no_show_followup", label: "Recordatorio oportunidad" },')], '"no_show_followup"')
