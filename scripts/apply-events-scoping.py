@@ -187,11 +187,12 @@ if "EventCreator" not in s:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizerFilter]);''', 1)
     # botón crear → modal
-    old = '''        <Link href="/" className="primary-button link-button">＋ Crear evento</Link>
-      </header>'''
-    assert old in s, "events-list: botón crear"
-    s = s.replace(old, '''        <button type="button" className="primary-button" onClick={() => setCreatorOpen(true)}>＋ Crear evento</button>
-      </header>
+    # El botón puede tener variantes (icono, texto): se reemplaza el enlace completo.
+    m = re.search(r'<Link href="/" className="primary-button link-button">([\s\S]*?)</Link>\n(\s*)</header>', s)
+    assert m, "events-list: botón crear"
+    inner = m.group(1)
+    s = s[:m.start()] + '''<button type="button" className="primary-button" onClick={() => setCreatorOpen(true)}>''' + inner + '''</button>
+''' + m.group(2) + '''</header>
       <EventCreator
         open={creatorOpen}
         onClose={() => setCreatorOpen(false)}
@@ -200,7 +201,7 @@ if "EventCreator" not in s:
           void loadEvents();
           setNotice({ text: `“${created.title}” quedó creado como borrador.`, slug: created.slug });
         }}
-      />''', 1)
+      />''' + s[m.end():]
     # filtro por organizador (solo administrador)
     old = '''        <div className="event-view-switch" aria-label="Vista de eventos">'''
     assert old in s, "events-list: view switch"
