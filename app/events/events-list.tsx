@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { FormEvent } from "react";
 import "./events-actions.css";
+import EventCreator from "./event-creator";
 import { useEffect, useMemo, useState } from "react";
 import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
 import { useFeedbackSetter } from "@/lib/feedback";
@@ -96,6 +97,9 @@ export default function EventsList() {
   const [duplicateError, setDuplicateError] = useState("");
   const [duplicateSaving, setDuplicateSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [creatorOpen, setCreatorOpen] = useState(false);
+  const [organizerFilter, setOrganizerFilter] = useState("");
+  const [organizers, setOrganizers] = useState<{ id: string; name: string; email: string }[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<EventRecord | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -162,34 +166,25 @@ export default function EventsList() {
   } | null>(null);
   const setNotice = useFeedbackSetter(setNoticeState);
 
-  const loadEvents = async () => {
-    const response = await fetch("/api/events", { cache: "no-store" });
+  const loadEvents = async (organizerId: string = organizerFilter) => {
+    const query = organizerId ? `?organizer=${encodeURIComponent(organizerId)}` : "";
+    const response = await fetch(`/api/events${query}`, { cache: "no-store" });
     const payload = (await response.json()) as {
       data?: EventRecord[];
+      organizers?: { id: string; name: string; email: string }[];
       error?: string;
     };
-    if (response.ok && payload.data) setEvents(payload.data);
+    if (response.ok && payload.data) {
+      setEvents(payload.data);
+      if (payload.organizers) setOrganizers(payload.organizers);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
-    let cancelled = false;
-    void fetch("/api/events", { cache: "no-store" })
-      .then(async (response) => {
-        const payload = (await response.json()) as {
-          data?: EventRecord[];
-        };
-        if (!cancelled && response.ok && payload.data) {
-          setEvents(payload.data);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadEvents(organizerFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizerFilter]);
 
   const filteredEvents = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("es");
@@ -286,8 +281,17 @@ export default function EventsList() {
           <h1>Eventos</h1>
           <p>Crea, programa y supervisa todas tus experiencias.</p>
         </div>
-        <Link href="/" className="primary-button link-button">＋ Crear evento</Link>
+        <button type="button" className="primary-button" onClick={() => setCreatorOpen(true)}>＋ Crear evento</button>
       </header>
+      <EventCreator
+        open={creatorOpen}
+        onClose={() => setCreatorOpen(false)}
+        onCreated={(created) => {
+          setCreatorOpen(false);
+          void loadEvents();
+          setNotice({ text: `“${created.title}” quedó creado como borrador.`, slug: created.slug });
+        }}
+      />
       {deleteNotice && (
         <div className="events-notice" role="status">
           <span>✓</span>
@@ -327,6 +331,17 @@ export default function EventsList() {
             <option value="cancelled">Cancelado</option>
           </select>
         </label>
+        {isAdmin && organizers.length > 0 && (
+          <label className="filter-select">
+            <span>Organizador</span>
+            <select value={organizerFilter} onChange={(event) => setOrganizerFilter(event.target.value)}>
+              <option value="">Todos</option>
+              {organizers.map((organizer) => (
+                <option value={organizer.id} key={organizer.id}>{organizer.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="event-view-switch" aria-label="Vista de eventos">
           <button
             className={view === "catalog" ? "active" : ""}
