@@ -1,0 +1,1 @@
+ALTER TYPE "public"."communication_type" ADD VALUE IF NOT EXISTS 'no_show_followup';

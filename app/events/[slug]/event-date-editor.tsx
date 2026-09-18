@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
 import { useFeedbackSetter } from "@/lib/feedback";
+import DurationInput from "../duration-input";
 
 // Cambio de fecha y hora del evento. Solo se ofrece mientras el evento está
 // en borrador o en preparación; al guardar, la API desplaza sesiones y
@@ -24,7 +25,7 @@ export default function EventDateEditor({
   const setError = useFeedbackSetter(setErrorState, "error");
   const [value, setValue] = useState(() => toPlatformDateTimeInput(startsAt));
   const initialDuration = Math.max(
-    15,
+    5,
     Math.round((new Date(endsAt).getTime() - new Date(startsAt).getTime()) / 60000),
   );
   const [duration, setDuration] = useState(String(initialDuration));
@@ -34,7 +35,7 @@ export default function EventDateEditor({
   const save = async () => {
     const start = platformLocalToDate(value);
     const minutes = Number(duration);
-    if (Number.isNaN(start.getTime()) || !minutes) {
+    if (Number.isNaN(start.getTime()) || !minutes || minutes < 5 || minutes > 720) {
       setError("Indica una fecha, hora y duración válidas.");
       return;
     }
@@ -78,16 +79,7 @@ export default function EventDateEditor({
       </label>
       <label>
         Duración
-        <select value={duration} onChange={(input) => setDuration(input.target.value)} disabled={saving}>
-          {[30, 45, 60, 90, 120, 180, 240].map((minutes) => (
-            <option value={String(minutes)} key={minutes}>
-              {minutes < 60 ? `${minutes} min` : `${minutes / 60} h${minutes % 60 ? ` ${minutes % 60} min` : ""}`}
-            </option>
-          ))}
-          {![30, 45, 60, 90, 120, 180, 240].includes(Number(duration)) && (
-            <option value={duration}>{duration} min</option>
-          )}
-        </select>
+        <DurationInput value={duration} onChange={setDuration} disabled={saving} id="date-editor-duration" />
       </label>
       <div className="event-date-editor-actions">
         <button type="button" className="secondary-action" disabled={saving} onClick={() => setOpen(false)}>

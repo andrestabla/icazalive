@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { PLATFORM_TIMEZONE, platformLocalToDate } from "@/lib/timezone";
+import DurationInput from "./duration-input";
 
 type EventFormat = "live" | "simulated" | "hybrid";
 type ScheduleConflict = { id: string; title: string; slug: string; startsAt: string; reasons: string[] };
@@ -56,7 +57,7 @@ export default function EventCreator({
     const form = new FormData(formEvent.currentTarget);
     const startsAt = platformLocalToDate(String(form.get("startsAt")));
     const duration = Number(form.get("duration"));
-    if (Number.isNaN(startsAt.getTime()) || !duration) {
+    if (Number.isNaN(startsAt.getTime()) || !duration || duration < 5 || duration > 720) {
       setFormError("Selecciona una fecha, hora y duración válidas.");
       setSaving(false);
       return;
@@ -74,7 +75,7 @@ export default function EventCreator({
         templateId: selectedTemplateId || undefined,
       }),
     });
-    const payload = (await response.json()) as {
+    const payload = (await response.json().catch(() => ({}))) as {
       data?: { slug: string; title: string };
       error?: string;
       conflicts?: ScheduleConflict[];
@@ -158,12 +159,7 @@ export default function EventCreator({
                 </label>
                 <label>
                   Duración
-                  <select name="duration" defaultValue="60" onChange={() => setScheduleConflicts([])}>
-                    <option value="30">30 minutos</option>
-                    <option value="60">1 hora</option>
-                    <option value="90">1 h 30 min</option>
-                    <option value="120">2 horas</option>
-                  </select>
+                  <DurationInput name="duration" id="creator-duration" onChange={() => setScheduleConflicts([])} />
                 </label>
               </div>
               {formError && <p className="form-error" role="alert">{formError}</p>}

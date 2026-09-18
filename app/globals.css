@@ -1229,3 +1229,8 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 .create-modal { width: min(560px, 100%); }
 .create-modal .event-options { margin-top: 14px; }
 .create-modal .event-form { margin-top: 14px; }
+
+/* Duración en minutos con sugerencias. */
+.duration-input { display: grid; gap: 4px; }
+.duration-input input { width: 100%; }
+.duration-input small { color: #8e8998; font-size: 11px; font-weight: 500; }

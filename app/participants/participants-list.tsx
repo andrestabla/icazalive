@@ -206,6 +206,7 @@ export default function ParticipantsList() {
     { value: "reminder_1h", label: "Recordatorio de 1 hora" },
     { value: "live_now", label: "Ya estamos en vivo" },
     { value: "post_event", label: "Seguimiento posterior" },
+    { value: "no_show_followup", label: "Recordatorio oportunidad" },
   ];
   const toggleSelected = (ids: string[], on: boolean) =>
     setSelectedIds((current) => {

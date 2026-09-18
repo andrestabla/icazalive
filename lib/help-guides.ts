@@ -340,6 +340,13 @@ const manageEventsSections: HelpGuideSection[] = [
       ),
       step(
         t(
+          "**Recordatorio oportunidad** es una sexta automatización, con la misma estructura que el seguimiento: se envía un tiempo después de terminar el evento, pero **solo a quienes se inscribieron y no entraron**. Si la persona sí asistió, el envío se cancela solo. Actívala con su interruptor; al hacerlo, los inscritos existentes quedan programados. El botón **Agendar una reunión** aparece únicamente si guardaste tu enlace de Calendly.",
+          "**Opportunity reminder** is a sixth automation with the same structure as the follow-up: it goes out some time after the event ends, but **only to people who registered and did not enter**. If the person did attend, the send cancels itself. Enable it with its switch; existing registrants are scheduled at that moment. The **Schedule a meeting** button appears only if you saved your Calendly link.",
+          "**Rappel opportunité** est une sixième automatisation, de même structure que le suivi : elle part un certain temps après la fin de l’événement, mais **uniquement aux inscrits qui ne sont pas entrés**. Si la personne a assisté, l’envoi s’annule tout seul. Activez-la avec son interrupteur ; les inscrits existants sont programmés à ce moment. Le bouton **Planifier une réunion** n’apparaît que si vous avez enregistré votre lien Calendly.",
+        ),
+      ),
+      step(
+        t(
           "En el mismo mensaje, el bloque **Momento de envío** define cuándo sale el seguimiento: escribe la cantidad, elige **minutos** u **horas** y pulsa **Guardar momento**. Se cuenta desde que **termina** el evento (por ejemplo, 2 horas después). Los envíos ya programados se mueven solos al nuevo momento.",
           "In the same message, the **Send time** block defines when the follow-up goes out: type the amount, choose **minutes** or **hours** and click **Save time**. It counts from the moment the event **ends** (for example, 2 hours later). Already scheduled deliveries move automatically to the new time.",
           "Dans le même message, le bloc **Moment d’envoi** définit quand part le suivi : saisissez la quantité, choisissez **minutes** ou **heures** et cliquez sur **Enregistrer le moment**. Il se compte à partir de la **fin** de l’événement (par exemple 2 heures après). Les envois déjà programmés se déplacent automatiquement.",

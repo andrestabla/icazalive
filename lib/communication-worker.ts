@@ -1,6 +1,6 @@
 import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { communicationDeliveries, events } from "@/db/schema";
+import { communicationDeliveries, events, registrations } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import {
   activeProviderName,
@@ -113,6 +113,23 @@ export async function processDueDeliveries(
         await db
           .update(communicationDeliveries)
           .set({ status: "cancelled", error: "El evento no pasó a en vivo.", updatedAt: new Date() })
+          .where(eq(communicationDeliveries.id, delivery.id));
+        continue;
+      }
+    }
+
+    // "Recordatorio oportunidad" es solo para quienes no entraron al evento.
+    if (delivery.type === "no_show_followup") {
+      const [registrationRow] = await db
+        .select({ status: registrations.status })
+        .from(registrations)
+        .where(eq(registrations.id, delivery.registrationId))
+        .limit(1);
+      if (!registrationRow || registrationRow.status === "attended" || registrationRow.status === "cancelled") {
+        summary.skipped += 1;
+        await db
+          .update(communicationDeliveries)
+          .set({ status: "cancelled", error: registrationRow?.status === "attended" ? "El participante sí asistió al evento." : "La inscripción no está activa.", updatedAt: new Date() })
           .where(eq(communicationDeliveries.id, delivery.id));
         continue;
       }
