@@ -27,7 +27,7 @@ import { applySchedulingLink, resolveEventSchedulingUrl, SCHEDULE_LINK_TAG } fro
 
 export const runtime = "nodejs";
 
-const TEMPLATE_TYPES = ["registration_confirmation", "reminder_24h", "reminder_1h", "live_now", "post_event"] as const;
+const TEMPLATE_TYPES = ["registration_confirmation", "reminder_24h", "reminder_1h", "live_now", "post_event", "no_show_followup"] as const;
 type TemplateType = (typeof TEMPLATE_TYPES)[number];
 const MAX_RECIPIENTS = 500;
 

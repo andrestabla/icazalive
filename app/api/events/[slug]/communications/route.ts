@@ -11,6 +11,8 @@ import { DEFAULT_COMMUNICATIONS } from "@/lib/default-communications";
 import { requireApiUser } from "@/lib/auth";
 import { canManageEvent } from "@/lib/event-permissions";
 import { ensureLiveNowMessage } from "@/lib/live-notifications";
+import { backfillAfterEventDeliveries, ensureMessageOfType, isAfterEventType } from "@/lib/communication-backfill";
+import { getPublicOrigin } from "@/lib/public-origin";
 
 export const runtime = "nodejs";
 
@@ -53,6 +55,7 @@ export async function GET(_: Request, context: RouteContext) {
   // La consulta no tiene efectos: el envío de la cola se dispara con
   // POST /communications/process o con el planificador del servidor.
   await ensureLiveNowMessage(event.id);
+  await ensureMessageOfType(event.id, "no_show_followup");
 
   const [messages, stats] = await Promise.all([
     db
@@ -219,7 +222,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!target) {
       return NextResponse.json({ error: "Comunicación no encontrada." }, { status: 404 });
     }
-    if (target.type === "post_event" && body.offsetMinutes < 0) {
+    if (isAfterEventType(target.type) && body.offsetMinutes < 0) {
       return NextResponse.json({ error: "El seguimiento se envía después del evento: usa un valor de 0 o más." }, { status: 400 });
     }
     if ((target.type === "reminder_24h" || target.type === "reminder_1h") && body.offsetMinutes >= 0) {
@@ -230,7 +233,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
     changes.offsetMinutes = body.offsetMinutes;
     // Las entregas ya programadas de este mensaje se mueven al nuevo momento.
-    const base = target.type === "post_event" ? event.endsAt : event.startsAt;
+    const base = isAfterEventType(target.type) ? event.endsAt : event.startsAt;
     await db
       .update(communicationDeliveries)
       .set({ scheduledFor: new Date(base.getTime() + body.offsetMinutes * 60_000), updatedAt: new Date() })
@@ -258,6 +261,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       { error: "Comunicación no encontrada." },
       { status: 404 },
     );
+  }
+
+  // Al activar un mensaje posterior al evento, los inscritos que aún no lo
+  // tienen programado lo reciben en su momento.
+  if (changes.enabled === true && isAfterEventType(updated.type)) {
+    await backfillAfterEventDeliveries(event.id, updated.id, getPublicOrigin(request));
   }
 
   await writeAuditLog({

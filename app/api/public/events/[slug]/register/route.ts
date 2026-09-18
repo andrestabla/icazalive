@@ -284,7 +284,7 @@ export async function POST(request: Request, context: RouteContext) {
           ? now
           : message.type === "live_now"
             ? event.endsAt // se libera al pasar a EN VIVO; si no, el worker la cancela
-            : message.type === "post_event"
+            : (message.type === "post_event" || message.type === "no_show_followup")
               ? new Date(event.endsAt.getTime() + message.offsetMinutes * 60_000) // después de que termine
               : new Date(event.startsAt.getTime() + message.offsetMinutes * 60_000);
       const status =

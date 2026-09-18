@@ -78,7 +78,7 @@ type SessionData = {
 type CommunicationMessage = {
   id: string;
   eventId: string;
-  type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event";
+  type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event" | "no_show_followup";
   subject: string;
   body: string;
   enabled: boolean;
@@ -215,6 +215,11 @@ const communicationLabels: Record<
   post_event: {
     title: "Seguimiento posterior",
     timing: "1 hora después del evento",
+    icon: "arrow-right",
+  },
+  no_show_followup: {
+    title: "Recordatorio oportunidad",
+    timing: "Solo a quienes no entraron al evento",
     icon: "arrow-right",
   },
 };
@@ -1424,7 +1429,7 @@ export default function EventDetail({
                       <span className="communication-icon"><AdminIcon name={label.icon} /></span>
                       <div>
                         <b>{label.title}</b>
-                        <p>{item.type === "post_event" ? describeFollowUpOffset(item.offsetMinutes) : label.timing}</p>
+                        <p>{item.type === "post_event" || item.type === "no_show_followup" ? `${describeFollowUpOffset(item.offsetMinutes)}${item.type === "no_show_followup" ? " · solo a quienes no entraron" : ""}` : label.timing}</p>
                         <small>{item.enabled ? "Automatización activa" : "Automatización pausada"}</small>
                       </div>
                       <button
@@ -1496,7 +1501,7 @@ export default function EventDetail({
                       }
                     />
                   </label>
-                  {selectedCommunication.type === "post_event" && (
+                  {(selectedCommunication.type === "post_event" || selectedCommunication.type === "no_show_followup") && (
                     <FollowUpTiming
                       key={selectedCommunication.id}
                       offsetMinutes={selectedCommunication.offsetMinutes}
@@ -1504,7 +1509,7 @@ export default function EventDetail({
                       onSave={(minutes) => void patchCommunication(selectedCommunication.id, { offsetMinutes: minutes })}
                     />
                   )}
-                  {selectedCommunication.type === "post_event" && (
+                  {(selectedCommunication.type === "post_event" || selectedCommunication.type === "no_show_followup") && (
                     <div className="scheduling-link-box">
                       <p className="eyebrow">AGENDAMIENTO · CALENDLY</p>
                       <p>

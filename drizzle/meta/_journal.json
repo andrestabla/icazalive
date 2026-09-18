@@ -253,6 +253,13 @@
       "when": 1789430400000,
       "tag": "0036_adorable_wolf_cub",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1789430400001,
+      "tag": "0039_overjoyed_jasper_sitwell",
+      "breakpoints": true
     }
   ]
 }

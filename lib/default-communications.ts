@@ -37,4 +37,13 @@ export const DEFAULT_COMMUNICATIONS = [
     enabled: false,
     offsetMinutes: 60,
   },
+  {
+    // Para quienes se inscribieron pero no entraron al evento. Se programa
+    // respecto al fin del evento y se cancela si la persona sí asistió.
+    type: "no_show_followup" as const,
+    subject: "Te extrañamos en {{event_title}}",
+    body: "Hola {{participant_name}},\n\nNo pudimos verte en {{event_title}} y queremos compartirte lo más importante de la sesión.\n\n¿Conversamos? Agendar una reunión con nuestro equipo: {{schedule_link}}\n\nEquipo Icaza Jammoul Live",
+    enabled: false,
+    offsetMinutes: 1440,
+  },
 ];

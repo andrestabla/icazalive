@@ -20,6 +20,7 @@ import AdminSidebar from "@/app/components/admin-sidebar";
 import type { AuthenticatedUser } from "@/lib/auth";
 import type { DashboardSummary } from "@/lib/dashboard";
 import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
+import DurationInput from "@/app/events/duration-input";
 
 type EventFormat = "live" | "simulated" | "hybrid";
 type ScheduleConflict = {
@@ -183,7 +184,7 @@ export default function Dashboard({
     const form = new FormData(formEvent.currentTarget);
     const startsAt = platformLocalToDate(String(form.get("startsAt")));
     const duration = Number(form.get("duration"));
-    if (Number.isNaN(startsAt.getTime()) || !duration) {
+    if (Number.isNaN(startsAt.getTime()) || !duration || duration < 5 || duration > 720) {
       setFormError("Selecciona una fecha, hora y duración válidas.");
       setSavingEvent(false);
       return;
@@ -201,7 +202,7 @@ export default function Dashboard({
         templateId: selectedTemplateId || undefined,
       }),
     });
-    const payload = (await response.json()) as {
+    const payload = (await response.json().catch(() => ({}))) as {
       data?: { slug: string };
       error?: string;
       conflicts?: ScheduleConflict[];
@@ -655,16 +656,7 @@ export default function Dashboard({
                     </label>
                     <label>
                       Duración
-                      <select
-                        name="duration"
-                        defaultValue="60"
-                        onChange={() => setScheduleConflicts([])}
-                      >
-                        <option value="30">30 minutos</option>
-                        <option value="60">1 hora</option>
-                        <option value="90">1 h 30 min</option>
-                        <option value="120">2 horas</option>
-                      </select>
+                      <DurationInput name="duration" id="dashboard-duration" onChange={() => setScheduleConflicts([])} />
                     </label>
                   </div>
                   {formError && (

@@ -39,7 +39,7 @@ export type EventTemplatePayload = {
     position: number;
   }[];
   communications: {
-    type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event";
+    type: "registration_confirmation" | "reminder_24h" | "reminder_1h" | "live_now" | "post_event" | "no_show_followup";
     subject: string;
     body: string;
     enabled: boolean;

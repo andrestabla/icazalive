@@ -161,6 +161,7 @@ export const communicationType = pgEnum("communication_type", [
   "reminder_1h",
   "live_now",
   "post_event",
+  "no_show_followup",
 ]);
 
 export const communicationStatus = pgEnum("communication_status", [
