@@ -75,7 +75,7 @@ export async function GET(request: Request) {
     return fail(request, intent, "exchange");
   }
 
-  const { email, emailVerified, name, hostedDomain } = result.identity;
+  const { email, emailVerified, name, picture, hostedDomain } = result.identity;
   if (!emailVerified) return fail(request, intent, "unverified");
 
   // Prefill del registro público: sin sesión, sin cuenta, sin filtro de dominio.
@@ -124,9 +124,16 @@ export async function GET(request: Request) {
 
   const session = await createSession(account.id);
   await setSessionCookie(session.token, session.expiresAt);
+  // La foto de Google se sincroniza en cada ingreso, salvo que la persona
+  // haya subido una propia desde su perfil.
   await db
     .update(users)
-    .set({ lastLoginAt: new Date() })
+    .set({
+      lastLoginAt: new Date(),
+      ...(picture && account.avatarSource !== "upload"
+        ? { avatarUrl: picture, avatarSource: "google" }
+        : {}),
+    })
     .where(eq(users.id, account.id));
 
   await writeAuditLog({

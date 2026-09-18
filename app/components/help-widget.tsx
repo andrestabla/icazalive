@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { HelpLocale } from "@/lib/help-content";
 
 const text = {
@@ -54,6 +54,11 @@ export default function HelpWidget({
 }) {
   const [open, setOpen] = useState(false);
   const [locale, setLocale] = useState<HelpLocale>("es");
+  // Arranca en el idioma elegido por el usuario en su perfil (<html lang>).
+  useEffect(() => {
+    const lang = document.documentElement.lang;
+    if (lang === "en" || lang === "fr") setLocale(lang);
+  }, []);
   const labels = text[locale];
   // En las pantallas del participante (sala, registro, autogestión) el widget
   // solo ofrece soporte: las guías del Centro de ayuda son para el equipo.

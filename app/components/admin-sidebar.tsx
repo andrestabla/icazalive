@@ -14,7 +14,8 @@ export type SidebarSection =
   | "Equipo"
   | "Permisos"
   | "Auditoría"
-  | "Privacidad";
+  | "Privacidad"
+  | "Perfil";
 
 // La navegación se arma con los permisos efectivos del usuario: solo se
 // muestran los módulos a los que realmente puede entrar.
@@ -52,7 +53,7 @@ export default function AdminSidebar({
 }: {
   user: AuthenticatedUser;
   granted: string[];
-  active: SidebarSection;
+  active?: SidebarSection;
 }) {
   const allowed = new Set(granted);
   const initials = user.name
@@ -114,13 +115,17 @@ export default function AdminSidebar({
         )}
       </nav>
       <div className="sidebar-bottom">
-        <Link href="/help" className="help-card help-card-link">
+        <Link href={user.locale === "en" ? "/help?lang=en" : "/help"} className="help-card help-card-link">
           <span className="help-icon">?</span>
           <div><b>Centro de ayuda</b><small>Guías y soporte</small></div>
         </Link>
         <div className="profile">
-          <div className="avatar">{initials}</div>
-          <div><b>{user.name}</b><small>{roleLabels[user.role]}</small></div>
+          <Link href="/profile" className="profile-link" title="Mi perfil">
+            <div className="avatar">
+              {user.avatarUrl ? <img src={user.avatarUrl} alt="" referrerPolicy="no-referrer" /> : initials}
+            </div>
+            <div><b>{user.name}</b><small>{roleLabels[user.role]}</small></div>
+          </Link>
           <AccountSecurity />
           <form action="/api/auth/logout" method="post">
             <button aria-label="Cerrar sesión" title="Cerrar sesión">↪</button>

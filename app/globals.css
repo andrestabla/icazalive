@@ -1240,3 +1240,34 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 .duration-input { display: grid; gap: 4px; }
 .duration-input input { width: 100%; }
 .duration-input small { color: #8e8998; font-size: 11px; font-weight: 500; }
+
+/* Perfil en el menú lateral y foto de usuario. */
+.profile-link { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; text-decoration: none; color: inherit; border-radius: 10px; }
+.profile-link:hover b { color: var(--purple, #6946df); }
+.profile-link > div:nth-child(2) { min-width: 0; }
+.profile-link b, .profile-link small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar { overflow: hidden; flex: none; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Resumen: la fila de próximos eventos se adapta al ancho de la tarjeta. */
+.events-panel { container-type: inline-size; }
+.event-row { grid-template-columns: 46px minmax(0, 1fr) auto auto 24px; }
+.event-row > * { min-width: 0; }
+.event-info h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attendees b, .attendees small { white-space: nowrap; }
+.events-panel .panel-heading > a { white-space: nowrap; }
+@container (max-width: 560px) {
+  .event-row { grid-template-columns: 46px minmax(0, 1fr) 24px; }
+  .event-row .attendees, .event-row .status { display: none; }
+}
+
+/* Analítica: filtros del administrador. */
+.analytics-filters { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; margin: -6px 0 18px; padding: 12px 14px; background: #fff; border: 1px solid var(--line, #e6e3ec); border-radius: 12px; }
+.analytics-filters .filter-select { display: grid; gap: 4px; font-size: 12px; font-weight: 650; color: #6f6b7c; }
+.analytics-filters .filter-select select, .analytics-filters .filter-select input { font: inherit; font-weight: 500; padding: 7px 9px; border: 1px solid var(--line, #e6e3ec); border-radius: 8px; background: #fff; min-width: 160px; color: #33303d; }
+.analytics-filters .secondary-action { padding: 8px 12px; }
+
+.content-owner-note { color: #8e8998; font-size: 12px; margin: 0; }
+
+.team-edit-secondary { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line, #e6e3ec); display: grid; gap: 10px; }
+.team-edit-secondary p, .team-edit-note { margin: 0; font-size: 13px; color: #6f6b7c; }

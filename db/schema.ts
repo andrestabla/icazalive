@@ -219,6 +219,10 @@ export const users = pgTable("users", {
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
   timezone: text("timezone"),
   schedulingUrl: text("scheduling_url"),
+  // Idioma de la interfaz ("es" por defecto) y foto de perfil (subida o de Google).
+  locale: text("locale"),
+  avatarUrl: text("avatar_url"),
+  avatarSource: text("avatar_source"),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
   mfaSecret: text("mfa_secret"),
   mfaEnrolledAt: timestamp("mfa_enrolled_at", { withTimezone: true }),

@@ -3,7 +3,7 @@ import { getBrandSettings } from "@/lib/brand";
 import { renderBrandedEmail } from "@/lib/email-branding";
 import { sendEmail } from "@/lib/email-provider";
 
-export type TeamAccessKind = "created" | "promoted" | "role_changed" | "password_reset";
+export type TeamAccessKind = "created" | "promoted" | "role_changed" | "password_reset" | "credentials_resent" | "email_changed";
 
 const ROLE_LABELS: Record<string, string> = {
   administrator: "Administrador",
@@ -48,6 +48,14 @@ export async function sendTeamAccessEmail(options: {
     case "password_reset":
       subject = `Nueva contraseña temporal para ${organization}`;
       intro = `Se restableció la contraseña de tu cuenta en ${organization}.`;
+      break;
+    case "credentials_resent":
+      subject = `Tus credenciales de acceso a ${organization}`;
+      intro = `Te reenviamos el acceso a ${organization} con el rol de ${roleLabel}. Usa la contraseña temporal de abajo para entrar.`;
+      break;
+    case "email_changed":
+      subject = `Tu correo de acceso a ${organization} cambió`;
+      intro = `Un administrador actualizó el correo con el que entras a ${organization}: a partir de ahora usa ${options.to}. Tu contraseña no cambió.`;
       break;
   }
 

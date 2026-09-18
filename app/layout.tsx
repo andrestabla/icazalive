@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import HelpWidget from "@/app/components/help-widget";
 import FeedbackDialog from "@/app/components/feedback-dialog";
 import { getBrandSettings } from "@/lib/brand";
+import I18nRuntime from "@/lib/i18n/runtime";
+import { resolveLocale } from "@/lib/i18n/server";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -24,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const brand = await getBrandSettings().catch(() => null);
+  const locale = await resolveLocale();
   const loaderStyle = brand?.loaderUrl
     ? ({ "--brand-loader-url": `url("${brand.loaderUrl}")` } as React.CSSProperties)
     : undefined;
@@ -34,8 +37,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     "Lunes a viernes · 08:00–18:00 (hora de Miami)";
 
   return (
-    <html lang="es">
+    <html lang={locale} data-locale={locale}>
       <body className={`${geistSans.variable} ${geistMono.variable}`} style={loaderStyle}>
+        {locale !== "es" && (
+          // Evita que la interfaz se vea un instante en español antes de traducirse.
+          <style>{`html[data-locale="en"]:not(.i18n-ready) body > *:not(script) { visibility: hidden; }`}</style>
+        )}
+        <I18nRuntime locale={locale} />
         {children}
         <HelpWidget
           supportEmail={supportEmail}

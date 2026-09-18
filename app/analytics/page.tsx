@@ -1,8 +1,11 @@
-import { desc, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
 import Link from "next/link";
 import { AdminIcon } from "@/app/components/admin-icon";
 import { getDb } from "@/db";
-import { events, registrations } from "@/db/schema";
+import { eventOrganizers, events, registrations, users } from "@/db/schema";
+import { getCurrentUser } from "@/lib/auth";
+import { platformLocalToDate } from "@/lib/timezone";
+import AnalyticsFilters from "./analytics-filters";
 import { getEventAnalytics } from "@/lib/event-analytics";
 import AnalyticsCharts from "./analytics-charts";
 
@@ -30,7 +33,41 @@ function formatEventDate(value: Date, timeZone: string) {
   }).format(value);
 }
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // Alcance: el organizador solo ve sus eventos; el administrador ve todo y
+  // puede filtrar por organizador, evento y rango de fechas.
+  const viewer = await getCurrentUser();
+  const params = await searchParams;
+  const pick = (key: string) => (typeof params[key] === "string" ? (params[key] as string).trim().slice(0, 64) : "");
+  const isAdmin = viewer?.role === "administrator";
+  const filter = {
+    organizer: isAdmin ? pick("organizer") : "",
+    event: pick("event"),
+    from: /^\d{4}-\d{2}-\d{2}$/.test(pick("from")) ? pick("from") : "",
+    to: /^\d{4}-\d{2}-\d{2}$/.test(pick("to")) ? pick("to") : "",
+  };
+  const scopeUserId = isAdmin ? filter.organizer : viewer?.id ?? "";
+  const scopeDb = getDb();
+  const conditions = [];
+  if (scopeUserId) {
+    const managed = scopeDb.select({ id: eventOrganizers.eventId }).from(eventOrganizers).where(eq(eventOrganizers.userId, scopeUserId));
+    conditions.push(or(inArray(events.id, managed), eq(events.createdBy, scopeUserId)));
+  }
+  if (filter.event) conditions.push(eq(events.id, filter.event));
+  if (filter.from) conditions.push(gte(events.startsAt, platformLocalToDate(`${filter.from}T00:00`)));
+  if (filter.to) conditions.push(lte(events.startsAt, platformLocalToDate(`${filter.to}T23:59`)));
+  const scope = conditions.length ? and(...conditions) : undefined;
+  const [organizers, allEvents] = isAdmin
+    ? await Promise.all([
+        scopeDb.select({ id: users.id, name: users.name }).from(users).where(and(ne(users.role, "participant"), eq(users.active, true))).orderBy(asc(users.name)),
+        scopeDb.select({ id: events.id, title: events.title }).from(events).orderBy(desc(events.startsAt)),
+      ])
+    : [[], []];
+
   const eventRecords = await getDb()
     .select({
       id: events.id,
@@ -42,7 +79,10 @@ export default async function AnalyticsPage() {
       timezone: events.timezone,
     })
     .from(events)
+    .where(scope)
     .orderBy(desc(events.startsAt));
+  const scopedEventIds = eventRecords.map((event) => event.id);
+  const registrationScope = scopedEventIds.length ? inArray(registrations.eventId, scopedEventIds) : sql`false`;
 
   const eventMetrics = await Promise.all(
     eventRecords.map(async (event) => ({
@@ -60,6 +100,7 @@ export default async function AnalyticsPage() {
         total: sql<number>`count(*)::int`,
       })
       .from(registrations)
+      .where(registrationScope)
       .groupBy(
         registrations.eventId,
         sql`to_char(${registrations.registeredAt} at time zone 'UTC', 'YYYY-MM-DD')`,
@@ -71,6 +112,7 @@ export default async function AnalyticsPage() {
         total: sql<number>`count(*)::int`,
       })
       .from(registrations)
+      .where(registrationScope)
       .groupBy(registrations.eventId, registrations.status),
   ]);
 
@@ -110,10 +152,17 @@ export default async function AnalyticsPage() {
         <div>
           <p className="eyebrow">VISIÓN GLOBAL</p>
           <h1>Analítica</h1>
-          <p>Resultados consolidados de todos tus eventos.</p>
+          <p>{isAdmin ? "Resultados consolidados de todos los eventos." : "Resultados consolidados de tus eventos."}</p>
         </div>
         <span>Datos actualizados al abrir esta página</span>
       </header>
+      {isAdmin && (
+        <AnalyticsFilters
+          organizers={organizers}
+          events={allEvents}
+          value={filter}
+        />
+      )}
 
       <section className="analytics-kpis global" aria-label="Indicadores globales">
         <article>
