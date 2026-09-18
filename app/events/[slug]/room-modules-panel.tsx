@@ -10,6 +10,7 @@ import {
   type RoomModules,
 } from "@/lib/room-modules";
 import "../room-modules.css";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 // Interruptores de los módulos de la sala y mensaje de cierre. Cada cambio se
 // guarda de inmediato y llega a los participantes conectados por SSE, así que
@@ -31,7 +32,8 @@ export default function RoomModulesPanel({
   const [closingDraft, setClosingDraft] = useState<string>(initial?.closingMessage ?? DEFAULT_ROOM_MODULES.closingMessage);
   const [loaded, setLoaded] = useState(Boolean(initial));
   const [saving, setSaving] = useState<RoomModuleKey | "closing" | null>(null);
-  const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
+  const [notice, setNoticeState] = useState<{ text: string; error: boolean } | null>(null);
+  const setNotice = useFeedbackSetter(setNoticeState);
 
   useEffect(() => {
     if (initial) return;

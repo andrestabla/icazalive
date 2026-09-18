@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AdminIcon } from "@/app/components/admin-icon";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type CatalogModule = {
   module: string;
@@ -35,8 +36,10 @@ export default function PermissionsManager() {
   const [data, setData] = useState<PermissionsData | null>(null);
   const [tab, setTab] = useState<"roles" | "users">("roles");
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
+  const [notice, setNoticeState] = useState("");
+  const setNotice = useFeedbackSetter(setNoticeState);
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 

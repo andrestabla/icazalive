@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { AdminIcon } from "@/app/components/admin-icon";
 import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type StaffRole = "administrator" | "organizer";
 type AssignableRole = StaffRole | "participant";
@@ -77,8 +78,10 @@ export default function TeamManager({
     password: string;
   } | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessageState] = useState("");
+  const setMessage = useFeedbackSetter(setMessageState);
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
 
   const activeMembers = members.filter((member) => member.active).length;
   const administrators = members.filter(

@@ -6,6 +6,7 @@ import { useUserTimezone } from "@/lib/use-user-timezone";
 import { downloadXlsx } from "@/lib/xlsx-export";
 import { AdminIcon } from "@/app/components/admin-icon";
 import ParticipantInviter from "./participant-inviter";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type RegistrationStatus =
   | "registered"
@@ -186,8 +187,10 @@ export default function ParticipantsList() {
     setDeleting(false);
   };
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessageState] = useState("");
+  const setMessage = useFeedbackSetter(setMessageState);
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
   const [refreshKey, setRefreshKey] = useState(0);
   const [exportOpen, setExportOpen] = useState(false);
   // Selección múltiple y envío manual de mensajes.

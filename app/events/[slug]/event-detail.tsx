@@ -25,6 +25,7 @@ import EventRegistrants from "./event-registrants";
 import SimulatedContentPanel from "./simulated-content-panel";
 import RegistrationFieldsManager from "./registration-fields-manager";
 import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type EventData = {
   id: string;
@@ -404,7 +405,12 @@ export default function EventDetail({
   );
   const [sessionSaving, setSessionSaving] = useState(false);
   const [sessionError, setSessionError] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessageState] = useState("");
+  const setMessage = useFeedbackSetter(setMessageState);
+  // Texto de presentación de la página de registro (modal de edición).
+  const [taglineOpen, setTaglineOpen] = useState(false);
+  const [taglineDraft, setTaglineDraft] = useState("");
+  const [resourceEditorOpen, setResourceEditorOpen] = useState(false);
 
   useEffect(() => {
     if (activeTab !== "Interacción") return;
@@ -441,7 +447,7 @@ export default function EventDetail({
     };
   }, [activeTab, event.slug]);
 
-  const patchEvent = async (changes: Partial<Pick<EventData, "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl" | "feedbackEnabled" | "feedbackQuestion" | "brandPrimaryColor" | "brandAccentColor" | "brandBackgroundColor" | "postEventRedirectUrl">>) => {
+  const patchEvent = async (changes: Partial<Pick<EventData, "description" | "status" | "registrationOpen" | "selfServiceCutoffMinutes" | "postRegistrationUrl" | "feedbackEnabled" | "feedbackQuestion" | "brandPrimaryColor" | "brandAccentColor" | "brandBackgroundColor" | "postEventRedirectUrl">>) => {
     setSaving(true);
     setMessage("");
     const response = await fetch(`/api/events/${event.slug}`, {
@@ -1291,6 +1297,53 @@ export default function EventDetail({
                 </label>
               ))}
             </div>
+            <div className="registration-tagline">
+              <div>
+                <p className="eyebrow">TEXTO DE PRESENTACIÓN</p>
+                <p className="registration-tagline-text">{event.description?.trim() || "Una experiencia diseñada para aprender, conectar e interactuar."}</p>
+                <small>Aparece bajo el título en la página de registro y como descripción al compartir el enlace.</small>
+              </div>
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={saving}
+                onClick={() => {
+                  setTaglineDraft(event.description ?? "");
+                  setTaglineOpen(true);
+                }}
+              >
+                Editar
+              </button>
+            </div>
+            {taglineOpen && (
+              <div className="modal-backdrop" onMouseDown={() => setTaglineOpen(false)}>
+                <section className="modal tagline-modal" role="dialog" aria-modal="true" aria-labelledby="tagline-title" onMouseDown={(click) => click.stopPropagation()}>
+                  <button className="modal-close" onClick={() => setTaglineOpen(false)} aria-label="Cerrar">×</button>
+                  <p className="eyebrow">PÁGINA DE REGISTRO</p>
+                  <h2 id="tagline-title">Texto de presentación</h2>
+                  <p>Una o dos frases que invitan a inscribirse. Si lo dejas vacío se usa el texto por defecto.</p>
+                  <textarea
+                    rows={3}
+                    maxLength={400}
+                    value={taglineDraft}
+                    placeholder="Una experiencia diseñada para aprender, conectar e interactuar."
+                    onChange={(input) => setTaglineDraft(input.target.value)}
+                  />
+                  <small className="tagline-counter">{taglineDraft.length}/400</small>
+                  <div className="export-actions">
+                    <button type="button" className="secondary-action" disabled={saving} onClick={() => setTaglineOpen(false)}>Cancelar</button>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      disabled={saving}
+                      onClick={() => void patchEvent({ description: taglineDraft.trim() || null }).then(() => setTaglineOpen(false))}
+                    >
+                      {saving ? "Guardando…" : "Guardar texto"}
+                    </button>
+                  </div>
+                </section>
+              </div>
+            )}
             <RegistrationBackgroundPanel slug={event.slug} />
           </section>
           <RegistrationFieldsManager eventSlug={event.slug} />
@@ -1813,7 +1866,14 @@ export default function EventDetail({
                 <section className="panel resource-management">
                   <div className="panel-heading">
                     <div><p className="eyebrow">RECURSOS</p><h2>Enlaces y archivos</h2><p>Comparte destinos HTTP/HTTPS; en producción podrán ser enlaces temporales de S3.</p></div>
+                    <button type="button" className="secondary-action" onClick={() => setResourceEditorOpen(true)}>+ Agregar recurso</button>
                   </div>
+                  {resourceEditorOpen && (
+                  <div className="modal-backdrop" onMouseDown={() => setResourceEditorOpen(false)}>
+                  <section className="modal resource-modal" role="dialog" aria-modal="true" onMouseDown={(click) => click.stopPropagation()}>
+                  <button className="modal-close" onClick={() => setResourceEditorOpen(false)} aria-label="Cerrar">×</button>
+                  <p className="eyebrow">NUEVO RECURSO</p>
+                  <h2>Agregar enlace o archivo</h2>
                   <div className="resource-creator-form">
                     <label>
                       Título
@@ -1854,11 +1914,14 @@ export default function EventDetail({
                         !newResourceTitle.trim() ||
                         !newResourceUrl.trim()
                       }
-                      onClick={() => void createResource()}
+                      onClick={() => void createResource().then(() => setResourceEditorOpen(false))}
                     >
                       {interactionSaving === "new-resource" ? "Agregando…" : "Agregar recurso"}
                     </button>
                   </div>
+                  </section>
+                  </div>
+                  )}
                   <div className="managed-resource-list">
                     {interactionData.resources.map((resource) => (
                       <article className={resource.visible ? "" : "hidden"} key={resource.id}>

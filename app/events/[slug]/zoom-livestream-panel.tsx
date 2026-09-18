@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import "../zoom-livestream.css";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type Status = {
   mode: string;
@@ -29,7 +30,8 @@ export default function ZoomLivestreamPanel({
 }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState<Action | null>(null);
-  const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
+  const [notice, setNoticeState] = useState<{ text: string; error: boolean } | null>(null);
+  const setNotice = useFeedbackSetter(setNoticeState);
   const [streaming, setStreaming] = useState(false);
 
   const refresh = useCallback(async () => {

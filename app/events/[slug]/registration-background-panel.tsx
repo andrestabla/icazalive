@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fileUrl } from "@/lib/uploads";
 import "../registration-tools.css";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 // Imagen de fondo del panel izquierdo de la página de registro. Se sube a S3
 // (brand/…, con URL prefirmada) o se indica una URL pública. Se guarda en
@@ -48,7 +49,8 @@ export default function RegistrationBackgroundPanel({ slug }: { slug: string }) 
   const [urlInput, setUrlInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
+  const [notice, setNoticeState] = useState<{ text: string; error: boolean } | null>(null);
+  const setNotice = useFeedbackSetter(setNoticeState);
 
   useEffect(() => {
     let cancelled = false;

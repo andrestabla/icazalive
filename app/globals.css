@@ -1205,3 +1205,28 @@ body[style*="--brand-loader-url"] .brand-loader-ring { display: none; }
 .participant-message-field small { color: #8e8998; font-weight: 400; font-size: 11px; }
 .participant-message-tags { margin: 0 0 8px; }
 .participant-message-tags button { border: 1px solid #e0dbea; border-radius: 6px; background: #f7f5fb; color: #5b3bd1; padding: 4px 7px; font: inherit; font-size: 11px; cursor: pointer; }
+
+/* Modal de confirmación / error tras guardar. */
+.feedback-backdrop { z-index: 60; }
+.feedback-dialog { width: min(420px, 100%); display: grid; grid-template-columns: 44px 1fr; gap: 14px 16px; align-items: start; padding: 22px 24px 20px; }
+.feedback-dialog .feedback-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; font-size: 20px; font-weight: 800; }
+.feedback-dialog.success .feedback-icon { background: #e6f4ec; color: #1f6b45; }
+.feedback-dialog.error .feedback-icon { background: #fdecec; color: #a3242b; }
+.feedback-dialog .eyebrow { margin: 4px 0 4px; }
+.feedback-dialog.error .eyebrow { color: #a3242b !important; }
+.feedback-dialog.success .eyebrow { color: #1f6b45 !important; }
+.feedback-text { margin: 0; font-size: 14px; line-height: 1.5; color: #3d3846; }
+.feedback-dialog > button { grid-column: 2; justify-self: end; margin-top: 4px; }
+
+/* Texto de presentación de la página de registro. */
+.registration-tagline { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin: 16px 0; padding: 14px 16px; border: 1px solid #e6e2ec; border-radius: 11px; background: #faf9fc; }
+.registration-tagline-text { margin: 4px 0 6px; font-size: 15px; line-height: 1.5; color: #221c30; }
+.registration-tagline small { color: #8e8998; font-size: 12px; }
+.tagline-modal textarea { width: 100%; box-sizing: border-box; margin-top: 8px; padding: 10px 12px; border: 1px solid #d9d5e0; border-radius: 9px; font: inherit; font-size: 14px; resize: vertical; }
+.tagline-counter { display: block; text-align: right; color: #9b96a4; font-size: 11px; margin: 6px 0 12px; }
+
+/* Formularios de alta/edición en modal. */
+.field-editor-modal, .resource-modal { width: min(640px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; }
+.field-editor-modal .registration-field-editor { margin: 14px 0 0; padding: 0; border: 0; background: transparent; }
+.resource-modal .resource-creator-form { margin: 14px 0 0; padding: 0; border: 0; background: transparent; }
+.base-field-card > b { display: block; font-size: 14px; margin: 6px 0 4px; }

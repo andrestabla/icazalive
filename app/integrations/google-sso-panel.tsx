@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type Settings = {
   enabled: boolean;
@@ -30,7 +31,8 @@ export default function GoogleSsoPanel() {
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
+  const [status, setStatusState] = useState<{ text: string; error: boolean } | null>(null);
+  const setStatus = useFeedbackSetter(setStatusState);
 
   useEffect(() => {
     let cancelled = false;
