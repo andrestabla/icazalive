@@ -231,4 +231,12 @@ if ".create-modal .event-options" not in g:
 """
     css.write_text(g, encoding="utf-8"); print("OK globals.css: modal de creación")
 else: print("OK globals.css: ya aplicado")
+# 4. Centro de ayuda: el botón abre un modal en la misma página
+hg = root / "lib/help-guides.ts"; h = hg.read_text(encoding="utf-8")
+old_h = '"Desde **Resumen** o **Eventos**, pulsa el botón morado **＋ Crear evento** (arriba a la derecha).'
+if old_h in h:
+    h = h.replace(old_h, '"Desde **Resumen** o **Eventos**, pulsa el botón morado **＋ Crear evento** (arriba a la derecha): se abre un modal en la misma página.', 1)
+    hg.write_text(h, encoding="utf-8"); print("OK help-guides.ts: crear evento en modal")
+else: print("OK help-guides.ts: ya aplicado o sin ancla")
+
 print("LISTO alcance y creación")
