@@ -13,6 +13,7 @@ import type {
   ManagedIntegrationProvider,
 } from "@/lib/integrations";
 import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type ConnectionStatus =
   | "disconnected"
@@ -239,7 +240,8 @@ export default function IntegrationsClient({
   const [wizardStep, setWizardStep] = useState(0);
   const [wizardSaving, setWizardSaving] = useState(false);
   const [wizardError, setWizardError] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessageState] = useState("");
+  const setMessage = useFeedbackSetter(setMessageState);
   const [zoomDraft, setZoomDraft] = useState(
     initialConnections.find((item) => item.connection.provider === "zoom")!
       .connection,

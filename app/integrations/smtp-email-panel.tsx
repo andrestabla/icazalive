@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { PLATFORM_TIMEZONE } from "@/lib/timezone";
 import "./email-provider.css";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type Provider = "smtp" | "sendgrid";
 
@@ -57,7 +58,8 @@ export default function SmtpEmailPanel() {
   const [apiKey, setApiKey] = useState("");
   const [testTo, setTestTo] = useState("");
   const [busy, setBusy] = useState<"save" | "test" | "check" | null>(null);
-  const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
+  const [status, setStatusState] = useState<{ text: string; error: boolean } | null>(null);
+  const setStatus = useFeedbackSetter(setStatusState);
 
   useEffect(() => {
     let cancelled = false;

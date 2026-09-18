@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type Asset = {
   id: string;
@@ -25,7 +26,8 @@ export default function ContentLibrary() {
   const [unregistered, setUnregistered] = useState<Unregistered[]>([]);
   const [s3Configured, setS3Configured] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
+  const [status, setStatusState] = useState<{ text: string; error: boolean } | null>(null);
+  const setStatus = useFeedbackSetter(setStatusState);
   const [refreshKey, setRefreshKey] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);

@@ -5,6 +5,7 @@ import "./csv-template.css";
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type EventOption = {
   id: string;
@@ -138,7 +139,8 @@ export default function ParticipantInviter({
   const [csvText, setCsvText] = useState("");
   const [sendInvitation, setSendInvitation] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
   const [result, setResult] = useState<InvitationResult | null>(null);
 
   useEffect(() => {

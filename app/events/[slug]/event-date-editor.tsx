@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 // Cambio de fecha y hora del evento. Solo se ofrece mientras el evento está
 // en borrador o en preparación; al guardar, la API desplaza sesiones y
@@ -19,7 +20,8 @@ export default function EventDateEditor({
 }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
   const [value, setValue] = useState(() => toPlatformDateTimeInput(startsAt));
   const initialDuration = Math.max(
     15,

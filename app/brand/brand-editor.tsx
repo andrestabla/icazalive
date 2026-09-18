@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import PublicBrandIdentity from "@/app/components/public-brand";
 import { DEFAULT_BRAND, type PublicBrand } from "@/lib/brand-config";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 const palettes = [
   {
@@ -107,7 +108,8 @@ function BrandAssetField({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
-  const [error, setError] = useState("");
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
   const url = brand[slot.urlField];
   const isVideo = Boolean(brand[slot.keyField]?.match(/\.(mp4|webm)$/i));
 
@@ -179,8 +181,10 @@ export default function BrandEditor({
 }) {
   const [brand, setBrand] = useState(initialBrand);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessageState] = useState("");
+  const setMessage = useFeedbackSetter(setMessageState);
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
 
   const update = <Key extends keyof PublicBrand>(
     key: Key,

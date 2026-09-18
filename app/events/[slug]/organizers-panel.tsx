@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type Organizer = {
   userId: string;
@@ -24,7 +25,8 @@ export default function OrganizersPanel({ eventSlug }: { eventSlug: string }) {
   const [canManage, setCanManage] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [notice, setNoticeState] = useState("");
+  const setNotice = useFeedbackSetter(setNoticeState);
 
   const [refreshKey, setRefreshKey] = useState(0);
 

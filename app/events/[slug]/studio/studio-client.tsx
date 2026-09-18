@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import StudioTechnicalTest from "./studio-technical-test";
 import type { StreamingCheck, StreamingMode } from "@/lib/streaming";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type StudioSession = {
   id: string;
@@ -36,7 +37,8 @@ export default function StudioClient({
   const [session, setSession] = useState(initialSession);
   const [checks, setChecks] = useState(initialChecks);
   const [checking, setChecking] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessageState] = useState("");
+  const setMessage = useFeedbackSetter(setMessageState);
   const statusLabels = {
     not_configured: "Configuración incompleta",
     configured: "Configurada",

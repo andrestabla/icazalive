@@ -3,6 +3,7 @@
 import Link from "next/link";
 import "../registration-tools.css";
 import { useEffect, useState } from "react";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type Asset = { id: string; title: string; s3Key: string; durationSeconds: number | null };
 type ContentConfig = {
@@ -36,7 +37,8 @@ export default function SimulatedContentPanel({
   const [config, setConfig] = useState<ContentConfig | null>(null);
   const [emitter, setEmitter] = useState<EmitterState | null>(null);
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
+  const [status, setStatusState] = useState<{ text: string; error: boolean } | null>(null);
+  const setStatus = useFeedbackSetter(setStatusState);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {

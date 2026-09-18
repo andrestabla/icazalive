@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import HelpWidget from "@/app/components/help-widget";
+import FeedbackDialog from "@/app/components/feedback-dialog";
 import { getBrandSettings } from "@/lib/brand";
 import "./globals.css";
 
@@ -40,6 +41,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           supportEmail={supportEmail}
           supportHours={supportHours}
         />
+        <FeedbackDialog />
       </body>
     </html>
   );

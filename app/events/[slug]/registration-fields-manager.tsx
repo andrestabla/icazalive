@@ -14,6 +14,7 @@ import {
   type BaseFieldsConfig,
 } from "@/lib/registration-base-fields";
 import "../registration-tools.css";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 const fieldTypeLabels: Record<RegistrationFieldType, string> = {
   text: "Texto corto",
@@ -30,9 +31,13 @@ export default function RegistrationFieldsManager({
   const [fields, setFields] = useState<RegistrationFieldDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState("");
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
+  const [notice, setNoticeState] = useState("");
+  const setNotice = useFeedbackSetter(setNoticeState);
   const [editorOpen, setEditorOpen] = useState(false);
+  // Edición de un campo base (etiqueta y obligatoriedad) en modal.
+  const [baseDraft, setBaseDraft] = useState<{ key: BaseFieldKey; label: string; required: boolean } | null>(null);
   const [type, setType] = useState<RegistrationFieldType>("text");
   // Campos base (empresa, cargo, teléfono): se guardan en el evento.
   const [baseFields, setBaseFields] = useState<BaseFieldsConfig>(DEFAULT_BASE_FIELDS);
@@ -240,6 +245,11 @@ export default function RegistrationFieldsManager({
       {error && <div className="participant-error">ⓘ {error}</div>}
 
       {editorOpen && (
+        <div className="modal-backdrop" onMouseDown={() => setEditorOpen(false)}>
+        <section className="modal field-editor-modal" role="dialog" aria-modal="true" aria-labelledby="field-editor-title" onMouseDown={(click) => click.stopPropagation()}>
+        <button className="modal-close" onClick={() => setEditorOpen(false)} aria-label="Cerrar">×</button>
+        <p className="eyebrow">NUEVO CAMPO</p>
+        <h2 id="field-editor-title">Agregar campo al formulario</h2>
         <form className="registration-field-editor" onSubmit={createField}>
           <label>
             Etiqueta del campo
@@ -297,8 +307,51 @@ export default function RegistrationFieldsManager({
             {saving === "new" ? "Agregando…" : "Agregar al formulario"}
           </button>
         </form>
+        </section>
+        </div>
       )}
 
+      {baseDraft && (
+        <div className="modal-backdrop" onMouseDown={() => setBaseDraft(null)}>
+          <section className="modal field-editor-modal" role="dialog" aria-modal="true" aria-labelledby="base-field-title" onMouseDown={(click) => click.stopPropagation()}>
+            <button className="modal-close" onClick={() => setBaseDraft(null)} aria-label="Cerrar">×</button>
+            <p className="eyebrow">CAMPO DEL FORMULARIO</p>
+            <h2 id="base-field-title">Editar “{DEFAULT_BASE_FIELDS[baseDraft.key].label}”</h2>
+            <label className="registration-editor-wide">
+              Etiqueta que verá el asistente
+              <input
+                type="text"
+                value={baseDraft.label}
+                minLength={2}
+                maxLength={60}
+                onChange={(input) => setBaseDraft((current) => (current ? { ...current, label: input.target.value } : current))}
+              />
+            </label>
+            <label className="registration-required-toggle">
+              <input
+                type="checkbox"
+                checked={baseDraft.required}
+                onChange={(input) => setBaseDraft((current) => (current ? { ...current, required: input.target.checked } : current))}
+              />
+              Solicitar respuesta obligatoria
+            </label>
+            <div className="export-actions">
+              <button type="button" className="secondary-action" onClick={() => setBaseDraft(null)}>Cancelar</button>
+              <button
+                type="button"
+                className="primary-button"
+                disabled={saving !== "" || baseDraft.label.trim().length < 2}
+                onClick={() => {
+                  const draft = baseDraft;
+                  void patchBaseField(draft.key, { label: draft.label.trim(), required: draft.required }).then(() => setBaseDraft(null));
+                }}
+              >
+                Guardar cambios
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       <div className="registration-base-fields editable">
         {(["Nombre completo", "Correo electrónico"] as const).map((label) => (
           <span className="base-field-card" key={label}>
@@ -313,21 +366,12 @@ export default function RegistrationFieldsManager({
           return (
             <span className={`base-field-card${field.active ? "" : " inactive"}`} key={key}>
               <i>{!field.active ? "Retirado" : field.required ? "Obligatorio" : "Opcional"}</i>
-              <input
-                type="text"
-                aria-label={`Etiqueta del campo ${DEFAULT_BASE_FIELDS[key].label}`}
-                value={baseLabels[key]}
-                maxLength={60}
-                disabled={busy || !field.active}
-                onChange={(input) => setBaseLabels((current) => ({ ...current, [key]: input.target.value }))}
-                onBlur={() => {
-                  const label = baseLabels[key].trim();
-                  if (label.length >= 2 && label !== field.label) void patchBaseField(key, { label });
-                  else setBaseLabels((current) => ({ ...current, [key]: field.label }));
-                }}
-              />
+              <b>{field.label}</b>
               <small>{BASE_FIELD_HINTS[key]}</small>
               <span className="base-field-actions">
+                <button type="button" disabled={busy || !field.active} onClick={() => { setBaseDraft({ key, label: field.label, required: field.required }); }}>
+                  Editar
+                </button>
                 <button type="button" disabled={busy || !field.active} onClick={() => void patchBaseField(key, { required: !field.required })}>
                   {field.required ? "Hacer opcional" : "Hacer obligatorio"}
                 </button>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type VideoInfo = {
   hasVideo: boolean;
@@ -57,7 +58,8 @@ export default function RecordedVideoPanel({
 }) {
   const [info, setInfo] = useState<VideoInfo | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
+  const [status, setStatusState] = useState<{ text: string; error: boolean } | null>(null);
+  const setStatus = useFeedbackSetter(setStatusState);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {

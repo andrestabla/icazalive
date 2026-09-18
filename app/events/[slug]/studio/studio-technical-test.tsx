@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import IvsPlayer from "@/app/room/[slug]/ivs-player";
 import ZoomLivestreamPanel from "../zoom-livestream-panel";
 import RoomModulesPanel from "../room-modules-panel";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type EmitterState = {
   status: "idle" | "starting" | "running" | "stopping" | "stopped" | "error";
@@ -45,7 +46,8 @@ export default function StudioTechnicalTest({
     contentConfigured: true,
   });
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [notice, setNoticeState] = useState("");
+  const setNotice = useFeedbackSetter(setNoticeState);
   // Reloj local para la línea de tiempo (se corrige con la hora del servidor).
   const [clockOffset, setClockOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import { PLATFORM_TIMEZONE } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type LegalDocument = {
   id: string;
@@ -98,8 +99,10 @@ export default function PrivacyManager({
   const [selected, setSelected] = useState<DataRequest | null>(null);
   const [saving, setSaving] = useState("");
   const [eraseConfirmation, setEraseConfirmation] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessageState] = useState("");
+  const setMessage = useFeedbackSetter(setMessageState);
+  const [error, setErrorState] = useState("");
+  const setError = useFeedbackSetter(setErrorState, "error");
 
   const activeRequests = requests.filter(
     (request) =>

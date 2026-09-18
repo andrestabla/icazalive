@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import "./events-actions.css";
 import { useEffect, useMemo, useState } from "react";
 import { PLATFORM_TIMEZONE, platformLocalToDate, toPlatformDateTimeInput } from "@/lib/timezone";
+import { useFeedbackSetter } from "@/lib/feedback";
 
 type ScheduleConflict = {
   id: string;
@@ -155,10 +156,11 @@ export default function EventsList() {
     setDeleteConfirmation("");
     setDeleting(false);
   };
-  const [notice, setNotice] = useState<{
+  const [notice, setNoticeState] = useState<{
     text: string;
     slug: string;
   } | null>(null);
+  const setNotice = useFeedbackSetter(setNoticeState);
 
   const loadEvents = async () => {
     const response = await fetch("/api/events", { cache: "no-store" });

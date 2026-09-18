@@ -116,6 +116,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     postEventRedirectUrl?: string | null;
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
+    description?: string | null;
     brandPrimaryColor?: string | null;
     brandAccentColor?: string | null;
     brandBackgroundColor?: string | null;
@@ -281,6 +282,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     postEventRedirectUrl?: string | null;
     feedbackEnabled?: boolean;
     feedbackQuestion?: string | null;
+    description?: string | null;
     roomModules?: ReturnType<typeof normalizeRoomModules>;
     baseFields?: ReturnType<typeof normalizeBaseFields>;
     registrationBackground?: string | null;
@@ -308,6 +310,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (body.feedbackQuestion !== undefined) {
     changes.feedbackQuestion = body.feedbackQuestion?.trim() || null;
+  }
+  // Texto de presentación de la página de registro (y descripción al compartir).
+  if (body.description !== undefined) {
+    if (body.description !== null && (typeof body.description !== "string" || body.description.length > 400)) {
+      return NextResponse.json({ error: "El texto de presentación admite hasta 400 caracteres." }, { status: 400 });
+    }
+    changes.description = body.description?.trim() || null;
   }
   // Campos base del registro y fondo de la página pública.
   if (body.baseFields !== undefined) {
