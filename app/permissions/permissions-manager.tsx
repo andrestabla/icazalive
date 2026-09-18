@@ -17,6 +17,7 @@ type StaffMember = {
   email: string;
   role: "administrator" | "organizer";
   active: boolean;
+  supportAgent?: boolean;
   overrides: { permission: string; allowed: boolean }[];
 };
 
@@ -134,7 +135,10 @@ export default function PermissionsManager() {
             </div>
             {data.catalog.map((module) => (
               <div className="permissions-group" key={module.module}>
-                <p className="permissions-module">{module.label}</p>
+                <p className="permissions-module">
+                  {module.label}
+                  {module.module === "support" && <small className="permissions-note">Los miembros marcados como Soporte en Equipo tienen estos permisos aunque su rol no los incluya.</small>}
+                </p>
                 {module.permissions.map((permission) => {
                   const locked = data.lockedForAdministrator.includes(permission.key);
                   return (
@@ -202,6 +206,7 @@ export default function PermissionsManager() {
                 {data.users.map((member) => (
                   <option value={member.id} key={member.id}>
                     {member.name} · {roleLabels[member.role]}
+                    {member.supportAgent ? " · Soporte" : ""}
                     {member.active ? "" : " (inactiva)"}
                   </option>
                 ))}
@@ -217,7 +222,10 @@ export default function PermissionsManager() {
               </div>
               {data.catalog.map((module) => (
                 <div className="permissions-group" key={module.module}>
-                  <p className="permissions-module">{module.label}</p>
+                  <p className="permissions-module">
+                    {module.label}
+                    {module.module === "support" && selectedUser?.supportAgent && <small className="permissions-note">Agente de soporte: estos permisos están activos para esta persona por su marca en Equipo.</small>}
+                  </p>
                   {module.permissions.map((permission) => {
                     const inherited = roleHas(selectedUser.role, permission.key);
                     const override = overrideFor(permission.key);

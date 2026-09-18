@@ -49,6 +49,7 @@ export async function GET() {
         email: users.email,
         role: users.role,
         active: users.active,
+        supportAgent: users.supportAgent,
       })
       .from(users)
       .where(inArray(users.role, ["administrator", "organizer"]))

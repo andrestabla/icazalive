@@ -1025,6 +1025,39 @@ const accountSections: HelpGuideSection[] = [
     ],
   },
   {
+    id: "permisos",
+    title: t("Permisos por rol y por persona", "Permissions by role and by person", "Permissions par rôle et par personne"),
+    intro: t(
+      "**Permisos** (menú lateral, solo administradores) decide qué módulos y acciones tiene cada rol y permite excepciones por persona. Los módulos sin permiso desaparecen del menú lateral de esa cuenta.",
+      "**Permissions** (side menu, administrators only) decides which modules and actions each role has and allows per-person exceptions. Modules without permission disappear from that account's side menu.",
+      "**Permissions** (menu latéral, administrateurs uniquement) décide quels modules et actions chaque rôle possède et permet des exceptions par personne. Les modules sans permission disparaissent du menu latéral de ce compte.",
+    ),
+    steps: [
+      step(
+        t(
+          "Pestaña **Por rol (valores por defecto)**: una fila por acción (ver, crear y editar, moderar, configurar…) con un interruptor para **Administrador** y otro para **Organizador**. Los cambios se guardan al instante y aplican a todas las cuentas del rol. De fábrica, el organizador ve Resumen, Eventos, Participantes, Analítica, Integraciones, Marca y Contenidos; el administrador lo tiene todo. Cuando se añade un módulo nuevo (por ejemplo **Soporte**), aparece con su valor de fábrica hasta que lo ajustes.",
+          "**By role (default values)** tab: one row per action (view, create and edit, moderate, configure…) with a switch for **Administrator** and another for **Organizer**. Changes save instantly and apply to every account with that role. Out of the box, the organizer sees Overview, Events, Participants, Analytics, Integrations, Brand and Content; the administrator has everything. When a new module is added (for example **Support**), it appears with its factory value until you adjust it.",
+          "Onglet **Par rôle (valeurs par défaut)** : une ligne par action (voir, créer et modifier, modérer, configurer…) avec un interrupteur pour **Administrateur** et un autre pour **Organisateur**. Les changements s’enregistrent immédiatement et s’appliquent à tous les comptes du rôle. Par défaut, l’organisateur voit Résumé, Événements, Participants, Analyses, Intégrations, Marque et Contenus ; l’administrateur a tout. Quand un nouveau module est ajouté (par exemple **Support**), il apparaît avec sa valeur d’usine jusqu’à ce que vous l’ajustiez.",
+        ),
+        { image: img("permisos"), caption: t("Permisos por rol con el módulo Soporte.", "Permissions by role with the Support module.", "Permissions par rôle avec le module Support.") },
+      ),
+      step(
+        t(
+          "Pestaña **Por usuario (excepciones)**: elige una cuenta y, por cada acción, deja **Heredar del rol** o fuerza **Permitir siempre** / **Bloquear siempre**. Sirve, por ejemplo, para dar Analítica a un organizador concreto o quitar Marca a otro sin tocar el rol. Las cuentas marcadas como **Soporte** en Equipo tienen los permisos del módulo Soporte activos aunque su rol no los incluya.",
+          "**By user (exceptions)** tab: pick an account and, for each action, keep **Inherit from role** or force **Always allow** / **Always block**. Useful, for example, to give Analytics to one specific organizer or remove Brand from another without touching the role. Accounts marked as **Support** in Team have the Support module permissions active even if their role does not include them.",
+          "Onglet **Par utilisateur (exceptions)** : choisissez un compte et, pour chaque action, gardez **Hériter du rôle** ou forcez **Toujours autoriser** / **Toujours bloquer**. Utile, par exemple, pour donner Analyses à un organisateur précis ou retirer Marque à un autre sans toucher au rôle. Les comptes marqués **Support** dans Équipe ont les permissions du module Support actives même si leur rôle ne les inclut pas.",
+        ),
+        {
+          tip: t(
+            "Permisos, Equipo (ver y gestionar) nunca se pueden quitar al administrador: garantizan que siempre haya quien administre los accesos. Tampoco puedes quitarte a ti mismo la administración de permisos.",
+            "Permissions and Team (view and manage) can never be removed from the administrator: they guarantee someone can always manage access. You also cannot remove permission administration from yourself.",
+            "Permissions et Équipe (voir et gérer) ne peuvent jamais être retirés à l’administrateur : ils garantissent qu’il y a toujours quelqu’un pour gérer les accès. Vous ne pouvez pas non plus vous retirer l’administration des permissions.",
+          ),
+        },
+      ),
+    ],
+  },
+  {
     id: "alcance",
     title: t("Qué ve cada rol", "What each role sees", "Ce que voit chaque rôle"),
     steps: [
@@ -1152,8 +1185,8 @@ export const helpGuides: HelpArticle[] = [
       "Tout ce qui est personnel se gère depuis Mon profil ; les comptes du personnel, depuis Équipe. Ce guide montre les deux écrans tels qu’ils apparaissent dans la plateforme.",
     ),
     keywords: {
-      es: ["perfil", "foto", "idioma", "inglés", "english", "zona horaria", "calendly", "equipo", "miembro", "editar", "correo", "reenviar credenciales", "contraseña temporal", "rol", "organizador", "administrador", "permisos", "solo lectura", "contenidos", "soporte", "caso", "ticket", "evidencias", "agente", "abierto", "en gestión", "solucionado", "sin solución"],
-      en: ["profile", "photo", "language", "english", "spanish", "time zone", "calendly", "team", "member", "edit", "email", "resend credentials", "temporary password", "role", "organizer", "administrator", "permissions", "read-only", "content", "support", "case", "ticket", "evidence", "agent", "open", "in progress", "resolved", "unresolved"],
+      es: ["perfil", "foto", "idioma", "inglés", "english", "zona horaria", "calendly", "equipo", "miembro", "editar", "correo", "reenviar credenciales", "contraseña temporal", "rol", "organizador", "administrador", "permisos", "solo lectura", "contenidos", "permisos", "heredar", "excepción", "bloquear", "soporte", "caso", "ticket", "evidencias", "agente", "abierto", "en gestión", "solucionado", "sin solución"],
+      en: ["profile", "photo", "language", "english", "spanish", "time zone", "calendly", "team", "member", "edit", "email", "resend credentials", "temporary password", "role", "organizer", "administrator", "permissions", "read-only", "content", "permissions", "inherit", "exception", "block", "support", "case", "ticket", "evidence", "agent", "open", "in progress", "resolved", "unresolved"],
       fr: ["profil", "photo", "langue", "anglais", "espagnol", "fuseau horaire", "calendly", "équipe", "membre", "modifier", "e-mail", "renvoyer les identifiants", "mot de passe temporaire", "rôle", "organisateur", "administrateur", "permissions", "lecture seule", "contenus"],
     },
     sections: accountSections,

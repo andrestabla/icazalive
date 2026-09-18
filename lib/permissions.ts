@@ -174,10 +174,14 @@ export async function getRoleDefaults(): Promise<Record<StaffRole, Set<Permissio
 
   for (const role of ["administrator", "organizer"] as StaffRole[]) {
     if (configuredRoles.has(role)) {
-      for (const row of rows) {
-        if (row.role === role && row.allowed) {
-          result[role].add(row.permission as PermissionKey);
-        }
+      const stored = new Map(rows.filter((row) => row.role === role).map((row) => [row.permission, row.allowed]));
+      for (const key of allPermissionKeys) {
+        const saved = stored.get(key);
+        // Permisos nuevos (por ejemplo, un módulo añadido después de guardar la
+        // configuración) toman su valor de fábrica hasta que el administrador
+        // los ajuste.
+        const allowed = saved === undefined ? factoryRoleDefaults[role].includes(key) : saved;
+        if (allowed) result[role].add(key);
       }
     } else {
       // Sin configuración guardada todavía: se usan los valores de fábrica.

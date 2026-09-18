@@ -146,7 +146,11 @@
     "Evento:": "Event:",
     "Adjuntar evidencias (capturas, PDF, video)": "Attach evidence (screenshots, PDF, video)",
     "Subiendo evidencias…": "Uploading evidence…",
-    "Ver el seguimiento de mi caso ↗": "Track my case ↗"
+    "Ver el seguimiento de mi caso ↗": "Track my case ↗",
+    "Los miembros marcados como Soporte en Equipo tienen estos permisos aunque su rol no los incluya.": "Members marked as Support in Team have these permissions even if their role does not include them.",
+    "Agente de soporte: estos permisos están activos para esta persona por su marca en Equipo.": "Support agent: these permissions are active for this person because of their Team flag.",
+    "· Soporte": "· Support",
+    "(inactiva)": "(inactive)"
   },
   "patterns": {
     "Correo de acceso ({0}) enviado a {1}.": "Access email ({0}) sent to {1}.",
