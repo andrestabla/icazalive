@@ -1,6 +1,6 @@
 # Documentación técnica de la plataforma Icaza Jammoul Live
 
-**Versión:** 18 de septiembre de 2026 · rama `feat/aws-ivs-s3`
+**Versión:** 18 de septiembre de 2026 (revisión 2) · rama `replit-main` (igual a `main` del workspace de Replit; en local, `main-sync`)
 **Producción:** `https://liveicazajammoul.com` (Replit Autoscale, región Sudamérica)
 **Repositorio:** `github.com/andrestabla/icazalive` · carpeta local `icaza-live-app`
 
@@ -75,7 +75,9 @@ Replit Autoscale (Next.js 16, Node)  ──►  Neon PostgreSQL (producción)
 ```
 app/                    Páginas y rutas de API (App Router)
   (panel)               /events, /participants, /analytics, /content, /integrations,
-                        /brand, /team, /permissions, /audit, /privacy, /help
+                        /brand, /team, /permissions, /audit, /privacy, /help,
+                        /support (mesa de casos), /profile (perfil, foto, idioma)
+  support/ticket/[t]    Seguimiento público de un caso de soporte (con token)
   register/[slug]       Página pública de registro (+ imagen Open Graph)
   room/[slug]           Sala del participante
   manage-registration/  Autogestión de la inscripción
@@ -84,11 +86,17 @@ app/                    Páginas y rutas de API (App Router)
   api/                  Rutas de API (ver sección 6)
   components/           Widgets globales (ayuda, modal de confirmación, marca pública)
 lib/                    Lógica de dominio (auth, permisos, correo, IVS, ECS, Zoom, S3,
-                        comunicaciones, sala en tiempo real, asistencia, límites…)
+                        comunicaciones, sala en tiempo real, asistencia, límites,
+                        soporte: support.ts, support-notifications.ts, support-attachments.ts)
+lib/i18n/               Idioma de la interfaz: locale.ts, server.ts, runtime.tsx (traductor
+                        en tiempo de ejecución), rules.ts (fechas y contadores), en.ts
+                        (diccionario generado), en-extra.json (entradas manuales)
 db/                     schema.ts (Drizzle) y migraciones
-scripts/                Semilla, backup y scripts de despliegue anclados (apply-*.py,
-                        replit-deploy-*.sh)
-docs/                   zoom-permisos.md, seguridad-pentest-2026-09.md
+scripts/                Semilla, backup, i18n-extract.mjs / i18n-build.mjs (diccionario),
+                        sql/ (cambios de esquema idempotentes para producción); los
+                        apply-*.py y replit-deploy-*.sh son historial
+docs/                   zoom-permisos.md, seguridad-pentest-2026-09.md, documentacion-tecnica.md,
+                        recomendaciones-operacion.md
 public/help/            Capturas del centro de ayuda
 ```
 
@@ -98,6 +106,7 @@ public/help/            Capturas del centro de ayuda
 3. **Rutas de API** (`app/api/**/route.ts`) validan entrada, comprueban autenticación y autorización, escriben en la base y registran auditoría.
 4. **Servicios de dominio** (`lib/*`) encapsulan integraciones externas y reglas: por ejemplo `simulated-emitter.ts`, `zoom-ivs-bridge.ts`, `communication-worker.ts`, `attendance.ts`.
 5. **Trabajos en segundo plano**: un planificador interno (`instrumentation.ts`) ejecuta cada minuto la cola de correos y la automatización de eventos simulados; `after()` de Next dispara envíos tras responder; `/api/cron/communications` es el respaldo externo.
+6. **Idioma**: el español es el idioma de origen del código. El inglés se aplica sobre la interfaz ya renderizada: `I18nRuntime` (en el layout raíz) carga `lib/i18n/en.ts` solo cuando el usuario eligió inglés, traduce textos y atributos visibles con un diccionario exacto más reglas (fechas, plurales, contadores) y observa el DOM para traducir lo que React pinta después; los valores escritos por el usuario, el código y los correos no se tocan. La preferencia vive en `users.locale` y en la cookie `icaza_locale`. `scripts/i18n-extract.mjs` extrae los textos del código y `scripts/i18n-build.mjs` genera el diccionario; en el navegador, `window.__i18n.missing()` lista lo que quedó sin traducir.
 
 ### 3.4 Tiempo real
 - La sala abre un canal **Server-Sent Events** (`/api/public/events/[slug]/room/stream`). Un único observador por evento y proceso consulta la base cada 2 segundos y difunde a todos los suscriptores: mensajes de chat nuevos, avisos de preguntas, agregados de reacciones, cambios de módulos y cambios de estado del evento (en vivo / completado).
@@ -106,18 +115,18 @@ public/help/            Capturas del centro de ayuda
 
 ---
 
-## 4. Modelo de datos (36 tablas)
+## 4. Modelo de datos (38 tablas)
 
 | Grupo | Tablas | Notas |
 |---|---|---|
-| Identidad y acceso | `users`, `auth_sessions`, `role_permissions`, `user_permissions`, `mfa_backup_codes`, `identity_settings`, `google_sso_settings` | Contraseñas con scrypt; sesiones como hash SHA-256; MFA TOTP |
+| Identidad y acceso | `users`, `auth_sessions`, `role_permissions`, `user_permissions`, `mfa_backup_codes`, `identity_settings`, `google_sso_settings` | Contraseñas con scrypt; sesiones como hash SHA-256; MFA TOTP. `users` guarda además `locale`, `avatar_url`/`avatar_source` (subida o Google) y `support_agent` |
 | Eventos | `events`, `event_organizers`, `event_templates`, `sessions` | `events.room_modules` (jsonb) guarda módulos activos y mensaje de cierre; `events.base_fields` la configuración de campos base; `sessions` guarda modo de transmisión, canal IVS, clave cifrada, estado del emisor |
 | Inscripciones | `registrations`, `registration_access_tokens`, `event_registration_fields`, `registration_field_responses` | Estados: registered, confirmed, attended, absent, cancelled. Un token de acceso por inscripción (hash) |
-| Comunicaciones | `communication_messages`, `communication_deliveries`, `outbound_email_settings` | Cinco tipos de mensaje por evento; entregas con cola, reintentos y errores |
+| Comunicaciones | `communication_messages`, `communication_deliveries`, `outbound_email_settings` | Seis tipos de mensaje por evento (`registration_confirmation`, `reminder_24h`, `reminder_1h`, `live_now`, `post_event`, `no_show_followup`); entregas con cola, reintentos y errores |
 | Interacción | `event_chat_messages`, `event_questions`, `question_votes`, `event_polls`, `poll_options`, `poll_votes`, `event_reactions`, `event_resources`, `event_participant_moderation`, `event_feedback_responses` | Moderación por inscripción (silenciar, bloquear) |
 | Contenido y marca | `content_assets`, `brand_settings` | Biblioteca en S3 con duración; marca global y por evento |
 | Integraciones | `integration_connections` | Estado de Zoom, AWS, correo; sin tokens |
-| Cumplimiento | `audit_logs`, `legal_documents`, `consent_records`, `data_subject_requests`, `support_requests` | Auditoría encadenada por hash y verificable |
+| Cumplimiento y soporte | `audit_logs`, `legal_documents`, `consent_records`, `data_subject_requests`, `support_requests`, `support_messages`, `support_attachments` | Auditoría encadenada por hash y verificable. Casos de soporte con estado (`new`, `in_progress`, `resolved`, `closed` = Abierto, En gestión, Solucionado, Sin solución), agente asignado, token de seguimiento, conversación (con notas internas) y evidencias en S3 `support/` |
 
 Convenciones: claves `uuid`, marcas de tiempo con zona, borrado en cascada desde `registrations` y `events`; los registros de consentimiento conservan la evidencia aunque se borre la persona (`set null`).
 
@@ -127,23 +136,26 @@ Convenciones: claves `uuid`, marcas de tiempo con zona, borrado en cascada desde
 
 ### 5.1 Panel del equipo
 - **Resumen**: indicadores del día, próximos eventos, últimos movimientos.
-- **Eventos**: lista y calendario; crear desde cero o desde plantilla; duplicar; eliminar (administrador). Estados: borrador → registro abierto → preparación → en vivo → completado / cancelado, con transiciones controladas.
+- **Eventos**: lista y calendario con alcance por organizador (el administrador filtra por organizador); crear desde cero o desde plantilla en un modal, con duración libre en minutos (5 a 720); duplicar; eliminar (administrador). Estados: borrador → registro abierto → preparación → en vivo → completado / cancelado, con transiciones controladas.
 - **Ficha del evento** (pestañas):
   - *Resumen*: datos, agenda de sesiones, estado, organizadores.
   - *Registro*: página pública (abrir, compartir por WhatsApp/LinkedIn/X/Instagram con miniatura Open Graph), texto de presentación, imagen de fondo (S3 o URL), colores del evento, cierre de inscripciones, plazo de autogestión, redirección posterior, campos del formulario (base y propios) en modales, lista de inscritos.
-  - *Comunicaciones*: contadores de cola, "Procesar cola ahora", "Reintentar con error", cinco plantillas con variables, momento del seguimiento posterior, enlace de Calendly.
+  - *Comunicaciones*: contadores de cola, "Procesar cola ahora", "Reintentar con error", seis plantillas con variables, momento del seguimiento posterior y del Recordatorio oportunidad (solo a quienes no entraron), enlace de Calendly.
   - *Transmisión*: flujo (Zoom → IVS, IVS directo, simulado), latencia, grabación, panel Zoom → Amazon IVS de tres pasos, contenido de la biblioteca, emisor (iniciar/detener), datos de emisión para codificadores externos.
   - *Interacción*: módulos de la sala (chat, preguntas, encuestas, recursos, reacciones) con cambio en vivo, mensaje de cierre, moderación de chat y preguntas, encuestas, recursos.
   - *Analítica*: embudo de asistencia, participación, retroalimentación, exportación e informe.
 - **Sala técnica**: vista previa de la señal tal como la ve el participante, prueba técnica sin emisión pública, línea de tiempo del contenido simulado, cerrar la sala, módulos y mensaje de cierre.
 - **Participantes**: lista agrupada o por inscripción, filtros, historial por persona, cambio de estado, invitación individual o por CSV (plantilla descargable), selección múltiple con "Enviar mensaje" (plantilla del evento o mensaje nuevo, siempre con cabecera y pie de marca), exportación CSV/XLSX, eliminación definitiva (administrador).
-- **Contenidos**: biblioteca de video en S3 con procesamiento y duración.
+- **Contenidos**: biblioteca de video en S3 con procesamiento y duración; el organizador solo renombra o retira lo que subió.
 - **Integraciones**: Zoom, AWS (IVS, S3, ECS), correo saliente (SendGrid o SMTP), Google SSO.
 - **Marca**: identidad, colores, logotipo, textos públicos, vista previa de correo.
-- **Equipo y Permisos**: cuentas, roles, permisos granulares (`events.*`, `participants.*`, `content.*`, `brand.*`, `integrations.*`, `team.*`, `permissions.manage`, `privacy.*`, `audit.view`, `analytics.view`, `dashboard.view`).
+- **Analítica**: alcance por organizador; el administrador filtra por organizador, evento y rango de fechas (en la URL).
+- **Equipo y Permisos**: cuentas, roles, edición de nombre y correo, reenvío de credenciales, casilla **Soporte** por miembro; permisos granulares (`events.*`, `participants.*`, `content.*`, `brand.*`, `integrations.*`, `team.*`, `permissions.manage`, `privacy.*`, `audit.view`, `analytics.view`, `dashboard.view`, `support.view`, `support.manage`) por rol y con excepciones por persona; los permisos nuevos toman su valor de fábrica aunque exista configuración guardada; los agentes de soporte reciben `support.*` por su marca.
+- **Soporte**: mesa de casos con contadores por estado, búsqueda, filtro por agente, detalle con descripción, evidencias, conversación, respuesta por correo, nota interna, cambio de estado y asignación; avisos por correo al solicitante y a los agentes.
+- **Mi perfil**: nombre, foto (S3 `avatars/` o sincronizada de Google en cada ingreso por SSO), idioma (español/inglés), zona horaria, enlace de Calendly, acceso a contraseña y MFA.
 - **Auditoría**: registro de acciones con verificación de integridad.
 - **Privacidad**: documentos legales versionados, solicitudes de derechos, exportación y borrado.
-- **Centro de ayuda**: guías paso a paso con capturas (eventos, participantes, analítica) para el equipo; soporte para participantes.
+- **Centro de ayuda**: guías paso a paso con capturas (eventos, participantes, analítica, cuenta/equipo/soporte/permisos) en español, inglés y francés; el contacto de soporte mostrado es el correo de los agentes marcados en Equipo (o `SUPPORT_EMAIL` si no hay ninguno). Tras enviar un caso se pueden adjuntar evidencias y abrir el seguimiento.
 
 ### 5.2 Experiencia del participante
 - **Registro** público con campos configurables, consentimiento versionado, límite de peticiones y miniatura al compartir.
@@ -151,6 +163,7 @@ Convenciones: claves `uuid`, marcas de tiempo con zona, borrado en cascada desde
 - **Añadir al calendario**: página con Google Calendar, Outlook.com, Outlook empresarial, Yahoo y archivo .ics.
 - **Sala**: lobby con cuenta regresiva, reproductor HLS adaptativo (tope 720p), chat, preguntas con votos, encuestas, recursos, reacciones; sin mención de la tecnología; sin scroll de página en escritorio; móvil adaptado; sin widget de ayuda. Al completarse el evento, pantalla de cierre con el mensaje del organizador y sala cerrada.
 - **Autogestión**: editar datos o cancelar la inscripción con el enlace personal; retroalimentación al final.
+- **Seguimiento de soporte**: página `/support/ticket/<token>` sin inicio de sesión con estado, conversación pública, evidencias propias y respuesta; cada respuesta o evidencia avisa al agente asignado.
 - **Asistencia automática**: al entrar en vivo pasa a "Asistió"; al completar, quien no entró queda "No asistió".
 
 ### 5.3 Automatizaciones
@@ -158,6 +171,8 @@ Convenciones: claves `uuid`, marcas de tiempo con zona, borrado en cascada desde
 - Arranque y parada automáticos del emisor de eventos simulados; paso a en vivo y a completado.
 - Cola de correos con reintentos exponenciales y cancelación de recordatorios vencidos.
 - Cierre de asistencia al completar.
+- **Recordatorio oportunidad**: programado respecto al fin del evento; en el momento del envío el worker cancela la entrega si la inscripción figura como asistió. Al activar la plantilla se programan los inscritos existentes (`lib/communication-backfill.ts`).
+- Casos de soporte: al responder un caso abierto pasa a En gestión y se asigna al agente; si el solicitante responde a un caso cerrado vuelve a En gestión.
 
 ---
 
@@ -167,11 +182,12 @@ Todas las rutas viven bajo `/api`. Las privadas exigen sesión (cookie `__Host-`
 
 | Área | Rutas principales |
 |---|---|
-| Autenticación | `auth/login`, `auth/logout`, `auth/me`, `auth/mfa`, `auth/password`, `auth/preferences`, `auth/sso/google/start`, `auth/sso/callback`, `auth/sso/status` |
+| Autenticación y perfil | `auth/login`, `auth/logout`, `auth/me`, `auth/mfa`, `auth/password`, `auth/preferences`, `auth/profile` (nombre, idioma, foto), `auth/sso/google/start`, `auth/sso/callback`, `auth/sso/status` |
 | Eventos | `events`, `events/[slug]`, `.../sessions`, `.../organizers`, `.../registration-fields`, `.../communications`, `.../communications/process`, `.../streaming`, `.../zoom-livestream`, `.../emitter`, `.../content`, `.../video`, `.../interaction`, `.../analytics`, `.../feedback`, `.../duplicate`, `.../scheduling-link`, `event-templates` |
 | Participantes | `participants` (GET, PATCH), `participants/[id]` (DELETE, administrador), `participants/invite`, `participants/message` |
 | Público (con token) | `public/events/[slug]/register` (sin token), `.../registration`, `.../room`, `.../room/stream` (SSE), `.../video`, `.../calendar`, `.../feedback` |
 | Configuración | `brand`, `integrations`, `integrations/sso-google`, `email-settings`, `team`, `permissions`, `security-setup`, `legal-documents`, `data-rights`, `support-requests`, `audit`, `audit/verify`, `content-assets`, `uploads/presign`, `files/[...key]` |
+| Soporte | `support` (lista, filtros), `support/[id]` (detalle, estado, asignación), `support/[id]/messages`, `support/[id]/attachments`, `support/attachments/[id]` (descarga privada), `support/ticket/[token]` (+ `/messages`, `/attachments`, con el token del solicitante), `support-requests` (creación pública) |
 | Operación | `cron/communications` (secreto), `health`, `dashboard` |
 
 Convenciones: respuestas `{ data }` o `{ error }`; códigos 400 validación, 401 sin sesión, 403 sin permiso o sin pertenencia, 404, 409 conflicto de estado, 429 límite de peticiones.
@@ -197,12 +213,14 @@ Convenciones: respuestas `{ data }` o `{ error }`; códigos 400 validación, 401
 cd icaza-live-app
 npm install
 cp .env.example .env.local        # completar solo lo necesario
-npm run db:migrate                # PGlite local (reiniciar el dev server después)
+npm run db:migrate                # PGlite local: migraciones + reconciliación con db/schema.ts (dev server detenido)
 npm run db:seed                   # administrador local: andres@icazalive.local
 npm run dev                       # http://localhost:3000
 ```
 
 - `npm run build` y `npx tsc --noEmit -p .` antes de cada publicación.
+- No ejecutar `db:migrate` con el dev server abierto: PGlite no admite dos procesos y la base local se corrompe (si pasa, mover `~/.icaza-live/pglite` y volver a migrar y sembrar).
+- `package-lock.json` apunta al registro interno de Replit; si `npm install` falla en local, instalar el paquete concreto de forma explícita y no confirmar los cambios del lock.
 - `npm run db:backup` / `db:restore` para copias de la base.
 - La caché de desarrollo (`.next/dev`) puede quedarse con CSS antiguo tras editar `globals.css`; si un estilo nuevo no aparece, detener el servidor, borrar `.next/dev` y arrancar de nuevo.
 - Pruebas de extremo a extremo con `puppeteer-core` y el Chrome del sistema (scripts en la carpeta de trabajo de la sesión).
@@ -211,19 +229,15 @@ npm run dev                       # http://localhost:3000
 
 ## 9. Publicación en Replit
 
-1. Confirmar y subir los cambios a la rama `feat/aws-ivs-s3`.
-2. En la shell del workspace de Replit, descargar el commit y ejecutar el script de despliegue correspondiente:
-   ```bash
-   curl -sL https://codeload.github.com/andrestabla/icazalive/tar.gz/<sha> | tar xz -C /tmp \
-     && mv /tmp/icazalive-<sha>* /tmp/icazalive-feat-aws-ivs-s3 \
-     && bash /tmp/icazalive-feat-aws-ivs-s3/scripts/replit-deploy-<nombre>.sh
-   ```
-   Los scripts copian solo archivos propios y aplican parches anclados e idempotentes (`scripts/apply-*.py`) para no pisar lo que el agente de Replit haya cambiado (por ejemplo `participant-inviter.tsx`, `lib/zoom.ts`, los módulos de correo).
-3. Si hay migraciones, crear las columnas antes en Development y Production desde la consola SQL de Replit (una sentencia por ejecución; usar `jsonb_build_object` en vez de `{}`), y cancelar si el diálogo de publicación propone borrar columnas.
-4. Pulsar **Republish** y verificar en producción.
-5. Los secretos nuevos se leen al publicar; las shells abiertas no los ven hasta abrir una nueva.
+El workspace de Replit es un repositorio git (`main`) sincronizado con la rama `replit-main` de GitHub; en local se trabaja sobre `main-sync`, que sigue esa misma rama.
 
-Scripts existentes (en orden histórico): `replit-deploy-zoom-live-only.sh`, `replit-deploy-help-guides.sh`, `replit-deploy-scheduling-link.sh`, `replit-deploy-room-modules.sh`, `replit-deploy-participant-polish.sh`, `replit-deploy-registration-polish.sh`, `replit-deploy-csv-template.sh`, `replit-deploy-og-preview.sh`, `replit-deploy-sept-help.sh`, `replit-deploy-sept-batch2.sh`, `replit-deploy-sept-batch3.sh`, `replit-deploy-team-layout.sh`, `replit-deploy-help-mobile.sh`, `replit-deploy-participant-message.sh`, `replit-deploy-security.sh`, `replit-deploy-ux-modals.sh`.
+1. Confirmar en local y subir: `git push origin main-sync:replit-main`.
+2. En la shell de Replit: `git pull --rebase origin replit-main` (cada Republish crea un commit automático "Published your App", por eso el `--rebase`).
+3. Si hay cambios de esquema: en Development, `psql "$DATABASE_URL" -f scripts/sql/<archivo>.sql`; en Production, pegar el bloque `DO $$ … $$;` del mismo archivo en Database → Production → SQL console con "Enable Editing" activado (la consola ejecuta solo la última sentencia, por eso todo va en un bloque) y desactivarlo después. Replit compara ambas bases al publicar y pide aprobación si difieren.
+4. Pulsar **Republish** (Replit compila) y verificar en producción.
+5. Los secretos nuevos se leen al publicar; las shells abiertas no los ven hasta abrir una nueva. Si `npx tsc` falla en Replit por `.next/dev/types`, borrar esa carpeta y repetir.
+
+Los antiguos `scripts/apply-*.py` y `scripts/replit-deploy-*.sh` (parches anclados descargados por tarball) ya no se usan; se conservan como historial de los cambios aplicados antes de la sincronización.
 
 ---
 
@@ -243,7 +257,7 @@ Scripts existentes (en orden histórico): `replit-deploy-zoom-live-only.sh`, `re
 | `AWS_SES_*`, `EMAIL_FROM`, `EMAIL_REPLY_TO` | Alternativa de correo por SES | No |
 | `ZOOM_*` | App propia Server-to-Server (alternativa al conector) | No |
 | `CRON_SECRET` | Respaldo externo del planificador | Opcional |
-| `SUPPORT_EMAIL`, `SALES_EMAIL`, `SUPPORT_HOURS`, `PRIVACY_EMAIL` | Textos del centro de ayuda y privacidad | Recomendadas |
+| `SUPPORT_EMAIL`, `SALES_EMAIL`, `SUPPORT_HOURS`, `PRIVACY_EMAIL` | Textos del centro de ayuda y privacidad. `SUPPORT_EMAIL` es solo el respaldo: el contacto real es el de los agentes marcados como Soporte en Equipo | Recomendadas |
 | `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_PLATFORM_TIMEZONE`, `NEXT_PUBLIC_IVS_MAX_HEIGHT` | Cliente | Opcionales |
 | `COMMUNICATIONS_SCHEDULER=off` | Desactiva el planificador interno | No |
 
@@ -263,7 +277,10 @@ Scripts existentes (en orden histórico): `replit-deploy-zoom-live-only.sh`, `re
 - Definir los secretos pendientes (sección 10) y volver a guardar las credenciales de correo tras crear `AUTH_ENCRYPTION_KEY`.
 - Añadir una política de contenido (CSP) en modo report-only y luego aplicarla.
 - Migrar el límite de peticiones a un almacén compartido si se opera con varias máquinas de forma habitual.
-- Registrar los envíos manuales en `communication_deliveries` (requiere ampliar el enumerado `communication_type`).
+- Registrar los envíos manuales en `communication_deliveries` (el enumerado `communication_type` ya se amplía con `ALTER TYPE … ADD VALUE`, como se hizo con `no_show_followup`).
+- Alinear el Resumen con el alcance por organizador (hoy cuenta todos los eventos).
+- Traducir al inglés los correos a participantes si se requiere una audiencia bilingüe (hoy solo la interfaz de gestión cambia de idioma).
+- Añadir indicadores de soporte (tiempo de primera respuesta, casos por estado) a la Analítica.
 - Importar automáticamente las grabaciones de IVS a la biblioteca.
 - Cifrar el secreto MFA y evitar la reutilización de códigos dentro de su ventana.
 - Mantener actualizadas las dependencias con una publicación de prueba previa.

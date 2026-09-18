@@ -1,7 +1,7 @@
 # Recomendaciones para la administración y la entrega de un servicio óptimo
 
 **Plataforma:** Icaza Jammoul Live · `https://liveicazajammoul.com`
-**Versión del documento:** 18 de septiembre de 2026
+**Versión del documento:** 18 de septiembre de 2026 (revisión 2: soporte, idioma, perfil y permisos)
 **Destinatarios:** administradores de la plataforma y organizadores de eventos
 
 Este documento reúne las prácticas que garantizan que cada evento salga bien: qué preparar antes, qué vigilar durante, qué cerrar después y cómo mantener sana la plataforma entre eventos. Está escrito para el equipo que opera el servicio, no para el desarrollador; la parte técnica está en el documento "Documentación técnica de la plataforma".
@@ -22,8 +22,9 @@ Este documento reúne las prácticas que garantizan que cada evento salga bien: 
 
 | Rol | Puede | No puede |
 |---|---|---|
-| **Administrador** | Todo: eventos de cualquier organizador, equipo, permisos, marca, integraciones, privacidad, auditoría, eliminar participantes y eventos | — |
-| **Organizador** | Crear y gestionar sus eventos, invitar y escribir a sus participantes, moderar sus salas, ver analítica de sus eventos | Eliminar eventos o participantes, cambiar integraciones, gestionar el equipo (salvo permisos adicionales) |
+| **Administrador** | Todo: eventos de cualquier organizador (con filtro por organizador en Eventos y Analítica), equipo, permisos, marca, integraciones, privacidad, auditoría, soporte, eliminar participantes y eventos | — |
+| **Organizador** | Crear y gestionar **sus** eventos (los que creó o coorganiza), invitar y escribir a **sus** participantes, moderar sus salas, ver analítica **solo** de sus eventos, subir contenidos y usar toda la biblioteca | Ver eventos o participantes ajenos, eliminar eventos o participantes, retirar o renombrar contenidos que no subió, cambiar integraciones, gestionar el equipo (salvo permisos adicionales) |
+| **Agente de soporte** (marca en Equipo, cualquier rol) | Además de lo de su rol: módulo Soporte completo (casos, estados, asignación, respuestas, evidencias); su correo es el contacto de soporte público | — |
 | **Participante** | Registrarse, entrar a la sala con su enlace personal, gestionar su inscripción, dar retroalimentación | Acceder al panel |
 
 **Recomendaciones**
@@ -32,12 +33,21 @@ Este documento reúne las prácticas que garantizan que cada evento salga bien: 
 - Revisar en **Permisos** que ningún organizador tenga `team.manage` salvo necesidad: ese permiso permite crear cuentas de administrador.
 - Al retirar a alguien del equipo, usar **Desactivar** en Equipo: cierra sus sesiones al instante y conserva su historial en la auditoría.
 - Los organizadores deben entrar con **Google (SSO)** cuando esté habilitado; reduce contraseñas débiles.
+- Marcar **al menos un miembro como Soporte** en Equipo. Si nadie lo está, los casos nuevos avisan al buzón por defecto `soporte@icazalive.local`, que nadie lee.
+- Desde **Equipo → Editar** se corrige el nombre o el correo de un miembro y se le **reenvían las credenciales** (contraseña temporal nueva) cuando perdió el acceso. No hace falta borrar y recrear cuentas.
+
+**Cuenta personal**
+
+- Cada miembro gestiona su nombre, foto, zona horaria, enlace de Calendly e idioma desde **Mi perfil** (clic en su nombre, abajo del menú lateral). Quien entra con Google recibe su foto automáticamente.
+- La plataforma puede usarse en **inglés** por usuario (Mi perfil → Idioma). Solo cambia la interfaz de gestión; los correos a participantes y sus páginas siguen en el idioma en que se escribieron las plantillas.
 
 ---
 
 ## 3. Calendario operativo de un evento
 
 ### 3.1 Al crear el evento (2 a 4 semanas antes)
+
+- La **duración** se escribe en minutos (5 a 720): un evento de 22 minutos es válido. Se ajusta después desde "Cambiar fecha y hora" mientras esté en borrador o preparación.
 
 - Elegir bien el **formato**: En vivo (Zoom → Amazon IVS), Simulado (video de la biblioteca emitido a la hora) o Híbrido (Zoom que cede al video). El formato no se cambia sin consecuencias después de confirmar: crea reuniones de Zoom y canales de video.
 - Definir **fecha, hora y zona horaria** con cuidado. Todo lo que ve el participante (página, correos, calendario) sale de ahí. Un cambio de fecha reprograma automáticamente recordatorios y reunión de Zoom, pero conviene evitarlo.
@@ -108,11 +118,31 @@ Este documento reúne las prácticas que garantizan que cada evento salga bien: 
 - Si un correo queda **Con error**, leer el motivo: casi siempre es una dirección inválida o un rebote. Corregir el dato del participante y usar **Reintentar con error**.
 - El **envío manual** desde Participantes sirve para avisos puntuales (cambio de hora, material extra). Usar plantilla del evento cuando exista; escribir mensaje nuevo solo para lo excepcional. Máximo 500 destinatarios por envío.
 - Evitar más de tres correos por participante y evento: confirmación, un recordatorio y el seguimiento son suficientes en la mayoría de los casos.
+- **Recordatorio oportunidad** es la sexta automatización: se envía después del evento **solo a quienes se inscribieron y no entraron**, con el botón de Calendly si el organizador guardó su enlace. Nace pausada; al activarla, los inscritos ya existentes quedan programados. Si la persona sí asistió, la entrega se cancela sola.
 - Nunca pegar enlaces personales de un participante en un mensaje masivo: cada persona recibe el suyo automáticamente con `{{access_link}}`.
 
 ---
 
-## 5. Participantes y datos personales
+## 5. Soporte a usuarios (casos)
+
+Todo lo que llega por **Contactar soporte** (Centro de ayuda o botón de ayuda) se convierte en un caso del módulo **Soporte**.
+
+**Flujo recomendado**
+
+1. **Recepción**: el solicitante recibe un correo con su número de caso y un enlace de seguimiento sin contraseña; los agentes reciben el aviso. Objetivo: primera respuesta en menos de 4 horas hábiles.
+2. **En gestión**: el agente se asigna el caso (o lo asigna un administrador), responde desde el módulo y pide evidencias si faltan. Cada respuesta llega al solicitante por correo y él puede contestar y adjuntar capturas, PDF o video desde su enlace.
+3. **Cierre**: **Solucionado** cuando se confirmó la solución; **Sin solución** cuando no depende de la plataforma o no hay información suficiente. El cambio de estado se avisa por correo. Si el solicitante responde a un caso cerrado, vuelve solo a En gestión.
+
+**Buenas prácticas**
+
+- Usar **Nota interna** para el diagnóstico técnico (números de canal, errores de proveedor); nunca ponerlo en la respuesta al solicitante.
+- Adjuntar la evidencia de la solución (captura del estado correcto) antes de cerrar.
+- Revisar el módulo al inicio y al final de cada jornada y siempre durante un evento en vivo: los casos "Abierto" con más de un día deben tener responsable.
+- Los datos del caso se conservan 180 días; no pedir contraseñas ni claves por este canal.
+
+---
+
+## 6. Participantes y datos personales
 
 - La plataforma cumple con un modelo de consentimiento explícito: cada inscripción guarda la versión de la política y los términos aceptados. **No modificar los textos legales** sin publicar una versión nueva desde Privacidad.
 - Las **solicitudes de derechos** (acceso, rectificación, borrado) llegan al Centro de privacidad y solo el administrador las atiende. Plazo interno recomendado: 10 días hábiles.
@@ -122,7 +152,7 @@ Este documento reúne las prácticas que garantizan que cada evento salga bien: 
 
 ---
 
-## 6. Mantenimiento de la plataforma
+## 7. Mantenimiento de la plataforma
 
 ### Semanal
 - Revisar **Auditoría** buscando accesos fallidos repetidos o acciones inesperadas.
@@ -142,7 +172,7 @@ Este documento reúne las prácticas que garantizan que cada evento salga bien: 
 
 ---
 
-## 7. Capacidad y rendimiento
+## 8. Capacidad y rendimiento
 
 - Producción corre en **Replit Autoscale** (2 vCPU, 4 GiB por máquina, hasta 3 máquinas). El video **no** pasa por Replit: lo entrega Amazon IVS por su red global, así que 500 o 5.000 espectadores no cargan el servidor; lo que carga son las conexiones de chat en tiempo real (una por asistente) y la entrada masiva al inicio.
 - Recomendar a los asistentes entrar **5 minutos antes** para repartir la carga de entrada.
@@ -150,7 +180,7 @@ Este documento reúne las prácticas que garantizan que cada evento salga bien: 
 - Para redes muy débiles del público, configurar la sesión en **Latencia estándar** (Transmisión): el búfer es mayor y aguanta microcortes. Baja latencia solo cuando prime la interacción.
 - Script de prueba de carga disponible en el repositorio (`scripts/sse-load.mjs`): abre cientos de conexiones de sala contra producción y reporta fallos y latencia. Ejecutarlo antes de un evento grande, nunca durante uno.
 
-### 7.1 Lista de verificación en Replit para eventos de cientos de conexiones
+### 8.1 Lista de verificación en Replit para eventos de cientos de conexiones
 
 Todo se configura en el proyecto `icazalive-app` de Replit. Los cambios de capacidad se aplican sin republicar código.
 
@@ -182,16 +212,17 @@ Todo se configura en el proyecto `icazalive-app` de Replit. Los cambios de capac
 
 ---
 
-## 8. Publicación de cambios (para quien administre el código)
+## 9. Publicación de cambios (para quien administre el código)
 
 1. Nunca publicar durante un evento ni en la hora previa.
-2. Si el cambio añade columnas a la base de datos, crearlas **antes** en las dos bases (Development y Production) desde la consola SQL; si el diálogo de publicación propone borrar (DROP) algo, cancelar.
-3. Publicar con **Republish** y verificar en producción la página de inicio, el registro de un evento y la sala de un evento de prueba.
-4. Conservar los scripts de despliegue del repositorio (`scripts/replit-deploy-*.sh`): aplican cambios anclados sin sobrescribir lo que el agente de Replit haya modificado.
+2. El código de producción vive en la rama `replit-main` de GitHub, que es la misma `main` del workspace de Replit. Desde local: confirmar, `git push origin main-sync:replit-main`; en la shell de Replit: `git pull --rebase origin replit-main` (con `--rebase`, porque cada publicación crea un commit automático "Published your App").
+3. Si el cambio añade tablas o columnas, aplicarlas **antes** en las dos bases (Development con `psql "$DATABASE_URL" -f scripts/sql/<archivo>.sql`; Production desde la consola SQL, en un solo bloque `DO $$ … $$;` idempotente, porque la consola ejecuta solo la última sentencia). Si el diálogo de publicación detecta diferencias y pide aprobación, revisar que solo proponga añadir; cancelar si propone borrar (DROP).
+4. Publicar con **Republish** y verificar en producción la página de inicio, el registro de un evento, la sala de un evento de prueba y el módulo tocado.
+5. Los scripts antiguos `scripts/apply-*.py` y `replit-deploy-*.sh` quedan como historial; ya no se usan.
 
 ---
 
-## 9. Gestión de incidencias
+## 10. Gestión de incidencias
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
@@ -202,10 +233,15 @@ Todo se configura en el proyecto `icazalive-app` de Replit. Los cambios de capac
 | Participante bloqueado por intentos | Límite de registro (3 por correo por hora) | Esperar o inscribirlo desde Participantes → Invitar |
 | Organizador no ve un evento | No figura como organizador | Añadirlo en Organizadores del evento |
 | Enlace de calendario "no válido" | Enlace personal caducado o inscripción cancelada | Reenviar confirmación desde Participantes → Enviar mensaje |
+| Nadie recibe los casos de soporte | Ningún miembro marcado como Soporte | Equipo → casilla Soporte en la persona responsable |
+| Un solicitante no encuentra su caso | Perdió el correo con el enlace de seguimiento | Soporte → abrir el caso → responderle: cada respuesta le llega con el enlace |
+| El Recordatorio oportunidad no salió | Automatización pausada, o el participante sí entró al evento | Comunicaciones → activarla; las entregas de asistentes se cancelan por diseño |
+| Un miembro no ve el módulo Soporte | Sin marca de Soporte ni permiso `support.view` | Equipo → Soporte, o Permisos → excepción por usuario |
+| Un organizador no ve un evento o sus participantes | No es propietario ni coorganizador | Ficha del evento → Organizadores → añadirlo |
 
 ---
 
-## 10. Contactos y responsables (completar)
+## 11. Contactos y responsables (completar)
 
 | Función | Responsable | Contacto |
 |---|---|---|
