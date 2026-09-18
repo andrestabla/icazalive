@@ -900,9 +900,9 @@ const accountSections: HelpGuideSection[] = [
     id: "perfil",
     title: t("Tu perfil", "Your profile", "Votre profil"),
     intro: t(
-      "Pulsa tu nombre, abajo a la izquierda del menú lateral, para abrir **Mi perfil**. Desde ahí gestionas tus datos, tu foto y tus preferencias sin pasar por un administrador.",
-      "Click your name at the bottom left of the side menu to open **My profile**. From there you manage your details, your photo and your preferences without going through an administrator.",
-      "Cliquez sur votre nom, en bas à gauche du menu latéral, pour ouvrir **Mon profil**. Vous y gérez vos données, votre photo et vos préférences sans passer par un administrateur.",
+      "Pulsa tu nombre, abajo a la izquierda del menú lateral, para abrir Mi perfil. Desde ahí gestionas tus datos, tu foto y tus preferencias sin pasar por un administrador.",
+      "Click your name at the bottom left of the side menu to open My profile. From there you manage your details, your photo and your preferences without going through an administrator.",
+      "Cliquez sur votre nom, en bas à gauche du menu latéral, pour ouvrir Mon profil. Vous y gérez vos données, votre photo et vos préférences sans passer par un administrateur.",
     ),
     steps: [
       step(
@@ -953,9 +953,9 @@ const accountSections: HelpGuideSection[] = [
     id: "equipo",
     title: t("Equipo: gestionar las cuentas del personal", "Team: managing staff accounts", "Équipe : gérer les comptes du personnel"),
     intro: t(
-      "**Equipo** (menú lateral) solo lo ven los administradores. Cada alta o cambio se avisa por correo a la persona y queda en Auditoría.",
-      "**Team** (side menu) is only visible to administrators. Every new account or change is emailed to the person and recorded in the Audit log.",
-      "**Équipe** (menu latéral) n’est visible que des administrateurs. Chaque création ou changement est notifié par e-mail à la personne et consigné dans l’Audit.",
+      "Equipo (menú lateral) solo lo ven los administradores. Cada alta o cambio se avisa por correo a la persona y queda en Auditoría.",
+      "Team (side menu) is only visible to administrators. Every new account or change is emailed to the person and recorded in the Audit log.",
+      "Équipe (menu latéral) n’est visible que des administrateurs. Chaque création ou changement est notifié par e-mail à la personne et consigné dans l’Audit.",
     ),
     steps: [
       step(
