@@ -13,7 +13,7 @@ export type FeedbackDetail = { text: string; kind: FeedbackKind };
 export const FEEDBACK_EVENT = "icaza:feedback";
 
 const ERROR_PATTERN =
-  /no fue posible|no se pudo|no pudimos|error|inv[áa]lid|no v[áa]lid|revisa|fall[óo]|rechaz|demasiad|no autoriz|no encontrad|incorrect|expir[óo]|selecciona|escribe |faltan?|⚠|no está|no existe|sin permiso|no eres|admite hasta|m[áa]ximo|no puede|no se admite|supera|debe[ns]? |obligatori|ya existe|ya tiene|no hay|no autenticad|intenta de nuevo|int[ée]ntalo/i;
+  /no fue posible|no se pudo|no pudimos|error|inv[áa]lid|no v[áa]lid|revisa|fall[óo]\b|rechaz|demasiad|no autoriz|no encontrad|incorrect|expir[óo]|selecciona|escribe |faltan?\b|⚠|no está|no existe|sin permiso|no eres|admite hasta|m[áa]ximo|no puede|no se admite|supera|\bdebe[ns]? |obligatori|ya existe|ya tiene|no hay|no autenticad|intenta de nuevo|int[ée]ntalo/i;
 
 export function inferFeedbackKind(text: string): FeedbackKind {
   return ERROR_PATTERN.test(text) ? "error" : "success";
