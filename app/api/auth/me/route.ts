@@ -19,6 +19,9 @@ export async function GET() {
       createdAt: users.createdAt,
       timezone: users.timezone,
       schedulingUrl: users.schedulingUrl,
+      locale: users.locale,
+      avatarUrl: users.avatarUrl,
+      avatarSource: users.avatarSource,
     })
     .from(users)
     .where(eq(users.id, user.id))
@@ -29,7 +32,7 @@ export async function GET() {
     : null;
 
   return NextResponse.json(
-    { data: { ...user, passwordStatus, timezone: record?.timezone ?? null, schedulingUrl: record?.schedulingUrl ?? null } },
+    { data: { ...user, passwordStatus, timezone: record?.timezone ?? null, schedulingUrl: record?.schedulingUrl ?? null, locale: record?.locale ?? "es", avatarUrl: record?.avatarUrl ?? null, avatarSource: record?.avatarSource ?? null } },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

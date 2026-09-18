@@ -55,6 +55,7 @@ export type GoogleIdentity = {
   email: string;
   emailVerified: boolean;
   name: string | null;
+  picture: string | null;
   hostedDomain: string | null;
 };
 
@@ -95,6 +96,7 @@ export async function exchangeCode(options: {
       email?: string;
       email_verified?: boolean | string;
       name?: string;
+      picture?: string;
       hd?: string;
     };
     if (!claims.email) return { ok: false, error: "Google no entregó el correo." };
@@ -105,6 +107,7 @@ export async function exchangeCode(options: {
         email: claims.email.toLowerCase(),
         emailVerified: claims.email_verified === true || claims.email_verified === "true",
         name: claims.name ?? null,
+        picture: typeof claims.picture === "string" && /^https:\/\//.test(claims.picture) ? claims.picture.slice(0, 500) : null,
         hostedDomain: claims.hd ?? null,
       },
     };

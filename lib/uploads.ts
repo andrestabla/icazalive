@@ -2,7 +2,7 @@
 // propio directorio del bucket: brand/, participants/, content/.
 // Este módulo no depende de Node y puede importarse desde el cliente.
 
-export type UploadScope = "brand" | "participants" | "content";
+export type UploadScope = "brand" | "participants" | "avatars" | "content";
 
 export const UPLOAD_SCOPES: Record<
   UploadScope,
@@ -19,6 +19,12 @@ export const UPLOAD_SCOPES: Record<
     maxBytes: 10 * 1024 * 1024,
     accept: /^(image\/(png|jpeg|webp|gif)|application\/pdf|text\/csv|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet)$/,
     label: "Participantes",
+  },
+  avatars: {
+    prefix: "avatars/",
+    maxBytes: 3 * 1024 * 1024,
+    accept: /^image\/(png|jpeg|webp|gif)$/,
+    label: "Perfil",
   },
   content: {
     prefix: "content/",
@@ -42,7 +48,7 @@ export function buildUploadKey(scope: UploadScope, filename: string): string {
 // Los recursos de marca son públicos (logos, favicon) y se sirven a través
 // de la app; el resto de directorios no se expone por esta vía.
 export function isPublicFileKey(key: string): boolean {
-  return /^brand\/[A-Za-z0-9._-]{1,160}$/.test(key);
+  return /^(brand|avatars)\/[A-Za-z0-9._-]{1,160}$/.test(key);
 }
 
 export function fileUrl(key: string | null | undefined): string | null {

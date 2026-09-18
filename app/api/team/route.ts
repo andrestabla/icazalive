@@ -1,9 +1,10 @@
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, ne } from "drizzle-orm";
 import { NextResponse, after } from "next/server";
 import { getDb } from "@/db";
 import { authSessions, events, users } from "@/db/schema";
 import { writeAuditLog } from "@/lib/audit";
 import { requireApiPermission } from "@/lib/api-guards";
+import { randomBytes } from "node:crypto";
 import { hashPassword } from "@/lib/password";
 import { isValidPassword, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
 import { getPublicOrigin } from "@/lib/public-origin";
@@ -220,12 +221,21 @@ export async function PATCH(request: Request) {
     role?: StaffRole | "participant";
     active?: boolean;
     password?: string;
+    name?: string;
+    email?: string;
+    resendCredentials?: boolean;
   };
   if (!body.id || typeof body.id !== "string") {
     return NextResponse.json(
       { error: "Miembro no válido." },
       { status: 400 },
     );
+  }
+  // Reenviar credenciales: el servidor genera la contraseña temporal.
+  if (body.resendCredentials) {
+    const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    const bytes = randomBytes(10);
+    body.password = `Live!${Array.from(bytes, (value) => alphabet[value % alphabet.length]).join("")}7`;
   }
   const origin = getPublicOrigin(request);
 
@@ -257,7 +267,11 @@ export async function PATCH(request: Request) {
 
   let role: AnyRole = target.role as StaffRole;
   let passwordHash = target.passwordHash;
+  let name = target.name;
+  let email = target.email;
   try {
+    if (body.name !== undefined) name = cleanName(body.name);
+    if (body.email !== undefined) email = cleanEmail(body.email);
     if (body.role !== undefined) role = cleanAnyRole(body.role);
     if (body.active !== undefined && typeof body.active !== "boolean") {
       throw new Error("invalid");
@@ -272,6 +286,20 @@ export async function PATCH(request: Request) {
       },
       { status: 400 },
     );
+  }
+
+  if (email !== target.email) {
+    const [taken] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.email, email), ne(users.id, target.id)))
+      .limit(1);
+    if (taken) {
+      return NextResponse.json(
+        { error: "Ese correo ya pertenece a otra cuenta." },
+        { status: 409 },
+      );
+    }
   }
 
   const active = body.active ?? target.active;
@@ -295,6 +323,8 @@ export async function PATCH(request: Request) {
   const [updated] = await db
     .update(users)
     .set({
+      name,
+      email,
       role,
       active,
       passwordHash,
@@ -309,7 +339,7 @@ export async function PATCH(request: Request) {
     .where(eq(users.id, target.id))
     .returning();
 
-  if (body.password !== undefined || !active || role !== target.role) {
+  if (body.password !== undefined || !active || role !== target.role || email !== target.email) {
     await db.delete(authSessions).where(eq(authSessions.userId, target.id));
   }
 
@@ -325,11 +355,22 @@ export async function PATCH(request: Request) {
       previousActive: target.active,
       active,
       passwordReset: body.password !== undefined,
+      credentialsResent: Boolean(body.resendCredentials),
+      previousName: target.name,
+      name,
+      previousEmail: target.email,
+      email,
     },
     request,
   });
-  if (role !== target.role || body.password !== undefined) {
-    const kind = role !== target.role ? "role_changed" : "password_reset";
+  if (role !== target.role || body.password !== undefined || email !== target.email) {
+    const kind = body.resendCredentials
+      ? "credentials_resent"
+      : role !== target.role
+        ? "role_changed"
+        : body.password !== undefined
+          ? "password_reset"
+          : "email_changed";
     after(() =>
       sendTeamAccessEmail({
         kind,
@@ -343,7 +384,10 @@ export async function PATCH(request: Request) {
       }),
     );
   }
-  return NextResponse.json({ data: safeMember(updated) });
+  return NextResponse.json({
+    data: safeMember(updated),
+    temporaryPassword: body.resendCredentials ? body.password ?? null : null,
+  });
 }
 
 export async function DELETE(request: Request) {

@@ -70,6 +70,9 @@ export default function TeamManager({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [resetMember, setResetMember] = useState<TeamMember | null>(null);
   const [deleteMember, setDeleteMember] = useState<TeamMember | null>(null);
+  const [editMember, setEditMember] = useState<TeamMember | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [createdAccess, setCreatedAccess] = useState<{
     name: string;
@@ -134,7 +137,14 @@ export default function TeamManager({
 
   const patchMember = async (
     member: TeamMember,
-    changes: { role?: AssignableRole; active?: boolean; password?: string },
+    changes: {
+      role?: AssignableRole;
+      active?: boolean;
+      password?: string;
+      name?: string;
+      email?: string;
+      resendCredentials?: boolean;
+    },
   ) => {
     setSaving(member.id);
     setMessage("");
@@ -144,8 +154,9 @@ export default function TeamManager({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ id: member.id, ...changes }),
     });
-    const payload = (await response.json()) as {
+    const payload = (await response.json().catch(() => ({}))) as {
       data?: TeamMember;
+      temporaryPassword?: string | null;
       error?: string;
     };
     if (response.ok && payload.data) {
@@ -156,7 +167,11 @@ export default function TeamManager({
           : current.map((item) => (item.id === member.id ? payload.data! : item)),
       );
       setMessage(
-        changes.password
+        changes.resendCredentials
+          ? `${member.name} recibió de nuevo sus credenciales por correo.`
+          : changes.name !== undefined || changes.email !== undefined
+            ? `Datos de ${payload.data.name} actualizados${changes.email !== undefined && changes.email !== member.email ? "; se le avisó al nuevo correo" : ""}.`
+          : changes.password
           ? `La contraseña de ${member.name} fue restablecida y se le envió por correo.`
           : changes.role === "participant"
             ? `${member.name} vuelve a ser participante; se le avisó por correo.`
@@ -170,6 +185,16 @@ export default function TeamManager({
         });
         setResetMember(null);
       }
+      if (changes.resendCredentials && payload.temporaryPassword) {
+        setCreatedAccess({
+          name: payload.data.name,
+          email: payload.data.email,
+          password: payload.temporaryPassword,
+        });
+        setEditMember(null);
+        setInviteOpen(true);
+      }
+      if (changes.name !== undefined || changes.email !== undefined) setEditMember(null);
     } else {
       setError(payload.error ?? "No fue posible actualizar el acceso.");
     }
@@ -274,6 +299,16 @@ export default function TeamManager({
                 </span>
                 <div className="team-actions">
                   <button
+                    disabled={saving === member.id}
+                    onClick={() => {
+                      setEditName(member.name);
+                      setEditEmail(member.email);
+                      setEditMember(member);
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button
                     disabled={isCurrent || saving === member.id}
                     onClick={() => {
                       setGeneratedPassword(temporaryPassword());
@@ -334,6 +369,45 @@ export default function TeamManager({
                   <button className="primary-button" disabled={saving === "invite"}>{saving === "invite" ? "Creando…" : "Crear cuenta"}</button>
                 </form>
               </>
+            )}
+          </section>
+        </div>
+      )}
+
+      {editMember && (
+        <div className="modal-backdrop" onMouseDown={() => saving !== editMember.id && setEditMember(null)}>
+          <section className="modal team-modal" role="dialog" aria-modal="true" aria-labelledby="team-edit-title" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="modal-close" disabled={saving === editMember.id} onClick={() => setEditMember(null)} aria-label="Cerrar">×</button>
+            <span className="modal-icon">♧</span>
+            <p className="eyebrow">EDITAR MIEMBRO</p>
+            <h2 id="team-edit-title">Datos de {editMember.name}</h2>
+            <p>Si cambias el correo, la persona entrará con el nuevo y recibirá un aviso. Sus sesiones abiertas se cierran.</p>
+            <form
+              className="team-invite-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const changes: { name?: string; email?: string } = {};
+                if (editName.trim() !== editMember.name) changes.name = editName.trim();
+                if (editEmail.trim().toLowerCase() !== editMember.email) changes.email = editEmail.trim().toLowerCase();
+                if (Object.keys(changes).length === 0) {
+                  setEditMember(null);
+                  return;
+                }
+                void patchMember(editMember, changes);
+              }}
+            >
+              <label>Nombre completo<input value={editName} onChange={(input) => setEditName(input.target.value)} required minLength={2} maxLength={100} autoComplete="off" /></label>
+              <label>Correo electrónico<input type="email" value={editEmail} onChange={(input) => setEditEmail(input.target.value)} required maxLength={254} autoComplete="off" disabled={editMember.id === currentUserId} /></label>
+              {editMember.id === currentUserId && <small className="team-edit-note">Tu propio correo de acceso no se cambia desde aquí.</small>}
+              <button className="primary-button" disabled={saving === editMember.id}>{saving === editMember.id ? "Guardando…" : "Guardar cambios"}</button>
+            </form>
+            {editMember.id !== currentUserId && (
+              <div className="team-edit-secondary">
+                <p>¿Perdió el acceso? Genera una contraseña temporal nueva y envíasela por correo junto con el enlace de ingreso.</p>
+                <button type="button" className="secondary-action" disabled={saving === editMember.id} onClick={() => void patchMember(editMember, { resendCredentials: true })}>
+                  Reenviar credenciales por correo
+                </button>
+              </div>
             )}
           </section>
         </div>

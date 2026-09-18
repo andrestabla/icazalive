@@ -11,6 +11,7 @@ type Asset = {
   sizeBytes: number | null;
   durationSeconds: number | null;
   createdAt: string;
+  canManage?: boolean;
 };
 
 type Unregistered = { s3Key: string; sizeBytes: number };
@@ -272,9 +273,13 @@ export default function ContentLibrary() {
                     <code>{asset.s3Key}</code>
                   </div>
                 </div>
-                <button className="content-remove" onClick={() => void remove(asset)}>
-                  Retirar
-                </button>
+                {asset.canManage !== false ? (
+                  <button className="content-remove" onClick={() => void remove(asset)}>
+                    Retirar
+                  </button>
+                ) : (
+                  <small className="content-owner-note" title="Lo subió otro miembro del equipo">Solo lectura</small>
+                )}
               </article>
             ))}
           </div>
@@ -331,6 +336,7 @@ export default function ContentLibrary() {
               {selected.durationSeconds ? <span>{Math.round(selected.durationSeconds / 60)} min</span> : null}
               <code>{selected.s3Key}</code>
             </div>
+            {selected.canManage !== false && (
             <label className="content-rename">
               Nombre del contenido
               <div>
@@ -341,9 +347,14 @@ export default function ContentLibrary() {
               </div>
               <small>El cambio se aplica también al archivo en Amazon S3; los eventos que lo usan no se ven afectados.</small>
             </label>
-            <div className="content-preview-actions">
-              <button className="content-remove" disabled={renaming} onClick={() => { void remove(selected); setSelected(null); }}>Retirar de la biblioteca</button>
-            </div>
+            )}
+            {selected.canManage !== false ? (
+              <div className="content-preview-actions">
+                <button className="content-remove" disabled={renaming} onClick={() => { void remove(selected); setSelected(null); }}>Retirar de la biblioteca</button>
+              </div>
+            ) : (
+              <p className="content-owner-note">Este contenido lo subió otro miembro del equipo: solo un administrador o quien lo subió puede renombrarlo o retirarlo.</p>
+            )}
           </section>
         </div>
       )}

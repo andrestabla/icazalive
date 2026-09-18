@@ -49,9 +49,15 @@ export async function GET() {
     }
   }
 
+  // El organizador solo puede retirar o renombrar lo que subió; el
+  // administrador, todo.
+  const isAdmin = auth.user.role === "administrator";
   return NextResponse.json({
     data: {
-      assets: registered,
+      assets: registered.map((asset) => ({
+        ...asset,
+        canManage: isAdmin || asset.createdBy === auth.user.id,
+      })),
       unregistered,
       s3Configured: Boolean(s3),
     },
@@ -139,6 +145,16 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Falta el identificador." }, { status: 400 });
   }
   const db = getDb();
+  const [target] = await db.select().from(contentAssets).where(eq(contentAssets.id, id)).limit(1);
+  if (!target) {
+    return NextResponse.json({ error: "Contenido no encontrado." }, { status: 404 });
+  }
+  if (auth.user.role !== "administrator" && target.createdBy !== auth.user.id) {
+    return NextResponse.json(
+      { error: "Solo quien subió este contenido o un administrador puede retirarlo." },
+      { status: 403 },
+    );
+  }
   const [removed] = await db
     .delete(contentAssets)
     .where(eq(contentAssets.id, id))
@@ -172,6 +188,12 @@ export async function PATCH(request: Request) {
   const db = getDb();
   const [asset] = await db.select().from(contentAssets).where(eq(contentAssets.id, body.id)).limit(1);
   if (!asset) return NextResponse.json({ error: "Contenido no encontrado." }, { status: 404 });
+  if (auth.user.role !== "administrator" && asset.createdBy !== auth.user.id) {
+    return NextResponse.json(
+      { error: "Solo quien subió este contenido o un administrador puede renombrarlo." },
+      { status: 403 },
+    );
+  }
 
   const s3 = readS3Config();
   if (!s3) return NextResponse.json({ error: "Amazon S3 no está configurado." }, { status: 409 });
